@@ -20,6 +20,9 @@ If there's new messages to send, call [send_telegram_messages].
 
 # pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
 
+import os
+import yaml
+
 import time
 from datetime import datetime
 from typing import Tuple
@@ -41,30 +44,29 @@ from tenacity import RetryError
 from authenticate_decidim import AuthenticateDecidim
 # from airflow_commons.slack_messages import send_slack
 
-from pprint import pprint
 
-# Constants
-
-TELEGRAM_CONN_ID = "telegram_decidim"
 DECIDIM_CONN_ID = "api_decidim"
 MESSAGE_COOLDOWN_DELAY = 30
 MESSAGE_COOLDOWN_RETRIES = 10
-UPDATE_DATETIME_VARIABLE="decidim_proposals_update_datetime"
+
+
+process_id = process_id
+telegram_conn_id = telegram_conn_id
+most_recent_msg_time = f"most_recent_msg_time_{process_id}"
+start_date = datetime.fromisoformat(start_date.isoformat())
 
 # DAG
-
 default_args = {
     "owner": "vitor",
-    "start_date": pendulum.datetime(2023, 5, 24, tz="America/Sao_Paulo"),
+    "start_date": self.start_date,
     "depends_on_past": False,
     "retries": 0,
     # "on_failure_callback": send_slack,
     # "on_retry_callback": send_slack,
 }
 
-
 @dag(
-    dag_id="dedicim_notify_new_proposals",
+    dag_id=f"dedicim_notify_new_proposals_{self.process_id}",
     default_args=default_args,
     schedule="*/3 * * * *",  # every 3 minutes
     catchup=False,
@@ -73,7 +75,6 @@ default_args = {
     tags=["notificação", "decidim"],
 )
 def dedicim_notify_new_proposals():
-    decidim_conn_values = BaseHook.get_connection(DECIDIM_CONN_ID)
 
     def _parse_json_to_df(proposals: dict) -> pd.DataFrame:
         """Parse decidim API json return to a pandas DataFrame.
@@ -130,6 +131,7 @@ def dedicim_notify_new_proposals():
 
         body = BeautifulSoup(row["node.body.translation"], "html.parser").get_text()
 
+        decidim_conn_values = BaseHook.get_connection(DECIDIM_CONN_ID)
         link = urljoin(
             decidim_conn_values.host,
             f"processes/{row['participatory_process.slug']}/f/{row['component.id']}/proposals/{row['node.id']}",
@@ -171,7 +173,7 @@ def dedicim_notify_new_proposals():
         """
 
         date_format = "%Y-%m-%d %H:%M:%S%z"
-        update_datetime = Variable.get(UPDATE_DATETIME_VARIABLE)
+        update_datetime = Variable.get(self.most_recent_msg_time)
 
         return datetime.strptime(update_datetime, date_format)
 
@@ -235,6 +237,7 @@ def dedicim_notify_new_proposals():
             }}
         """
 
+        decidim_conn_values = BaseHook.get_connection(DECIDIM_CONN_ID)
         api_url = urljoin(decidim_conn_values.host, "api")
         session = AuthenticateDecidim(DECIDIM_CONN_ID).get_session()
         response = session.post(api_url, json={"query": graphiql})
@@ -339,7 +342,7 @@ def dedicim_notify_new_proposals():
         for message in proposals_messages:
             for _ in range(MESSAGE_COOLDOWN_RETRIES):
                 try:
-                    TelegramHook(telegram_conn_id=TELEGRAM_CONN_ID).send_message(
+                    TelegramHook(telegram_conn_id=self.telegram_conn_id).send_message(
                         api_params={"text": message}
                     )
                     break
@@ -378,4 +381,25 @@ def dedicim_notify_new_proposals():
     )
 
 
-DAG = dedicim_notify_new_proposals()
+return dedicim_notify_new_proposals()
+
+
+def read_yaml_files_from_directory():
+    cur_dir = os.path.dirname(os.path.abspath(__file__))
+    directory_path = os.path.join(cur_dir, 'processes_confs')
+
+    for filename in os.listdir(directory_path):
+        # Check if the file is a YAML file
+        if filename.endswith('.yaml') or filename.endswith('.yml'):
+            filepath = os.path.join(directory_path, filename)
+
+            with open(filepath, 'r') as file:
+                try:
+                    yaml_dict = yaml.safe_load(file)
+                    DecidimNotifierDAGGenerator().generate_dag(**yaml_dict['process_params'])
+
+                except yaml.YAMLError as e:
+                    print(f"Error reading {filename}: {e}")
+
+
+read_yaml_files_from_directory()
