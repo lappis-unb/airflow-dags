@@ -1,0 +1,4 @@
+process_params:
+  telegram_conn_id: telegram_decidim_conjuv
+  process_id: CONJUV
+  start_date: 2023-05-24
