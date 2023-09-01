@@ -42,6 +42,7 @@ from telegram.error import RetryAfter
 from tenacity import RetryError
 
 from authenticate_decidim import AuthenticateDecidim
+
 # from airflow_commons.slack_messages import send_slack
 
 
@@ -77,7 +78,6 @@ class DecidimNotifierDAGGenerator:
             tags=["notificação", "decidim"],
         )
         def dedicim_notify_new_proposals():
-
             def _parse_json_to_df(proposals: dict) -> pd.DataFrame:
                 """Parse decidim API json return to a pandas DataFrame.
 
@@ -89,7 +89,9 @@ class DecidimNotifierDAGGenerator:
                 """
 
                 df = pd.DataFrame()
-                for participatory_process in proposals["data"]["participatoryProcesses"]:
+                for participatory_process in proposals["data"][
+                    "participatoryProcesses"
+                ]:
                     for component in participatory_process["components"]:
                         if component is None or component == {}:
                             continue
@@ -97,13 +99,15 @@ class DecidimNotifierDAGGenerator:
                         proposals = component["proposals"]["edges"]
                         df_proposals = pd.json_normalize(proposals)
                         df_proposals["component.id"] = component["id"]
-                        df_proposals["component.name"] = component["name"]["translation"]
-                        df_proposals["participatory_process.name"] = participatory_process[
-                            "title"
-                        ]["translation"]
-                        df_proposals["participatory_process.slug"] = participatory_process[
-                            "slug"
+                        df_proposals["component.name"] = component["name"][
+                            "translation"
                         ]
+                        df_proposals[
+                            "participatory_process.name"
+                        ] = participatory_process["title"]["translation"]
+                        df_proposals[
+                            "participatory_process.slug"
+                        ] = participatory_process["slug"]
                         df = pd.concat([df, df_proposals], ignore_index=True)
 
                 return df
@@ -131,7 +135,9 @@ class DecidimNotifierDAGGenerator:
                     else ""
                 )
 
-                body = BeautifulSoup(row["node.body.translation"], "html.parser").get_text()
+                body = BeautifulSoup(
+                    row["node.body.translation"], "html.parser"
+                ).get_text()
 
                 decidim_conn_values = BaseHook.get_connection(DECIDIM_CONN_ID)
                 link = urljoin(
@@ -180,7 +186,7 @@ class DecidimNotifierDAGGenerator:
                 return datetime.strptime(update_datetime, date_format)
 
             @task
-            def get_proposals(update_date: datetime) -> dict:
+            def get_proposals(component_id: int, update_date: datetime) -> dict:
                 """Airflow task that uses variable `graphiql` to request
                 proposals on dedicim API.
 
@@ -191,51 +197,47 @@ class DecidimNotifierDAGGenerator:
                     dict: result of decidim API query on proposals.
                 """
 
-                graphiql = f"""
-                    {{
-                    participatoryProcesses {{
-                        slug
-                        title {{
-                        translation(locale: "pt-BR")
-                        }}
-                        components {{
-                        ... on Proposals {{
-                            id
-                            name {{
+                graphiql = f"""{{
+                    component(id: {component_id}) {{
+                        id
+                        name {{
                             translation(locale: "pt-BR")
-                            }}
-                            proposals(
-                                filter: {{publishedSince: "{update_date.strftime("%Y-%m-%d")}"}},
-                                order: {{publishedAt: "desc"}}
-                                ) {{
+                        }}
+                        ... on Proposals {{
+                        name {{
+                            translation(locale: "pt-BR")
+                        }}
+                        proposals(filter: {{publishedSince: {update_date}}}, order: {{publishedAt: "desc"}}) {{
                             edges {{
                                 node {{
-                                id
-                                title {{
-                                    translation(locale: "pt-BR")
-                                }}
-                                publishedAt
-                                updatedAt
-                                state
-                                author {{
-                                    name
-                                    organizationName
-                                }}
-                                category {{
-                                    name {{
+                                    id
+                                    title {{
                                         translation(locale: "pt-BR")
                                     }}
-                                }}
-                                body {{
-                                    translation(locale: "pt-BR")
-                                }}
-                                official
+                                    publishedAt
+                                    updatedAt
+                                    state
+                                    author {{
+                                        name
+                                        organizationName
+                                    }}
+                                    category {{
+                                        name {{
+                                            translation(locale: "pt-BR")
+                                        }}
+                                    }}
+                                    body {{
+                                        translation(locale: "pt-BR")
+                                    }}
+                                    official
+                                        }}
+                                    }}
                                 }}
                             }}
+                        }}
+                            decidim {{
+                                version
                             }}
-                        }}
-                        }}
-                    }}
                     }}
                 """
 
@@ -248,7 +250,9 @@ class DecidimNotifierDAGGenerator:
                 return response.json()
 
             @task(multiple_outputs=True)
-            def mount_telegram_messages(proposals_json: dict, update_date: datetime) -> dict:
+            def mount_telegram_messages(
+                proposals_json: dict, update_date: datetime
+            ) -> dict:
                 """Airflow task that parse proposals json, select only new or
                 updated proposal, get the max proposal date (new or update) and
                 mount message for telegram.
@@ -269,7 +273,9 @@ class DecidimNotifierDAGGenerator:
                 proposals_df["node.publishedAt"] = pd.to_datetime(
                     proposals_df["node.publishedAt"]
                 )
-                proposals_df["node.updatedAt"] = pd.to_datetime(proposals_df["node.updatedAt"])
+                proposals_df["node.updatedAt"] = pd.to_datetime(
+                    proposals_df["node.updatedAt"]
+                )
 
                 # filter dataframe to only newer than update_date
                 proposals_df_new = proposals_df[
@@ -280,9 +286,21 @@ class DecidimNotifierDAGGenerator:
                 NOT_FOUND_MSG = "-"
                 proposals_messages = []
                 for _, row in proposals_df_new.iterrows():
-                    proposal_title = row["node.title.translation"] if "node.title.translation" in row else NOT_FOUND_MSG
-                    author_name = row["node.author.name"] if "node.author.name" in row else NOT_FOUND_MSG
-                    category = row["node.category.name.translation"] if "node.category.name.translation" in row else NOT_FOUND_MSG
+                    proposal_title = (
+                        row["node.title.translation"]
+                        if "node.title.translation" in row
+                        else NOT_FOUND_MSG
+                    )
+                    author_name = (
+                        row["node.author.name"]
+                        if "node.author.name" in row
+                        else NOT_FOUND_MSG
+                    )
+                    category = (
+                        row["node.category.name.translation"]
+                        if "node.category.name.translation" in row
+                        else NOT_FOUND_MSG
+                    )
                     header, organization_name, body, link = _prepare_strings(row)
 
                     proposal_message = (
@@ -304,7 +322,9 @@ class DecidimNotifierDAGGenerator:
                     proposals_messages.append(proposal_message)
 
                 max_datetime = (
-                    proposals_df_new[["node.updatedAt", "node.publishedAt"]].values.max()
+                    proposals_df_new[
+                        ["node.updatedAt", "node.publishedAt"]
+                    ].values.max()
                     if proposals_messages
                     else None
                 )
@@ -344,9 +364,9 @@ class DecidimNotifierDAGGenerator:
                 for message in proposals_messages:
                     for _ in range(MESSAGE_COOLDOWN_RETRIES):
                         try:
-                            TelegramHook(telegram_conn_id=self.telegram_conn_id).send_message(
-                                api_params={"text": message}
-                            )
+                            TelegramHook(
+                                telegram_conn_id=self.telegram_conn_id
+                            ).send_message(api_params={"text": message})
                             break
                         except (RetryError, RetryAfter) as e:
                             logging.info("Exception caught: %s", e)
@@ -382,23 +402,24 @@ class DecidimNotifierDAGGenerator:
                 >> save_update_date(selected_proposals["max_datetime"])
             )
 
-
         return dedicim_notify_new_proposals()
 
 
 def read_yaml_files_from_directory():
     cur_dir = os.path.dirname(os.path.abspath(__file__))
-    directory_path = os.path.join(cur_dir, 'processes_confs')
+    directory_path = os.path.join(cur_dir, "processes_confs")
 
     for filename in os.listdir(directory_path):
         # Check if the file is a YAML file
-        if filename.endswith('.yaml') or filename.endswith('.yml'):
+        if filename.endswith(".yaml") or filename.endswith(".yml"):
             filepath = os.path.join(directory_path, filename)
 
-            with open(filepath, 'r') as file:
+            with open(filepath, "r") as file:
                 try:
                     yaml_dict = yaml.safe_load(file)
-                    DecidimNotifierDAGGenerator().generate_dag(**yaml_dict['process_params'])
+                    DecidimNotifierDAGGenerator().generate_dag(
+                        **yaml_dict["process_params"]
+                    )
 
                 except yaml.YAMLError as e:
                     print(f"Error reading {filename}: {e}")
