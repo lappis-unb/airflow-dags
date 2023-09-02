@@ -20,7 +20,8 @@ class AuthenticateDecidim:
         }
     
 
-    def __get_proposals_query(update_date_filter):
+    def __get_proposals_query(self, update_date_filter=None, **kawrgs):
+        assert update_date_filter, logging.ERROR("Porposals need the update_date_filter to run.")
         query = f"""
             proposals(filter: {{publishedSince: {update_date_filter}}}, order: {{publishedAt: "desc"}}) {{
                             edges {{
