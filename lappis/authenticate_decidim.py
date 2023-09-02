@@ -36,31 +36,29 @@ class AuthenticateDecidim:
 
         query = f"""
             proposals(filter: {{publishedSince: {update_date_filter}}}, order: {{publishedAt: "desc"}}) {{
-                            edges {{
-                                node {{
-                                    id
-                                    title {{
-                                        translation(locale: "pt-BR")
-                                    }}
-                                    publishedAt
-                                    updatedAt
-                                    state
-                                    author {{
-                                        name
-                                        organizationName
-                                    }}
-                                    category {{
-                                        name {{
-                                            translation(locale: "pt-BR")
-                                        }}
-                                    }}
-                                    body {{
-                                        translation(locale: "pt-BR")
-                                    }}
-                                    official
-                                        }}
-                                    }}
-                                }}
+                nodes {{
+                    id
+                    title {{
+                        translation(locale: "pt-BR")
+                    }}
+                    publishedAt
+                    updatedAt
+                    state
+                    author {{
+                        name
+                        organizationName
+                    }}
+                    category {{
+                        name {{
+                            translation(locale: "pt-BR")
+                        }}
+                    }}
+                    body {{
+                        translation(locale: "pt-BR")
+                    }}
+                    official
+                        }}
+                    }}
             """
         return query
 
