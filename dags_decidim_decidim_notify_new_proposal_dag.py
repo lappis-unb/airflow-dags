@@ -41,7 +41,7 @@ from airflow.providers.telegram.hooks.telegram import TelegramHook
 from telegram.error import RetryAfter
 from tenacity import RetryError
 
-from authenticate_decidim import AuthenticateDecidim
+from lappis.authenticate_decidim import AuthenticateDecidim
 
 # from airflow_commons.slack_messages import send_slack
 
