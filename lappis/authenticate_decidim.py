@@ -19,7 +19,17 @@ class AuthenticateDecidim:
             "user[email]": conn_values.login,
             "user[password]": conn_values.password,
         }
-    
+
+    def __run_graphql_post_query__(self, graphql_query):
+        response = self.get_session().post(self.api_url, json={"query": graphql_query})
+        status_code = response.status_code
+        assert status_code == 200, logging.ERROR(f"""Query:
+                                                        {graphql_query}
+                                                     has returned status code: {status_code}
+                                                    """)
+
+        return response
+
 
     def __get_proposals_query(self, update_date_filter=None, **kawrgs):
         assert update_date_filter, logging.ERROR("Porposals need the update_date_filter to run.")
