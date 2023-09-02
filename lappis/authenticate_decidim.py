@@ -7,7 +7,7 @@ and password.
 import logging
 from urllib.parse import urljoin
 import requests
-
+from contextlib import closing
 from airflow.hooks.base import BaseHook
 
 class AuthenticateDecidim:
@@ -63,12 +63,11 @@ class AuthenticateDecidim:
             requests.Session: session object authenticaded.
         """
 
-        session = requests.Session()
-
-        try:
-            r = session.post(self.auth_url, data=self.payload)
-            r.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            logging.info("An login error occurred: %s", str(e))
-        else:
-            return session
+        with closing(requests.Session()) as session:
+            try:
+                r = session.post(self.auth_url, data=self.payload)
+                r.raise_for_status()
+            except requests.exceptions.HTTPError as e:
+                logging.info("An login error occurred: %s", str(e))
+            else:
+                return session
