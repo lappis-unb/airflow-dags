@@ -13,7 +13,8 @@ from airflow.hooks.base import BaseHook
 class AuthenticateDecidim:
     def __init__(self, conn_id: str):
         conn_values = BaseHook.get_connection(conn_id)
-        self.auth_url = urljoin(conn_values.host, "api/sign_in")
+        self.api_url = conn_values.host
+        self.auth_url = urljoin(self.api_url, "api/sign_in")
         self.payload = {
             "user[email]": conn_values.login,
             "user[password]": conn_values.password,
@@ -22,6 +23,7 @@ class AuthenticateDecidim:
 
     def __get_proposals_query(self, update_date_filter=None, **kawrgs):
         assert update_date_filter, logging.ERROR("Porposals need the update_date_filter to run.")
+
         query = f"""
             proposals(filter: {{publishedSince: {update_date_filter}}}, order: {{publishedAt: "desc"}}) {{
                             edges {{
