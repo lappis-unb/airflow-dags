@@ -122,7 +122,7 @@ class DecidimNotifierDAGGenerator:
 
             @task(multiple_outputs=True)
             def mount_telegram_messages(
-                proposals_json: dict, update_date: datetime
+                component_id, proposals_json: dict, update_date: datetime
             ) -> dict:
                 """Airflow task that parse proposals json, select only new or
                 updated proposal, get the max proposal date (new or update) and
@@ -137,73 +137,51 @@ class DecidimNotifierDAGGenerator:
                     dict: "proposals_messages" (list): new/updated proposals to
                             send on telegram.
                         "max_datetime" (str): max proposal date (new or update).
+
                 """
+
                 logging.info(f"Recived proposals {proposals_json}")
-                proposals_df = _parse_json_to_df(proposals_json)
-                proposals_df.fillna("", inplace=True)
-                proposals_df["node.publishedAt"] = pd.to_datetime(
-                    proposals_df["node.publishedAt"]
-                )
-                proposals_df["node.updatedAt"] = pd.to_datetime(
-                    proposals_df["node.updatedAt"]
-                )
+                result:dict[str, Union[list, datetime, None]] = {
+                    "proposals_messages": [],
+                    "max_datetime": None,
+                }
+
+                proposals_df = DecidimHook(
+                    DECIDIM_CONN_ID
+                ).json_component_to_data_frame(component_id, proposals_json)
+                if proposals_df.empty:
+                    return result
 
                 # filter dataframe to only newer than update_date
                 proposals_df_new = proposals_df[
-                    (proposals_df["node.publishedAt"] > update_date)
-                    | (proposals_df["node.updatedAt"] > update_date)
+                    (proposals_df["publishedAt"] > update_date)
+                    | (proposals_df["updatedAt"] > update_date)
                 ].copy()
 
-                NOT_FOUND_MSG = "-"
-                proposals_messages = []
                 for _, row in proposals_df_new.iterrows():
-                    proposal_title = (
-                        row["node.title.translation"]
-                        if "node.title.translation" in row
-                        else NOT_FOUND_MSG
-                    )
-                    author_name = (
-                        row["node.author.name"]
-                        if "node.author.name" in row
-                        else NOT_FOUND_MSG
-                    )
-                    category = (
-                        row["node.category.name.translation"]
-                        if "node.category.name.translation" in row
-                        else NOT_FOUND_MSG
-                    )
-                    header, organization_name, body, link = _prepare_strings(row)
-
+                    state = row["state"]
                     proposal_message = (
-                        f"{header}"
+                        f"{state['emoji']} Proposta <b>{state['label']}</b>em {row['date'].strftime('%d/%m/%Y %H:%M')}"
                         "\n"
                         "\n<b>Proposta</b>"
-                        f"\n{proposal_title}"
+                        f"\n{row['title.translation']}"
                         "\n"
                         f"\n<b>Autor</b>"
-                        f"\n{author_name} {organization_name}"
+                        f"\n{row['author.name']} {row['author.organizationName']}"
                         "\n"
                         "\n<b>Categoria</b>"
-                        f"\n{category}"
+                        f"\n{row['category']}"
                         "\n"
-                        f"\n{body}"
+                        f"\n{row['body.translation']}"
                         "\n"
-                        f'\n<a href="{link}">Acesse aqui</a>'
+                        f'\n<a href="{row["link"]}">Acesse aqui</a>'
                     )
-                    proposals_messages.append(proposal_message)
+                    result["proposals_messages"].append(proposal_message)
 
-                max_datetime = (
-                    proposals_df_new[
-                        ["node.updatedAt", "node.publishedAt"]
-                    ].values.max()
-                    if proposals_messages
-                    else None
-                )
+                result["max_datetime"] = proposals_df_new["date"].max()
 
-                return {
-                    "proposals_messages": proposals_messages,
-                    "max_datetime": max_datetime,
-                }
+                logging.info(f"Monted {len(result['proposals_messages'])} menssages.")
+                return result
 
             @task.branch
             def check_if_new_proposals(selected_proposals: list) -> str:
