@@ -159,3 +159,91 @@ class DecidimHook(BaseHook):
                         }}
         """
         return self.run_graphql_post_query(graphql_query)["data"]["component"]
+
+    def json_component_to_data_frame(
+        self, component_id, json_component, **kawrgs
+    ) -> pd.DataFrame:
+        """Parse decidim API json return to a pandas DataFrame.
+
+        Args:
+            proposals (dict): API json return
+
+        Returns:
+            pd.DataFrame: json parsed into pandas DataFrame
+        """
+
+        # Decidim::ParticipatoryProcess -> decidim::_participatory_process -> process
+        component_type = self.get_component_type(component_id)
+        participatory_space = self.get_participatory_space_from_component_id(
+            component_id
+        )
+
+        inflect_engine = inflect.engine()
+        link_base = urljoin(
+            self.api_url,
+            f"{inflect_engine.plural(participatory_space['type_for_links'])}/{participatory_space['slug']}/f/{component_id}/{component_type.lower()}",
+        )
+
+        del inflect_engine
+
+        json_component = json_component[component_type.lower()]["nodes"]
+        print(json_component)
+        # TODO: Verificar que são essas as keys que estão chegando para todos os componentes.
+        normalized_component_json = pd.json_normalize(json_component)
+        df = pd.DataFrame(normalized_component_json)
+
+        if df.empty:
+            return df
+
+        df.rename(columns={"category.name.translation": "category"}, inplace=True)
+
+        df["publishedAt"] = pd.to_datetime(df["publishedAt"])
+        df["updatedAt"] = pd.to_datetime(df["updatedAt"])
+
+        df["body.translation"] = df["body.translation"].apply(
+            lambda x: BeautifulSoup(x, "html.parser").get_text()
+        )
+
+        ids = np.char.array(df["id"].values, unicode=True)
+        df = df.assign(link=(link_base + "/" + ids).astype(str))
+
+        state_map = {
+            "accepted": {"label": "aceita ", "emoji": "✅ ✅ ✅"},
+            "evaluating": {"label": "em avaliação ", "emoji": "📥 📥 📥"},
+            "withdrawn": {"label": "retirada ", "emoji": "🚫 🚫 🚫"},
+            "rejected": {"label": "rejeitada ", "emoji": "⛔ ⛔ ⛔"},
+            "others": {"label": "atualizada ", "emoji": "🔄 🔄 🔄"},
+            "new": {"label": "", "emoji": "📣 📣 📣 <b>[NOVA]</b>"},
+        }
+
+        df_mask = df["updatedAt"] > df["publishedAt"]
+        df.loc[df_mask, "state"] = df[df_mask]["state"].apply(
+            state_map.get, args=(state_map.get("others"),)
+        )
+        df.loc[df_mask, "date"] = df[df_mask]["updatedAt"]
+
+        df.loc[(~df_mask), "state"] = df[(~df_mask)]["state"].apply(
+            state_map.get, args=(state_map.get("new"),)
+        )
+        df.loc[(~df_mask), "date"] = df[(~df_mask)]["publishedAt"]
+
+        df.fillna("-", inplace=True)
+        df.replace({None: "-", "": "-"}, inplace=True)
+        return df
+
+    def get_session(self) -> requests.Session:
+        """Create a requests session with decidim based on Airflow
+        connection host, login and password values.
+
+        Returns:
+            requests.Session: session object authenticaded.
+        """
+        session = requests.Session()
+
+        try:
+            r = session.post(self.auth_url, data=self.payload)
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            logging.info("An login error occurred: %s", str(e))
+        else:
+            return session
