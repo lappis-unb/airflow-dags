@@ -39,3 +39,16 @@ class DecidimHook(BaseHook):
         )
 
         return response.json()
+    def get_component_type(self, component_id: str) -> str:
+        logging.info(f"Component id: {component_id}")
+        graphql_query = f"""
+                    {{
+                        component(id: {component_id}) {{
+                            __typename
+                        }}
+                    }}
+                    """
+        response = self.run_graphql_post_query(graphql_query=graphql_query)
+
+        assert response["data"]["component"] is not None
+        return response["data"]["component"]["__typename"]
