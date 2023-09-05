@@ -52,3 +52,47 @@ class DecidimHook(BaseHook):
 
         assert response["data"]["component"] is not None
         return response["data"]["component"]["__typename"]
+            )
+
+    def get_participatory_space_from_component_id(
+        self, component_id: int
+    ) -> dict[str, str]:
+        graphql_query = f"""{{
+                component(id: {component_id}) {{
+                    participatorySpace {{
+                        id
+                        type
+                }}
+            }}
+        }}
+        """
+
+        response = self.run_graphql_post_query(graphql_query)
+        participatory_space = response["data"]["component"]["participatorySpace"]
+
+        lower_first_letter = lambda s: s[:1].lower() + s[1:] if s else ""
+
+        participatory_space["type"] = lower_first_letter(
+            participatory_space["type"].split("::")[-1]
+        )
+        graphql_query = f"""
+            {{
+            {participatory_space["type"]}(id: {participatory_space["id"]}){{
+                id
+                type
+                slug
+                title {{
+                    translation(locale: "pt-BR")
+                }}
+            }}
+        }}
+        """
+
+        response = self.run_graphql_post_query(graphql_query)
+        participatory_space = response["data"][participatory_space["type"]]
+        participatory_space["type_for_links"] = underscore(
+            participatory_space["type"]
+        ).split("_")[-1]
+
+        return participatory_space
+
