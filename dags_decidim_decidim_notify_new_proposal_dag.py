@@ -209,7 +209,6 @@ class DecidimNotifierDAGGenerator:
                     proposals_messages (list): List of proposals telegram
                         messages to be send.
                 """
-
                 for message in proposals_messages:
                     for _ in range(MESSAGE_COOLDOWN_RETRIES):
                         try:
@@ -235,12 +234,14 @@ class DecidimNotifierDAGGenerator:
                     max_datetime (str): last proposal datetime
                 """
 
-                Variable.set("decidim_proposals_update_datetime", max_datetime)
+                Variable.set(self.most_recent_msg_time, max_datetime)
 
             # Instantiation
-            update_date = get_update_date()
-            proposals_json = get_proposals(update_date)
-            selected_proposals = mount_telegram_messages(proposals_json, update_date)
+            update_date = get_update_date(start_date)
+            proposals_json = get_proposals(component_id, update_date)
+            selected_proposals = mount_telegram_messages(
+                component_id, proposals_json, update_date
+            )
             check_if_new_proposals_task = check_if_new_proposals(selected_proposals)
 
             # Orchestration
