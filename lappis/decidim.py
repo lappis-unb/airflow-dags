@@ -39,6 +39,46 @@ class DecidimHook(BaseHook):
         )
 
         return response.json()
+
+    def __get_proposals_query(self, update_date_filter: datetime = None, **kawrgs):
+        assert update_date_filter is not None, logging.ERROR(
+            "Porposals need the update_date_filter to run."
+        )
+
+        query = f"""
+            ... on Proposals{{
+                id
+                name {{
+                    translation(locale: "pt-BR")
+                }}
+                proposals(filter: {{publishedSince: "{update_date_filter.strftime("%Y-%m-%d")}"}}, order: {{publishedAt: "desc"}}) {{
+                nodes {{
+                    id
+                    title {{
+                        translation(locale: "pt-BR")
+                    }}
+                    publishedAt
+                    updatedAt
+                    state
+                    author {{
+                        name
+                        organizationName
+                    }}
+                    category {{
+                        name {{
+                            translation(locale: "pt-BR")
+                        }}
+                    }}
+                    body {{
+                        translation(locale: "pt-BR")
+                    }}
+                    official
+                        }}
+                    }}
+                }}
+            """
+        return query
+
     def get_component_type(self, component_id: str) -> str:
         logging.info(f"Component id: {component_id}")
         graphql_query = f"""
@@ -52,6 +92,13 @@ class DecidimHook(BaseHook):
 
         assert response["data"]["component"] is not None
         return response["data"]["component"]["__typename"]
+
+    def __get_component_query(self, component_id: str, **kawrgs):
+        component_type = self.get_component_type(component_id)
+
+        if component_type == "Proposals":
+            return self.__get_proposals_query(
+                update_date_filter=kawrgs.get("update_date_filter", None)
             )
 
     def get_participatory_space_from_component_id(
@@ -96,3 +143,19 @@ class DecidimHook(BaseHook):
 
         return participatory_space
 
+    def get_component(self, component_id: int, **kawrgs) -> dict[str, str]:
+        graphql_query = f"""
+                        {{
+                            component(id: {component_id}) {{
+                                id
+                                name {{
+                                translation(locale: "pt-BR")
+                                }}
+
+                                {
+                                    self.__get_component_query(component_id, **kawrgs)
+                                }
+                            }}
+                        }}
+        """
+        return self.run_graphql_post_query(graphql_query)["data"]["component"]
