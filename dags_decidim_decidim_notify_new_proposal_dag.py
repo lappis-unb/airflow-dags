@@ -24,11 +24,11 @@ import os
 import yaml
 
 import time
-from datetime import datetime
+from datetime import datetime, tzinfo, timezone, timedelta
 from typing import Tuple
 from urllib.parse import urljoin
 import logging
-
+from typing import Union
 import pendulum
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -41,7 +41,7 @@ from airflow.providers.telegram.hooks.telegram import TelegramHook
 from telegram.error import RetryAfter
 from tenacity import RetryError
 
-from lappis.authenticate_decidim import AuthenticateDecidim
+from lappis.decidim import DecidimHook
 
 # from airflow_commons.slack_messages import send_slack
 
@@ -102,68 +102,23 @@ class DecidimNotifierDAGGenerator:
                 return datetime.strptime(update_datetime, date_format)
 
             @task
-            def get_proposals(component_id: int, update_date: datetime) -> dict:
-                """Airflow task that uses variable `graphiql` to request
+            def get_proposals(component_id: int, update_date: datetime):
+                """Airflow task that uses variable `graphql` to request
                 proposals on dedicim API.
 
                 Args:
+                    component_id (int): id of the component to get updates from.
                     update_date (datetime): last proposals update date.
 
                 Returns:
                     dict: result of decidim API query on proposals.
                 """
 
-                graphiql = f"""{{
-                    component(id: {component_id}) {{
-                        id
-                        name {{
-                            translation(locale: "pt-BR")
-                        }}
-                        ... on Proposals {{
-                        name {{
-                            translation(locale: "pt-BR")
-                        }}
-                        proposals(filter: {{publishedSince: {update_date}}}, order: {{publishedAt: "desc"}}) {{
-                            edges {{
-                                node {{
-                                    id
-                                    title {{
-                                        translation(locale: "pt-BR")
-                                    }}
-                                    publishedAt
-                                    updatedAt
-                                    state
-                                    author {{
-                                        name
-                                        organizationName
-                                    }}
-                                    category {{
-                                        name {{
-                                            translation(locale: "pt-BR")
-                                        }}
-                                    }}
-                                    body {{
-                                        translation(locale: "pt-BR")
-                                    }}
-                                    official
-                                        }}
-                                    }}
-                                }}
-                            }}
-                        }}
-                            decidim {{
-                                version
-                            }}
-                    }}
-                """
+                component_dict = DecidimHook(DECIDIM_CONN_ID).get_component(
+                    component_id, update_date_filter=update_date
+                )
 
-                decidim_conn_values = BaseHook.get_connection(DECIDIM_CONN_ID)
-                api_url = urljoin(decidim_conn_values.host, "api")
-                session = AuthenticateDecidim(DECIDIM_CONN_ID).get_session()
-                response = session.post(api_url, json={"query": graphiql})
-                session.close()
-
-                return response.json()
+                return component_dict
 
             @task(multiple_outputs=True)
             def mount_telegram_messages(
