@@ -52,7 +52,10 @@ MESSAGE_COOLDOWN_RETRIES = 10
 
 
 class DecidimNotifierDAGGenerator:
-    def generate_dag(self, telegram_conn_id: str, process_id: str, start_date: str):
+    def generate_dag(
+        self, telegram_conn_id: str, component_id: str, process_id: str, start_date: str
+    ):
+        self.component_id = component_id
         self.process_id = process_id
         self.telegram_conn_id = telegram_conn_id
         self.most_recent_msg_time = f"most_recent_msg_time_{process_id}"
