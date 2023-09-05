@@ -82,17 +82,23 @@ class DecidimNotifierDAGGenerator:
         )
         def dedicim_notify_new_proposals():
             @task
-            def get_update_date() -> datetime:
+            def get_update_date(dag_start_date: datetime) -> datetime:
                 """Airflow task that retrieve last proposal update date from
                 airflow variables.
 
                 Returns:
                     datetime: last proposal update from airflow variables.
                 """
-
                 date_format = "%Y-%m-%d %H:%M:%S%z"
-                update_datetime = Variable.get(self.most_recent_msg_time)
 
+                tz = timezone(timedelta(hours=-3))
+                start_date = datetime(
+                    dag_start_date.year,
+                    dag_start_date.month,
+                    dag_start_date.day,
+                    tzinfo=tz,
+                ).strftime(date_format)
+                update_datetime = Variable.get(self.most_recent_msg_time, start_date)
                 return datetime.strptime(update_datetime, date_format)
 
             @task
