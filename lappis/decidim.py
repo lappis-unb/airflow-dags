@@ -201,11 +201,15 @@ class DecidimHook(BaseHook):
         # TODO: Verificar que são essas as keys que estão chegando para todos os componentes.
         normalized_component_json = pd.json_normalize(json_component)
         df = pd.DataFrame(normalized_component_json)
-
         if df.empty:
             return df
 
-        df.rename(columns={"category.name.translation": "category"}, inplace=True)
+        df["categoria"] = ""
+        for column in set(["category.name.translation", "category"]).intersection(set(df.columns)):
+            df["categoria"] += df[column]
+
+        df.drop(columns=["category.name.translation", "category"], inplace=True, errors='ignore')
+        df.rename(columns={"categoria": "category"}, inplace=True)
 
         df["publishedAt"] = pd.to_datetime(df["publishedAt"])
         df["updatedAt"] = pd.to_datetime(df["updatedAt"])
