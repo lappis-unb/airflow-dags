@@ -143,7 +143,7 @@ class DecidimNotifierDAGGenerator:
                 """
 
                 logging.info(f"Recived proposals {proposals_json}")
-                result:dict[str, Union[list, datetime, None]] = {
+                result: dict[str, Union[list, datetime, None]] = {
                     "proposals_messages": [],
                     "max_datetime": None,
                 }
@@ -162,6 +162,7 @@ class DecidimNotifierDAGGenerator:
 
                 for _, row in proposals_df_new.iterrows():
                     state = row["state"]
+
                     proposal_message = (
                         f"{state['emoji']} Proposta <b>{state['label']}</b>em {row['date'].strftime('%d/%m/%Y %H:%M')}"
                         "\n"
