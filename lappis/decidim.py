@@ -214,6 +214,10 @@ class DecidimHook(BaseHook):
             lambda x: BeautifulSoup(x, "html.parser").get_text()
         )
 
+        # Removes hastag from body.
+        df["body.translation"] = df["body.translation"].apply(lambda x: re.sub(r"gid:\/\/decide\/Decidim::Hashtag\/\d\/\w*|\n$", "", x))
+
+
         ids = np.char.array(df["id"].values, unicode=True)
         df = df.assign(link=(link_base + "/" + ids).astype(str))
 
