@@ -39,8 +39,23 @@ class DecidimHook(BaseHook):
         )
 
         return response.json()
+    
+    def get_component_link_component_by_id(self, component_id: int):
 
-    def __get_proposals_query(self, update_date_filter: datetime = None, **kawrgs):
+        component_type = self.get_component_type(component_id)
+        participatory_space = self.get_participatory_space_from_component_id(
+            component_id
+        )
+
+        inflect_engine = inflect.engine()
+        link_base = urljoin(
+            self.api_url,
+            f"{inflect_engine.plural(participatory_space['type_for_links'])}/{participatory_space['slug']}/f/{component_id}/{component_type.lower()}",
+        )
+
+        del inflect_engine
+
+        return link_base
         assert update_date_filter is not None, logging.ERROR(
             "Porposals need the update_date_filter to run."
         )
