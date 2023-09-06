@@ -236,14 +236,16 @@ class DecidimHook(BaseHook):
         }
 
         df_mask = df["updatedAt"] > df["publishedAt"]
-        df.loc[df_mask, "state"] = df[df_mask]["state"].apply(
-            state_map.get, args=(state_map.get("others"),)
-        )
-        df.loc[df_mask, "date"] = df[df_mask]["updatedAt"]
+        get_state = lambda state, default: state_map.get(state, state_map.get(default))
 
-        df.loc[(~df_mask), "state"] = df[(~df_mask)]["state"].apply(
-            state_map.get, args=(state_map.get("new"),)
+        df.loc[df_mask, "state"] = df[df_mask]["state"].apply(
+            get_state, args=("others",)
         )
+        df.loc[(~df_mask), "state"] = df[(~df_mask)]["state"].apply(
+            get_state, args=("new",)
+        )
+
+        df.loc[df_mask, "date"] = df[df_mask]["updatedAt"]
         df.loc[(~df_mask), "date"] = df[(~df_mask)]["publishedAt"]
 
         df.fillna("-", inplace=True)
