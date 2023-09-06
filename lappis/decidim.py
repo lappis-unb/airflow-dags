@@ -197,8 +197,7 @@ class DecidimHook(BaseHook):
         link_base = self.get_component_link_component_by_id(component_id)
 
         json_component = json_component[component_type.lower()]["nodes"]
-        print(json_component)
-        # TODO: Verificar que são essas as keys que estão chegando para todos os componentes.
+
         normalized_component_json = pd.json_normalize(json_component)
         df = pd.DataFrame(normalized_component_json)
         if df.empty:
