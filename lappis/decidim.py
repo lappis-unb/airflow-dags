@@ -250,6 +250,9 @@ class DecidimHook(BaseHook):
 
         df.fillna("-", inplace=True)
         df.replace({None: "-", "": "-"}, inplace=True)
+
+        df["author.organizationName"].replace({"-": ""}, inplace=True)
+
         return df
 
     def get_session(self) -> requests.Session:
