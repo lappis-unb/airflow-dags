@@ -114,7 +114,9 @@ class DecidimNotifierDAGGenerator:
                     dict: result of decidim API query on proposals.
                 """
 
-                component_dict = DecidimHook(DECIDIM_CONN_ID).get_component(
+                component_dict = DecidimHook(
+                    DECIDIM_CONN_ID
+                ).get_component_by_component_id(
                     component_id, update_date_filter=update_date
                 )
 

@@ -56,6 +56,8 @@ class DecidimHook(BaseHook):
         del inflect_engine
 
         return link_base
+
+    def _get_proposals_subquery(self, update_date_filter: datetime = None, **kawrgs):
         assert update_date_filter is not None, logging.ERROR(
             "Porposals need the update_date_filter to run."
         )
@@ -108,12 +110,14 @@ class DecidimHook(BaseHook):
         assert response["data"]["component"] is not None
         return response["data"]["component"]["__typename"]
 
-    def __get_component_query(self, component_id: str, **kawrgs):
+    def _get_component_query(self, component_id: str, **kawrgs):
         component_type = self.get_component_type(component_id)
 
         if component_type == "Proposals":
-            return self.__get_proposals_query(
-                update_date_filter=kawrgs.get("update_date_filter", None)
+            update_date_filter = kawrgs.get("update_date_filter", None)
+
+            return self._get_proposals_subquery(
+                update_date_filter=update_date_filter
             )
 
     def get_participatory_space_from_component_id(
@@ -158,7 +162,7 @@ class DecidimHook(BaseHook):
 
         return participatory_space
 
-    def get_component(self, component_id: int, **kawrgs) -> dict[str, str]:
+    def get_component_by_component_id(self, component_id: int, **kawrgs) -> dict[str, str]:
         graphql_query = f"""
                         {{
                             component(id: {component_id}) {{
@@ -168,7 +172,7 @@ class DecidimHook(BaseHook):
                                 }}
 
                                 {
-                                    self.__get_component_query(component_id, **kawrgs)
+                                    self._get_component_query(component_id, **kawrgs)
                                 }
                             }}
                         }}
@@ -188,18 +192,9 @@ class DecidimHook(BaseHook):
         """
 
         # Decidim::ParticipatoryProcess -> decidim::_participatory_process -> process
+        
         component_type = self.get_component_type(component_id)
-        participatory_space = self.get_participatory_space_from_component_id(
-            component_id
-        )
-
-        inflect_engine = inflect.engine()
-        link_base = urljoin(
-            self.api_url,
-            f"{inflect_engine.plural(participatory_space['type_for_links'])}/{participatory_space['slug']}/f/{component_id}/{component_type.lower()}",
-        )
-
-        del inflect_engine
+        link_base = self.get_component_link_component_by_id(component_id)
 
         json_component = json_component[component_type.lower()]["nodes"]
         print(json_component)
