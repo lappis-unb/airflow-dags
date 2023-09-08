@@ -137,10 +137,10 @@ class DecidimHook(BaseHook):
         participatory_space = response["data"]["component"]["participatorySpace"]
 
         lower_first_letter = lambda s: s[:1].lower() + s[1:] if s else ""
-
-        participatory_space["type"] = lower_first_letter(
-            participatory_space["type"].split("::")[-1]
-        )
+        type_of_space = participatory_space["type"] = lower_first_letter(
+                    participatory_space["type"].split("::")[-1]
+                )
+        
         graphql_query = f"""
             {{
             {participatory_space["type"]}(id: {participatory_space["id"]}){{
@@ -157,7 +157,7 @@ class DecidimHook(BaseHook):
         response = self.run_graphql_post_query(graphql_query)
         participatory_space = response["data"][participatory_space["type"]]
         participatory_space["type_for_links"] = underscore(
-            participatory_space["type"]
+            type_of_space
         ).split("_")[-1]
 
         return participatory_space
