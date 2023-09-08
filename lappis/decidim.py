@@ -220,8 +220,6 @@ class DecidimHook(BaseHook):
         # Removes hastag from body.
         df["body.translation"] = df["body.translation"].apply(lambda x: re.sub(r"gid:\/\/decide\/Decidim::Hashtag\/\d\/\w*|\n$", "", x))
 
-        df["author.organizationName"].replace(to_replace=["Brasil Participativo"], value="", inplace=True)
-
         ids = np.char.array(df["id"].values, unicode=True)
         df = df.assign(link=(link_base + "/" + ids).astype(str))
 
@@ -250,8 +248,10 @@ class DecidimHook(BaseHook):
         df.fillna("-", inplace=True)
         df.replace({None: "-", "": "-"}, inplace=True)
 
-        df["author.organizationName"].replace({"-": ""}, inplace=True)
-
+        if "author.organizationName" in df:
+            df["author.organizationName"].replace(to_replace=["Brasil Participativo"], value="", inplace=True)
+            df["author.organizationName"].replace({"-": ""}, inplace=True)
+            
         return df
 
     def get_session(self) -> requests.Session:

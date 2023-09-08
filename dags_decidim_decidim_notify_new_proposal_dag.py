@@ -163,6 +163,9 @@ class DecidimNotifierDAGGenerator:
                 for _, row in proposals_df_new.iterrows():
                     state = row["state"]
 
+                    organization_name = row['author.organizationName'] if 'author.organizationName' in row else ""
+                    author_name = row['author.name'] if 'author.name' in row else "-"
+
                     proposal_message = (
                         f"{state['emoji']} Proposta <b>{state['label']}</b>em {row['date'].strftime('%d/%m/%Y %H:%M')}"
                         "\n"
@@ -170,7 +173,7 @@ class DecidimNotifierDAGGenerator:
                         f"\n{row['title.translation']}"
                         "\n"
                         f"\n<b>Autor</b>"
-                        f"\n{row['author.name']} {row['author.organizationName']}"
+                        f"\n{author_name} {organization_name}"
                         "\n"
                         "\n<b>Categoria</b>"
                         f"\n{row['category']}"
