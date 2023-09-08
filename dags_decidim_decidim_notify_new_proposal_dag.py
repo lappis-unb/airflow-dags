@@ -278,7 +278,7 @@ def read_yaml_files_from_directory():
                     )
 
                 except yaml.YAMLError as e:
-                    print(f"Error reading {filename}: {e}")
+                    logging.ERROR(f"Error reading {filename}: {e}")
 
 
 read_yaml_files_from_directory()
