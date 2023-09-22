@@ -1,5 +1,5 @@
 process_params:
   telegram_conn_id: telegram_decidim
-  process_id: ENGD
-  component_id: 7
+  process_id: CNPCT
+  component_id: 138
   start_date: 2023-01-01
