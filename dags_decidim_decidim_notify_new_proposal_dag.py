@@ -173,7 +173,7 @@ class DecidimNotifierDAGGenerator:
                         f"\n{row['title.translation']}"
                         "\n"
                         f"\n<b>Autor</b>"
-                        f"\n{author_name} {organization_name}"
+                        f"\n{row['author.name']} {row['author.organizationName']}"
                         "\n"
                         "\n<b>Categoria</b>"
                         f"\n{row['category']}"
