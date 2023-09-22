@@ -24,11 +24,11 @@ import os
 import yaml
 
 import time
-from datetime import datetime
+from datetime import datetime, tzinfo, timezone, timedelta
 from typing import Tuple
 from urllib.parse import urljoin
 import logging
-
+from typing import Union
 import pendulum
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -41,7 +41,8 @@ from airflow.providers.telegram.hooks.telegram import TelegramHook
 from telegram.error import RetryAfter
 from tenacity import RetryError
 
-from authenticate_decidim import AuthenticateDecidim
+from lappis.decidim import DecidimHook
+
 # from airflow_commons.slack_messages import send_slack
 
 
@@ -51,7 +52,10 @@ MESSAGE_COOLDOWN_RETRIES = 10
 
 
 class DecidimNotifierDAGGenerator:
-    def generate_dag(self, telegram_conn_id: str, process_id: str, start_date: str):
+    def generate_dag(
+        self, telegram_conn_id: str, component_id: str, process_id: str, start_date: str
+    ):
+        self.component_id = component_id
         self.process_id = process_id
         self.telegram_conn_id = telegram_conn_id
         self.most_recent_msg_time = f"most_recent_msg_time_{process_id}"
@@ -77,178 +81,51 @@ class DecidimNotifierDAGGenerator:
             tags=["notificação", "decidim"],
         )
         def dedicim_notify_new_proposals():
-
-            def _parse_json_to_df(proposals: dict) -> pd.DataFrame:
-                """Parse decidim API json return to a pandas DataFrame.
-
-                Args:
-                    proposals (dict): API json return
-
-                Returns:
-                    pd.DataFrame: json parsed into pandas DataFrame
-                """
-
-                df = pd.DataFrame()
-                for participatory_process in proposals["data"]["participatoryProcesses"]:
-                    for component in participatory_process["components"]:
-                        if component is None or component == {}:
-                            continue
-
-                        proposals = component["proposals"]["edges"]
-                        df_proposals = pd.json_normalize(proposals)
-                        df_proposals["component.id"] = component["id"]
-                        df_proposals["component.name"] = component["name"]["translation"]
-                        df_proposals["participatory_process.name"] = participatory_process[
-                            "title"
-                        ]["translation"]
-                        df_proposals["participatory_process.slug"] = participatory_process[
-                            "slug"
-                        ]
-                        df = pd.concat([df, df_proposals], ignore_index=True)
-
-                return df
-
-            def _prepare_strings(
-                row: pd.core.series.Series,
-            ) -> Tuple[str, str, str, str]:
-                """Prepares strings for a given row in a pandas Series to
-                compose telegram message.
-
-                Args:
-                    row (pd.core.series.Series): a pandas Series representing a
-                        row of data.
-
-                Returns:
-                    Tuple[str, str, str, str]: A tuple containing the prepared
-                        strings in the following order:
-                        - header, organization_name, body, link
-                """
-
-                organization_name = (
-                    f'({row["node.author.organizationName"]})'
-                    if row["node.author.organizationName"] != ""
-                    and row["node.author.organizationName"] != "Brasil Participativo"
-                    else ""
-                )
-
-                body = BeautifulSoup(row["node.body.translation"], "html.parser").get_text()
-
-                decidim_conn_values = BaseHook.get_connection(DECIDIM_CONN_ID)
-                link = urljoin(
-                    decidim_conn_values.host,
-                    f"processes/{row['participatory_process.slug']}/f/{row['component.id']}/proposals/{row['node.id']}",
-                )
-
-                published_at = row["node.publishedAt"]
-                updated_at = row["node.updatedAt"]
-
-                state = row["node.state"]
-                state_map = {
-                    "accepted": {"label": "aceita ", "emoji": "✅ ✅ ✅"},
-                    "evaluating": {"label": "em avaliação ", "emoji": "📥 📥 📥"},
-                    "withdrawn": {"label": "retirada ", "emoji": "🚫 🚫 🚫"},
-                    "rejected": {"label": "rejeitada ", "emoji": "⛔ ⛔ ⛔"},
-                    "others": {"label": "atualizada ", "emoji": "🔄 🔄 🔄"},
-                    "new": {"label": "", "emoji": "📣 📣 📣 <b>[NOVA]</b>"},
-                }
-
-                if updated_at > published_at:
-                    date = updated_at.strftime("%d/%m/%Y %H:%M")
-                    emoji = state_map.get(state, state_map["others"])["emoji"]
-                    state_label = state_map.get(state, state_map["others"])["label"]
-                else:
-                    date = published_at.strftime("%d/%m/%Y %H:%M")
-                    emoji = state_map["new"]["emoji"]
-                    state_label = state_map["new"]["label"]
-
-                header = f"{emoji} Proposta <b>{state_label}</b>em {date}"
-
-                return header, organization_name, body, link
-
             @task
-            def get_update_date() -> datetime:
+            def get_update_date(dag_start_date: datetime) -> datetime:
                 """Airflow task that retrieve last proposal update date from
                 airflow variables.
 
                 Returns:
                     datetime: last proposal update from airflow variables.
                 """
-
                 date_format = "%Y-%m-%d %H:%M:%S%z"
-                update_datetime = Variable.get(self.most_recent_msg_time)
 
+                tz = timezone(timedelta(hours=-3))
+                start_date = datetime(
+                    dag_start_date.year,
+                    dag_start_date.month,
+                    dag_start_date.day,
+                    tzinfo=tz,
+                ).strftime(date_format)
+                update_datetime = Variable.get(self.most_recent_msg_time, start_date)
                 return datetime.strptime(update_datetime, date_format)
 
             @task
-            def get_proposals(update_date: datetime) -> dict:
-                """Airflow task that uses variable `graphiql` to request
+            def get_proposals(component_id: int, update_date: datetime):
+                """Airflow task that uses variable `graphql` to request
                 proposals on dedicim API.
 
                 Args:
+                    component_id (int): id of the component to get updates from.
                     update_date (datetime): last proposals update date.
 
                 Returns:
                     dict: result of decidim API query on proposals.
                 """
 
-                graphiql = f"""
-                    {{
-                    participatoryProcesses {{
-                        slug
-                        title {{
-                        translation(locale: "pt-BR")
-                        }}
-                        components {{
-                        ... on Proposals {{
-                            id
-                            name {{
-                            translation(locale: "pt-BR")
-                            }}
-                            proposals(
-                                filter: {{publishedSince: "{update_date.strftime("%Y-%m-%d")}"}},
-                                order: {{publishedAt: "desc"}}
-                                ) {{
-                            edges {{
-                                node {{
-                                id
-                                title {{
-                                    translation(locale: "pt-BR")
-                                }}
-                                publishedAt
-                                updatedAt
-                                state
-                                author {{
-                                    name
-                                    organizationName
-                                }}
-                                category {{
-                                    name {{
-                                        translation(locale: "pt-BR")
-                                    }}
-                                }}
-                                body {{
-                                    translation(locale: "pt-BR")
-                                }}
-                                official
-                                }}
-                            }}
-                            }}
-                        }}
-                        }}
-                    }}
-                    }}
-                """
+                component_dict = DecidimHook(
+                    DECIDIM_CONN_ID
+                ).get_component_by_component_id(
+                    component_id, update_date_filter=update_date
+                )
 
-                decidim_conn_values = BaseHook.get_connection(DECIDIM_CONN_ID)
-                api_url = urljoin(decidim_conn_values.host, "api")
-                session = AuthenticateDecidim(DECIDIM_CONN_ID).get_session()
-                response = session.post(api_url, json={"query": graphiql})
-                session.close()
-
-                return response.json()
+                return component_dict
 
             @task(multiple_outputs=True)
-            def mount_telegram_messages(proposals_json: dict, update_date: datetime) -> dict:
+            def mount_telegram_messages(
+                component_id, proposals_json: dict, update_date: datetime
+            ) -> dict:
                 """Airflow task that parse proposals json, select only new or
                 updated proposal, get the max proposal date (new or update) and
                 mount message for telegram.
@@ -262,57 +139,52 @@ class DecidimNotifierDAGGenerator:
                     dict: "proposals_messages" (list): new/updated proposals to
                             send on telegram.
                         "max_datetime" (str): max proposal date (new or update).
+
                 """
+
                 logging.info(f"Recived proposals {proposals_json}")
-                proposals_df = _parse_json_to_df(proposals_json)
-                proposals_df.fillna("", inplace=True)
-                proposals_df["node.publishedAt"] = pd.to_datetime(
-                    proposals_df["node.publishedAt"]
-                )
-                proposals_df["node.updatedAt"] = pd.to_datetime(proposals_df["node.updatedAt"])
+                result: dict[str, Union[list, datetime, None]] = {
+                    "proposals_messages": [],
+                    "max_datetime": None,
+                }
+
+                proposals_df = DecidimHook(
+                    DECIDIM_CONN_ID
+                ).json_component_to_data_frame(component_id, proposals_json)
+                if proposals_df.empty:
+                    return result
 
                 # filter dataframe to only newer than update_date
                 proposals_df_new = proposals_df[
-                    (proposals_df["node.publishedAt"] > update_date)
-                    | (proposals_df["node.updatedAt"] > update_date)
+                    (proposals_df["publishedAt"] > update_date)
+                    | (proposals_df["updatedAt"] > update_date)
                 ].copy()
 
-                NOT_FOUND_MSG = "-"
-                proposals_messages = []
                 for _, row in proposals_df_new.iterrows():
-                    proposal_title = row["node.title.translation"] if "node.title.translation" in row else NOT_FOUND_MSG
-                    author_name = row["node.author.name"] if "node.author.name" in row else NOT_FOUND_MSG
-                    category = row["node.category.name.translation"] if "node.category.name.translation" in row else NOT_FOUND_MSG
-                    header, organization_name, body, link = _prepare_strings(row)
+                    state = row["state"]
 
                     proposal_message = (
-                        f"{header}"
+                        f"{state['emoji']} Proposta <b>{state['label']}</b>em {row['date'].strftime('%d/%m/%Y %H:%M')}"
                         "\n"
                         "\n<b>Proposta</b>"
-                        f"\n{proposal_title}"
+                        f"\n{row['title.translation']}"
                         "\n"
                         f"\n<b>Autor</b>"
-                        f"\n{author_name} {organization_name}"
+                        f"\n{row['author.name']} {row['author.organizationName']}"
                         "\n"
                         "\n<b>Categoria</b>"
-                        f"\n{category}"
+                        f"\n{row['category']}"
                         "\n"
-                        f"\n{body}"
+                        f"\n{row['body.translation']}"
                         "\n"
-                        f'\n<a href="{link}">Acesse aqui</a>'
+                        f'\n<a href="{row["link"]}">Acesse aqui</a>'
                     )
-                    proposals_messages.append(proposal_message)
+                    result["proposals_messages"].append(proposal_message)
 
-                max_datetime = (
-                    proposals_df_new[["node.updatedAt", "node.publishedAt"]].values.max()
-                    if proposals_messages
-                    else None
-                )
+                result["max_datetime"] = proposals_df_new["date"].max()
 
-                return {
-                    "proposals_messages": proposals_messages,
-                    "max_datetime": max_datetime,
-                }
+                logging.info(f"Monted {len(result['proposals_messages'])} menssages.")
+                return result
 
             @task.branch
             def check_if_new_proposals(selected_proposals: list) -> str:
@@ -340,13 +212,12 @@ class DecidimNotifierDAGGenerator:
                     proposals_messages (list): List of proposals telegram
                         messages to be send.
                 """
-
                 for message in proposals_messages:
                     for _ in range(MESSAGE_COOLDOWN_RETRIES):
                         try:
-                            TelegramHook(telegram_conn_id=self.telegram_conn_id).send_message(
-                                api_params={"text": message}
-                            )
+                            TelegramHook(
+                                telegram_conn_id=self.telegram_conn_id
+                            ).send_message(api_params={"text": message})
                             break
                         except (RetryError, RetryAfter) as e:
                             logging.info("Exception caught: %s", e)
@@ -366,12 +237,14 @@ class DecidimNotifierDAGGenerator:
                     max_datetime (str): last proposal datetime
                 """
 
-                Variable.set("decidim_proposals_update_datetime", max_datetime)
+                Variable.set(self.most_recent_msg_time, max_datetime)
 
             # Instantiation
-            update_date = get_update_date()
-            proposals_json = get_proposals(update_date)
-            selected_proposals = mount_telegram_messages(proposals_json, update_date)
+            update_date = get_update_date(start_date)
+            proposals_json = get_proposals(component_id, update_date)
+            selected_proposals = mount_telegram_messages(
+                component_id, proposals_json, update_date
+            )
             check_if_new_proposals_task = check_if_new_proposals(selected_proposals)
 
             # Orchestration
@@ -382,23 +255,24 @@ class DecidimNotifierDAGGenerator:
                 >> save_update_date(selected_proposals["max_datetime"])
             )
 
-
         return dedicim_notify_new_proposals()
 
 
 def read_yaml_files_from_directory():
     cur_dir = os.path.dirname(os.path.abspath(__file__))
-    directory_path = os.path.join(cur_dir, 'processes_confs')
+    directory_path = os.path.join(cur_dir, "processes_confs")
 
     for filename in os.listdir(directory_path):
         # Check if the file is a YAML file
-        if filename.endswith('.yaml') or filename.endswith('.yml'):
+        if filename.endswith(".yaml") or filename.endswith(".yml"):
             filepath = os.path.join(directory_path, filename)
 
-            with open(filepath, 'r') as file:
+            with open(filepath, "r") as file:
                 try:
                     yaml_dict = yaml.safe_load(file)
-                    DecidimNotifierDAGGenerator().generate_dag(**yaml_dict['process_params'])
+                    DecidimNotifierDAGGenerator().generate_dag(
+                        **yaml_dict["process_params"]
+                    )
 
                 except yaml.YAMLError as e:
                     print(f"Error reading {filename}: {e}")
