@@ -163,6 +163,9 @@ class DecidimNotifierDAGGenerator:
                 for _, row in proposals_df_new.iterrows():
                     state = row["state"]
 
+                    organization_name = row['author.organizationName'] if 'author.organizationName' in row else ""
+                    author_name = row['author.name'] if 'author.name' in row else "-"
+
                     proposal_message = (
                         f"{state['emoji']} Proposta <b>{state['label']}</b>em {row['date'].strftime('%d/%m/%Y %H:%M')}"
                         "\n"
@@ -275,7 +278,7 @@ def read_yaml_files_from_directory():
                     )
 
                 except yaml.YAMLError as e:
-                    print(f"Error reading {filename}: {e}")
+                    logging.ERROR(f"Error reading {filename}: {e}")
 
 
 read_yaml_files_from_directory()

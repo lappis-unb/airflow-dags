@@ -1,5 +1,5 @@
 process_params:
   telegram_conn_id: telegram_decidim
-  process_id: CONJUV
-  component_id: 136
+  process_id: CONJUV4
+  component_id: 10
   start_date: 2023-01-01
