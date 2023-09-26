@@ -3,3 +3,4 @@ process_params:
   process_id: CONJUV4
   component_id: 10
   start_date: 2023-01-01
+  decidim_url: https://lab-decide.dataprev.gov.br/admin/participatory_processes/juventude/edit
