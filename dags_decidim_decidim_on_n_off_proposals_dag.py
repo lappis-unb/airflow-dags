@@ -189,7 +189,26 @@ class DecidimOnOffDAGGenerator:
 
         return decidim_on_n_off_proposals
 
+def yaml_to_dag(filepath):
+    """
+    Recive the path to configuration file and generate an airflow dag.
+    """
+    with open(filepath, "r") as file:
+        yaml_dict = yaml.safe_load(file)
+        DecidimOnOffDAGGenerator().generate_dag(
+            **yaml_dict["process_params"],
+            dag_id="decidim_set_on_proposals", 
+            schedule="0 8 * * *")(True)
+
+        DecidimOnOffDAGGenerator().generate_dag(
+            **yaml_dict["process_params"],
+            dag_id="decidim_set_off_proposals",
+            schedule="0 22 * * *")(False)
+
 def read_yaml_files_from_directory():
+    """
+    Search for yaml files and send then.
+    """
     cur_dir = os.path.dirname(os.path.abspath(__file__))
     directory_path = os.path.join(cur_dir, "processes_confs")
 
@@ -197,21 +216,6 @@ def read_yaml_files_from_directory():
         # Check if the file is a YAML file
         if filename.endswith(".yaml") or filename.endswith(".yml"):
             filepath = os.path.join(directory_path, filename)
-
-            with open(filepath, "r") as file:
-                try:
-                    yaml_dict = yaml.safe_load(file)
-                    DecidimOnOffDAGGenerator().generate_dag(
-                        **yaml_dict["process_params"],
-                        dag_id="decidim_set_on_proposals", 
-                        schedule="0 8 * * *")(True)
-
-                    DecidimOnOffDAGGenerator().generate_dag(
-                        **yaml_dict["process_params"],
-                        dag_id="decidim_set_off_proposals",
-                        schedule="0 22 * * *")(False)
-
-                except yaml.YAMLError as e:
-                    logging.ERROR(f"Error reading {filename}: {e}")
+            yaml_to_dag(filepath)
 
 read_yaml_files_from_directory()
