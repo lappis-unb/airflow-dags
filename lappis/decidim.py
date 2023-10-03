@@ -16,6 +16,9 @@ import inflect
 import numpy as np
 from datetime import datetime
 from bs4 import BeautifulSoup
+from collections import defaultdict
+
+from json import loads
 
 
 class DecidimHook(BaseHook):
@@ -39,9 +42,8 @@ class DecidimHook(BaseHook):
         )
 
         return response.json()
-    
-    def get_component_link_component_by_id(self, component_id: int):
 
+    def get_component_link_component_by_id(self, component_id: int):
         component_type = self.get_component_type(component_id)
         participatory_space = self.get_participatory_space_from_component_id(
             component_id
@@ -81,6 +83,15 @@ class DecidimHook(BaseHook):
                         name
                         organizationName
                     }}
+                    comments{{
+                        id
+                        body
+                        createdAt
+                        author {{
+                            id
+                            name
+                        }}
+                    }}
                     category {{
                         name {{
                             translation(locale: "pt-BR")
@@ -107,7 +118,7 @@ class DecidimHook(BaseHook):
                     """
         response = self.run_graphql_post_query(graphql_query=graphql_query)
 
-        assert response["data"]["component"] is not None
+        assert response["data"]["component"] is not None, response
         return response["data"]["component"]["__typename"]
 
     def _get_component_query(self, component_id: str, **kawrgs):
@@ -116,9 +127,7 @@ class DecidimHook(BaseHook):
         if component_type == "Proposals":
             update_date_filter = kawrgs.get("update_date_filter", None)
 
-            return self._get_proposals_subquery(
-                update_date_filter=update_date_filter
-            )
+            return self._get_proposals_subquery(update_date_filter=update_date_filter)
 
     def get_participatory_space_from_component_id(
         self, component_id: int
@@ -138,9 +147,9 @@ class DecidimHook(BaseHook):
 
         lower_first_letter = lambda s: s[:1].lower() + s[1:] if s else ""
         type_of_space = participatory_space["type"] = lower_first_letter(
-                    participatory_space["type"].split("::")[-1]
-                )
-        
+            participatory_space["type"].split("::")[-1]
+        )
+
         graphql_query = f"""
             {{
             {participatory_space["type"]}(id: {participatory_space["id"]}){{
@@ -156,13 +165,97 @@ class DecidimHook(BaseHook):
 
         response = self.run_graphql_post_query(graphql_query)
         participatory_space = response["data"][participatory_space["type"]]
-        participatory_space["type_for_links"] = underscore(
-            type_of_space
-        ).split("_")[-1]
+        participatory_space["type_for_links"] = underscore(type_of_space).split("_")[-1]
 
         return participatory_space
 
-    def get_component_by_component_id(self, component_id: int, **kawrgs) -> dict[str, str]:
+    def _format_comment(
+        self, comment: dict, proposal_id, parent_id: int = None
+    ) -> dict:
+        return {
+            "proposal_id": proposal_id,  # TODO achar um nome melhora para component pq não é um componente mas sim uma proposta ou uma reunião etc
+            "parent_id": comment["id"] if parent_id is None else parent_id,
+            "body": comment["body"],
+            "author_id": comment["author"]["id"],
+            "author_name": comment["author"]["name"],
+            "comment_id": comment["id"],
+            "creation_date": comment["createdAt"],
+        }
+
+    def _build_comment_thread(
+        self, parent_comment: dict[str], proposal_id: int, thread_level: int = 1
+    ):
+        graphql_query = f"""{{
+                            commentable(
+                                id: "{parent_comment['id']}"
+                                type: "Decidim::Comments::Comment"
+                                locale: "pt-BR"
+                                toggleTranslations: true
+                            ) {{
+                            id
+                            comments {{
+                                id
+                                body
+                                createdAt
+                                author {{
+                                    id
+                                    name
+                                }}
+                            }}
+                        }}
+                    }}
+                """
+        result = self.run_graphql_post_query(graphql_query)
+        commentable = result["data"]["commentable"]
+
+        if thread_level == 1:  # Root level
+            yield self._format_comment(parent_comment, proposal_id=proposal_id)
+
+        for comment in commentable["comments"]:
+            yield self._format_comment(
+                comment, proposal_id=proposal_id, parent_id=parent_comment["id"]
+            )
+            yield from self._build_comment_thread(
+                comment, thread_level=thread_level + 1, proposal_id=proposal_id
+            )
+
+    def get_comments_from_component_id(
+        self, component_id: int, update_date_filter, **kwargs
+    ):
+        component = self.get_component_by_component_id(
+            component_id=component_id, update_date_filter=update_date_filter, **kwargs
+        )
+        component_type = self.get_component_type(component_id)
+
+        proposals = component[component_type.lower()]["nodes"]
+
+        comments = []
+
+        for proposal in proposals:
+            for comment in proposal["comments"]:
+                comments.extend(
+                    self._build_comment_thread(comment, proposal_id=proposal["id"])
+                )
+
+        df = pd.DataFrame(comments)
+
+        if df.empty:
+            return loads(df.to_json(orient="records"))
+
+        df["mask_date"] = pd.to_datetime(
+            df["creation_date"], utc=True, format="ISO8601"
+        )
+        df_mask = df["mask_date"] > update_date_filter
+
+        link_base = self.get_component_link_component_by_id(component_id)
+        ids = np.char.array(df["proposal_id"].values, unicode=True)
+        df = df.assign(link=(link_base + "/" + ids).astype(str))
+
+        return loads(df.loc[df_mask, ::].to_json(orient="records"))
+
+    def get_component_by_component_id(
+        self, component_id: int, **kawrgs
+    ) -> dict[str, str]:
         graphql_query = f"""
                         {{
                             component(id: {component_id}) {{
@@ -177,6 +270,7 @@ class DecidimHook(BaseHook):
                             }}
                         }}
         """
+
         return self.run_graphql_post_query(graphql_query)["data"]["component"]
 
     def json_component_to_data_frame(
@@ -192,7 +286,7 @@ class DecidimHook(BaseHook):
         """
 
         # Decidim::ParticipatoryProcess -> decidim::_participatory_process -> process
-        
+
         component_type = self.get_component_type(component_id)
         link_base = self.get_component_link_component_by_id(component_id)
 
@@ -204,10 +298,16 @@ class DecidimHook(BaseHook):
             return df
 
         df["categoria"] = ""
-        for column in set(["category.name.translation", "category"]).intersection(set(df.columns)):
+        for column in set(["category.name.translation", "category"]).intersection(
+            set(df.columns)
+        ):
             df["categoria"] += df[column]
 
-        df.drop(columns=["category.name.translation", "category"], inplace=True, errors='ignore')
+        df.drop(
+            columns=["category.name.translation", "category"],
+            inplace=True,
+            errors="ignore",
+        )
         df.rename(columns={"categoria": "category"}, inplace=True)
 
         df["publishedAt"] = pd.to_datetime(df["publishedAt"])
@@ -218,7 +318,9 @@ class DecidimHook(BaseHook):
         )
 
         # Removes hastag from body.
-        df["body.translation"] = df["body.translation"].apply(lambda x: re.sub(r"gid:\/\/decide\/Decidim::Hashtag\/\d\/\w*|\n$", "", x))
+        df["body.translation"] = df["body.translation"].apply(
+            lambda x: re.sub(r"gid:\/\/decide\/Decidim::Hashtag\/\d\/\w*|\n$", "", x)
+        )
 
         ids = np.char.array(df["id"].values, unicode=True)
         df = df.assign(link=(link_base + "/" + ids).astype(str))
@@ -249,9 +351,11 @@ class DecidimHook(BaseHook):
         df.replace({None: "-", "": "-"}, inplace=True)
 
         if "author.organizationName" in df:
-            df["author.organizationName"].replace(to_replace=["Brasil Participativo"], value="", inplace=True)
+            df["author.organizationName"].replace(
+                to_replace=["Brasil Participativo"], value="", inplace=True
+            )
             df["author.organizationName"].replace({"-": ""}, inplace=True)
-            
+
         return df
 
     def get_session(self) -> requests.Session:
