@@ -7,7 +7,7 @@ import json
 import boto3
 
 DEFAULT_ARGS = {
-    'owner': 'you',
+    'owner': 'nitai',
     'depends_on_past': False,
     'email_on_failure': True,
     'email_on_retry': False,
