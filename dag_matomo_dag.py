@@ -1,9 +1,7 @@
 from datetime import datetime, timedelta
-from airflow import DAG
 from airflow.decorators import task, dag
 from airflow.hooks.base_hook import BaseHook
 import requests
-import json
 import boto3
 
 DEFAULT_ARGS = {
@@ -28,15 +26,16 @@ def get_matomo_data(module, method, execution_date):
         'idSite': SITE_ID,
         'period': 'day',
         'date': execution_date.isoformat(),
-        'format': 'CSV',
+        'format': 'csv',
         'token_auth': TOKEN_AUTH,
         'method': f'{module}.{method}'
     }
     response = requests.get(MATOMO_URL, params=params)
     if response.status_code == 200:
-        return response.json()
+        return response.text
     else:
         raise Exception(f"Failed to fetch data for {module}.{method}. Status code: {response.status_code}")
+
 
 def save_to_minio(data, module, method, execution_date):
     # Fetching MinIO connection details from Airflow connections
@@ -44,6 +43,7 @@ def save_to_minio(data, module, method, execution_date):
     MINIO_URL = minio_conn.host
     MINIO_ACCESS_KEY = minio_conn.login
     MINIO_SECRET_KEY = minio_conn.password
+    MINIO_BUCKET = minio_conn.schema
 
     # Saving JSON to MinIO bucket using boto3
     s3_client = boto3.client('s3',
@@ -51,10 +51,12 @@ def save_to_minio(data, module, method, execution_date):
                              aws_access_key_id=MINIO_ACCESS_KEY,
                              aws_secret_access_key=MINIO_SECRET_KEY,
                              region_name='us-east-1')
-    filename = f"{module}_{method}_{execution_date}.json"
-    s3_client.put_object(Body=json.dumps(data),
-                         Bucket='bucket-test',
-                         Key=filename)
+    filename = f"{module}_{method}_{execution_date}.csv"
+    s3_client.put_object(Body=data,
+                         Bucket=MINIO_BUCKET,
+                         Key=filename,
+                         ContentType='text/csv')
+
 
 @dag(
         default_args=DEFAULT_ARGS,
