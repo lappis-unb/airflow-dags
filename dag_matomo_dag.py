@@ -84,12 +84,19 @@ def matomo_data_download():
     for module, method in endpoints:
         @task(task_id=f"extract_from_{method}_{module}")
         def fetch_data(module_: str, method_: str, **context):
-            # import ipdb; ipdb.set_trace()
-            data = get_matomo_data(module_, method_, context['execution_date'])
-            save_to_minio(data, module_, method_, context['execution_date'])
+            data = get_matomo_data(module_,
+                                   method_,
+                                   context['data_interval_start']
+            )
+            save_to_minio(data,
+                          module_,
+                          method_,
+                          context['data_interval_start']
+            )
 
-        fetch_data(module, method)  # This call will generate a unique task based on the current module and method
+        fetch_data(module, method)
 
     return matomo_data_download
 
-dag = matomo_data_download()
+
+matomo_data_download()
