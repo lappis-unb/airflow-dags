@@ -53,7 +53,12 @@ MESSAGE_COOLDOWN_RETRIES = 10
 
 class DecidimNotifierDAGGenerator:
     def generate_dag(
-        self, telegram_conn_id: str, component_id: str, process_id: str, start_date: str, **kwargs
+        self,
+        telegram_conn_id: str,
+        component_id: str,
+        process_id: str,
+        start_date: str,
+        **kwargs,
     ):
         self.component_id = component_id
         self.process_id = process_id
@@ -150,7 +155,7 @@ class DecidimNotifierDAGGenerator:
 
                 proposals_df = DecidimHook(
                     DECIDIM_CONN_ID
-                ).json_component_to_data_frame(component_id, proposals_json)
+                ).component_json_to_dataframe(component_id, proposals_json)
                 if proposals_df.empty:
                     return result
 
@@ -163,8 +168,12 @@ class DecidimNotifierDAGGenerator:
                 for _, row in proposals_df_new.iterrows():
                     state = row["state"]
 
-                    organization_name = row['author.organizationName'] if 'author.organizationName' in row else ""
-                    author_name = row['author.name'] if 'author.name' in row else "-"
+                    organization_name = (
+                        row["author.organizationName"]
+                        if "author.organizationName" in row
+                        else ""
+                    )
+                    author_name = row["author.name"] if "author.name" in row else "-"
 
                     proposal_message = (
                         f"{state['emoji']} Proposta <b>{state['label']}</b>em {row['date'].strftime('%d/%m/%Y %H:%M')}"
@@ -178,6 +187,7 @@ class DecidimNotifierDAGGenerator:
                         "\n<b>Categoria</b>"
                         f"\n{row['category']}"
                         "\n"
+                        "\n<b>Descrição</b>"
                         f"\n{row['body.translation']}"
                         "\n"
                         f'\n<a href="{row["link"]}">Acesse aqui</a>'
@@ -186,7 +196,7 @@ class DecidimNotifierDAGGenerator:
 
                 result["max_datetime"] = proposals_df_new["date"].max()
 
-                logging.info(f"Monted {len(result['proposals_messages'])} menssages.")
+                logging.info(f"Built {len(result['proposals_messages'])} menssages.")
                 return result
 
             @task.branch

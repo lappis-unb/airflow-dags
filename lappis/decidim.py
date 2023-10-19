@@ -31,7 +31,28 @@ class DecidimHook(BaseHook):
             "user[password]": conn_values.password,
         }
 
-    def run_graphql_post_query(self, graphql_query):
+    def run_graphql_post_query(self, graphql_query) -> dict[str, str]:
+        """
+            Execute a GraphQL POST query and retrieve the JSON response.
+
+            Args:
+                graphql_query (str): The GraphQL query to execute.
+
+            Returns:
+                dict[str, str]: A dictionary containing the JSON response.
+
+            Raises:
+                AssertionError: If the HTTP status code is not 200 (OK), an error is logged.
+
+            Example:
+                To execute a GraphQL query and retrieve the response:
+                >>> response = self.run_graphql_post_query(query)
+                >>> process_response_data(response)
+
+            Note:
+                This function sends a POST request to the specified API URL with the provided GraphQL query.
+                It checks if the HTTP status code is 200 (OK) and raises an AssertionError if not.
+        """
         response = self.get_session().post(self.api_url, json={"query": graphql_query})
         status_code = response.status_code
         assert status_code == 200, logging.ERROR(
@@ -42,6 +63,51 @@ class DecidimHook(BaseHook):
         )
 
         return response.json()
+
+    def run_graphql_post_pagineted_query(
+        self, pagineted_graphql_query: str, endcursor: str = "null"
+    ):
+        """
+        Execute a paginated GraphQL POST query and retrieve results page by page.
+
+        Args:
+            paginated_graphql_query (str): The GraphQL query to execute for pagination.
+            endcursor (str, optional): The cursor to start pagination. Defaults to "null".
+
+        Yields:
+            dict: A dictionary containing the JSON response for each page.
+
+        Note:
+            This function is designed to handle paginated GraphQL queries. It starts with the provided endcursor
+            and retrieves pages of results until there are no more pages. The results are yielded page by page.
+
+        Example:
+            To fetch paginated results:
+            >>> for page in self.run_graphql_post_paginated_query(query, endcursor="some_cursor"):
+            ...     process_page_data(page)
+
+        """
+        variables = {"after": endcursor}
+        response = self.get_session().post(
+            self.api_url,
+            json={"query": pagineted_graphql_query, "variables": variables},
+        )
+        response_json = response.json()
+
+        # TODO: Trocar para uma forma mais geral e não apenas proposals.
+        new_endcursor = response_json["data"]["component"]["proposals"]["pageInfo"][
+            "endCursor"
+        ]
+        hasnextpage = response_json["data"]["component"]["proposals"]["pageInfo"][
+            "hasNextPage"
+        ]
+
+        if hasnextpage:
+            yield from self.run_graphql_post_pagineted_query(
+                pagineted_graphql_query, endcursor=new_endcursor
+            )
+
+        yield response_json
 
     def get_component_link_component_by_id(self, component_id: int):
         component_type = self.get_component_type(component_id)
@@ -70,37 +136,42 @@ class DecidimHook(BaseHook):
                 name {{
                     translation(locale: "pt-BR")
                 }}
-                proposals(filter: {{publishedSince: "{update_date_filter.strftime("%Y-%m-%d")}"}}, order: {{publishedAt: "desc"}}) {{
-                nodes {{
-                    id
-                    title {{
-                        translation(locale: "pt-BR")
+                proposals(filter: {{publishedSince: "{update_date_filter.strftime("%Y-%m-%d")}"}}, order: {{publishedAt: "asc"}}, after: $after) {{
+                    pageInfo {{
+                        hasNextPage
+                        startCursor
+                        endCursor
                     }}
-                    publishedAt
-                    updatedAt
-                    state
-                    author {{
-                        name
-                        organizationName
-                    }}
-                    comments{{
+                    nodes {{
                         id
-                        body
-                        createdAt
-                        author {{
-                            id
-                            name
-                        }}
-                    }}
-                    category {{
-                        name {{
+                        title {{
                             translation(locale: "pt-BR")
                         }}
-                    }}
-                    body {{
-                        translation(locale: "pt-BR")
-                    }}
-                    official
+                        publishedAt
+                        updatedAt
+                        state
+                        author {{
+                            name
+                            organizationName
+                        }}
+                        comments{{
+                                id
+                                body
+                                createdAt
+                                author {{
+                                    id
+                                    name
+                                }}
+                            }}
+                    category {{
+                        name {{
+                                translation(locale: "pt-BR")
+                            }}
+                        }}
+                        body {{
+                            translation(locale: "pt-BR")
+                        }}
+                            official
                         }}
                     }}
                 }}
@@ -108,7 +179,6 @@ class DecidimHook(BaseHook):
         return query
 
     def get_component_type(self, component_id: str) -> str:
-        logging.info(f"Component id: {component_id}")
         graphql_query = f"""
                     {{
                         component(id: {component_id}) {{
@@ -257,7 +327,7 @@ class DecidimHook(BaseHook):
         self, component_id: int, **kawrgs
     ) -> dict[str, str]:
         graphql_query = f"""
-                        {{
+                        query($after: String) {{
                             component(id: {component_id}) {{
                                 id
                                 name {{
@@ -270,10 +340,23 @@ class DecidimHook(BaseHook):
                             }}
                         }}
         """
+        component_type = self.get_component_type(component_id).lower()
 
-        return self.run_graphql_post_query(graphql_query)["data"]["component"]
+        result = None
+        for page in self.run_graphql_post_pagineted_query(graphql_query):
+            if result is None:
+                result = page
+            else:
+                result["data"]["component"][component_type]["nodes"].extend(
+                    page["data"]["component"][component_type]["nodes"]
+                )
 
-    def json_component_to_data_frame(
+        logging.info(
+            f"Total quantity of {component_type.capitalize()}: {len(result['data']['component'][component_type]['nodes'])}"
+        )
+        return result["data"]["component"]
+
+    def component_json_to_dataframe(
         self, component_id, json_component, **kawrgs
     ) -> pd.DataFrame:
         """Parse decidim API json return to a pandas DataFrame.
@@ -313,6 +396,8 @@ class DecidimHook(BaseHook):
         df["publishedAt"] = pd.to_datetime(df["publishedAt"])
         df["updatedAt"] = pd.to_datetime(df["updatedAt"])
 
+        df.fillna("", inplace=True)
+
         df["body.translation"] = df["body.translation"].apply(
             lambda x: BeautifulSoup(x, "html.parser").get_text()
         )
@@ -347,7 +432,6 @@ class DecidimHook(BaseHook):
         df.loc[df_mask, "date"] = df[df_mask]["updatedAt"]
         df.loc[(~df_mask), "date"] = df[(~df_mask)]["publishedAt"]
 
-        df.fillna("-", inplace=True)
         df.replace({None: "-", "": "-"}, inplace=True)
 
         if "author.organizationName" in df:
@@ -355,6 +439,8 @@ class DecidimHook(BaseHook):
                 to_replace=["Brasil Participativo"], value="", inplace=True
             )
             df["author.organizationName"].replace({"-": ""}, inplace=True)
+
+        df.sort_values(by=["updatedAt"], inplace=True)
 
         return df
 

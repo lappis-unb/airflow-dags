@@ -49,7 +49,7 @@ class DecidimOnOffDAGGenerator:
         start_date: str,
         decidim_url: str,
         dag_id: str,
-        schedule: str
+        schedule: str,
     ):
         self.component_id = component_id
         self.process_id = process_id
@@ -77,24 +77,23 @@ class DecidimOnOffDAGGenerator:
             description=__doc__,
             tags=["decidim"],
         )
-
         def decidim_on_n_off_proposals(
             proposals_status: bool,
         ):  # pylint: disable=missing-function-docstring
             # due to Airflow DAG __doc__
-    
+
             def _convert_html_form_to_dict(html_form: bs4.element.Tag) -> defaultdict:
                 """Convert html <form> and <input> tags to python dictionary.
-    
+
                 Args:
                     html_form (bs4.element.Tag): beautiful soup object with
                         respective html <form> filtered.
-    
+
                 Returns:
                     defaultdict: a dictionary of lists with html input tag name
                     and value.
                 """
-    
+
                 dict_output = defaultdict(list)
                 for tag in html_form.find_all("input"):
                     if tag.get("type", None) == "checkbox":
@@ -102,7 +101,7 @@ class DecidimOnOffDAGGenerator:
                             dict_output[tag["name"]].append(tag["value"])
                     else:
                         dict_output[tag["name"]].append(tag["value"])
-    
+
                 return dict_output
 
             def _find_form_input_id(dict_form: bs4.element.Tag):
@@ -119,7 +118,7 @@ class DecidimOnOffDAGGenerator:
                     IndexError: If does not found a component of creation enabled.
                 """
 
-                pattern = r'component\[step_settings\]\[\d+\]\[creation_enabled\]'
+                pattern = r"component\[step_settings\]\[\d+\]\[creation_enabled\]"
                 pattern_match = re.findall(pattern, str(dict_form))
 
                 form_input_id = pattern_match.pop(0)
@@ -141,14 +140,16 @@ class DecidimOnOffDAGGenerator:
                         input checkbox `Participantes podem criar propostas`.
                 """
 
-                component_url:str = Variable.get(DECIDIM_URL)
+                component_url: str = Variable.get(DECIDIM_URL)
                 assert component_url.endswith("/edit")
 
                 session = DecidimHook(DECIDIM_CONN_ID).get_session()
 
                 return_component_page = session.get(f"{component_url}")
                 if return_component_page.status_code != 200:
-                    raise HTTPError(f"Status code is {return_component_page.status_code} and not 200.")
+                    raise HTTPError(
+                        f"Status code is {return_component_page.status_code} and not 200."
+                    )
 
                 b = BeautifulSoup(return_component_page.text, "html.parser")
                 html_form = b.find(class_=PAGE_FORM_CLASS)
@@ -181,13 +182,15 @@ class DecidimOnOffDAGGenerator:
                     message = "🚫 <b>[DESATIVADO]</b> \n\n<i>Participantes podem criar propostas</i>"
 
                 TelegramHook(telegram_conn_id=TELEGRAM_CONN_ID).send_message(
-                            api_params={"text": message}
-                        )
+                    api_params={"text": message}
+                )
 
-            set_proposals_availability(proposals_status) >> \
-            send_telegram(proposals_status)
+            set_proposals_availability(proposals_status) >> send_telegram(
+                proposals_status
+            )
 
         return decidim_on_n_off_proposals
+
 
 def yaml_to_dag(filepath):
     """
@@ -197,13 +200,16 @@ def yaml_to_dag(filepath):
         yaml_dict = yaml.safe_load(file)
         DecidimOnOffDAGGenerator().generate_dag(
             **yaml_dict["process_params"],
-            dag_id="decidim_set_on_proposals", 
-            schedule="0 8 * * *")(True)
+            dag_id="decidim_set_on_proposals",
+            schedule="0 8 * * *",
+        )(True)
 
         DecidimOnOffDAGGenerator().generate_dag(
             **yaml_dict["process_params"],
             dag_id="decidim_set_off_proposals",
-            schedule="0 22 * * *")(False)
+            schedule="0 22 * * *",
+        )(False)
+
 
 def read_yaml_files_from_directory():
     """
@@ -217,5 +223,6 @@ def read_yaml_files_from_directory():
         if filename.endswith(".yaml") or filename.endswith(".yml"):
             filepath = os.path.join(directory_path, filename)
             yaml_to_dag(filepath)
+
 
 read_yaml_files_from_directory()
