@@ -71,7 +71,7 @@ def save_to_minio(data, module, method, execution_date):
 
 @dag(
         default_args=DEFAULT_ARGS,
-        schedule_interval='@daily',
+        schedule_interval='0 5 * * *',
         start_date=datetime(2023, 5, 1),
         catchup=False,
         doc_md=__doc__,
