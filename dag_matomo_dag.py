@@ -29,12 +29,14 @@ def get_matomo_data(module, method, execution_date):
     TOKEN_AUTH = matomo_conn.password
     SITE_ID = matomo_conn.login
 
+    date_filter = execution_date.strftime("%Y-%m-%d")
+
     # Matomo API request
     params = {
         'module': 'API',
         'idSite': SITE_ID,
         'period': 'day',
-        'date': execution_date.isoformat(),
+        'date': date_filter,
         'format': 'csv',
         'token_auth': TOKEN_AUTH,
         'method': f'{module}.{method}'
@@ -60,7 +62,7 @@ def save_to_minio(data, module, method, execution_date):
                              aws_access_key_id=MINIO_ACCESS_KEY,
                              aws_secret_access_key=MINIO_SECRET_KEY,
                              region_name='us-east-1')
-    filename = f"{module}_{method}_{execution_date}.csv"
+    filename = f'{module}_{method}_{execution_date.strftime("%Y-%m-%d")}.csv'
     s3_client.put_object(Body=data,
                          Bucket=MINIO_BUCKET,
                          Key=filename,
