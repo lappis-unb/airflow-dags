@@ -94,13 +94,10 @@ def matomo_data_download():
         ('VisitsSummary', 'get'),
         ('Actions', 'getPageUrls'),
         ('Actions', 'getPageTitles'),
-        ('Actions', 'getDownload'),
         ('Actions', 'getOutlinks'),
         ('Referrers', 'getAll'),
-        ('Referrers', 'getWebsites'),
-        ('Referrers', 'getSearchEngines'),
         ('UserCountry', 'getCountry'),
-        ('DeviceDetection', 'getType'),
+        ('UserCountry', 'getRegion'),
         # Add more as necessary
     ]
 
