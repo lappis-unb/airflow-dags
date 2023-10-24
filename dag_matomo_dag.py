@@ -6,12 +6,15 @@ and saving it as CSV files to a MinIO bucket. The data fetched ranges from visit
 summaries, action types, referrer sources, and user device types. This DAG is intended
 to run daily and fetch the data for the specific day of execution.
 """
+import logging
 
 from datetime import datetime, timedelta
 from airflow.decorators import task, dag
 from airflow.hooks.base_hook import BaseHook
 import requests
 import boto3
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_ARGS = {
     'owner': 'nitai',
@@ -41,6 +44,9 @@ def get_matomo_data(module, method, execution_date):
         'token_auth': TOKEN_AUTH,
         'method': f'{module}.{method}'
     }
+
+    logger.info('Extracting data for %s', date_filter)
+
     response = requests.get(MATOMO_URL, params=params)
     if response.status_code == 200:
         return response.text
