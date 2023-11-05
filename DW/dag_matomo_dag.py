@@ -32,6 +32,7 @@ def _create_s3_client():
                         aws_secret_access_key=MINIO_SECRET_KEY,
                         region_name='us-east-1')
 
+
 def _generate_s3_filename(module, method, execution_date):
     return f'{module}_{method}_{execution_date.strftime("%Y-%m-%d")}.csv'
 
@@ -82,6 +83,7 @@ class MatomoDagGenerator:
         else:
             raise Exception(f"Failed to fetch data for {module}.{method}. Status code: {response.status_code}")
 
+
     def save_to_minio(self, data, module, method, execution_date):
         minio_conn = BaseHook.get_connection('minio_connection_id')
         MINIO_BUCKET = minio_conn.schema
@@ -101,9 +103,9 @@ class MatomoDagGenerator:
                 catchup=False,
                 doc_md=__doc__,
         )
-        def matomo_data_extractor():
+        def matomo_data_extraction():
             for module, method in self.endpoints:
-                @task(task_id=f"extract_from_{method}_{module}")
+                @task(task_id=f"extract_{method}_{module}")
                 def fetch_data(module_: str, method_: str, **context):
                     data = self.get_matomo_data(module_,
                                             method_,
@@ -116,7 +118,7 @@ class MatomoDagGenerator:
                     )
                 fetch_data(module, method)
 
-        return matomo_data_extractor()
+        return matomo_data_extraction()
 
 
     def _ingest_into_postgres(self,
