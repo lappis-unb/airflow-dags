@@ -11,8 +11,11 @@ import logging
 from datetime import datetime, timedelta
 from airflow.decorators import task, dag
 from airflow.hooks.base_hook import BaseHook
+from airflow.hooks.postgres_hook import PostgresHook
 import requests
 import boto3
+import pandas as pd
+from io import StringIO
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +92,8 @@ class MatomoDagGenerator:
                              Key=filename,
                              ContentType='text/csv')
 
-    def generate_dag(self):
+
+    def generate_extraction_dag(self):
         @dag(
                 default_args=self.default_dag_args,
                 schedule_interval='0 5 * * *',
@@ -115,5 +119,78 @@ class MatomoDagGenerator:
         return matomo_data_extractor()
 
 
+    def _ingest_into_postgres(self,
+                              module: str,
+                              method: str,
+                              execution_date: datetime):
+        """
+        Ingest data from a CSV file in MinIO into a PostgreSQL database.
+
+        Args:
+            module (str): The name of the module corresponding to the
+                          Matomo endpoint.
+            method (str): The method name corresponding to the action type.
+            execution_date (datetime): The execution date for the DAG run.
+        """
+        s3_client = _create_s3_client()
+        minio_conn = BaseHook.get_connection('minio_connection_id')
+        filename = _generate_s3_filename(module, method, execution_date)
+
+        obj = s3_client.get_object(Bucket=minio_conn.schema, Key=filename)
+        csv_content = obj['Body'].read().decode('utf-8')
+
+        # Read the CSV content into a pandas DataFrame
+        df = pd.read_csv(StringIO(csv_content))
+
+        # Establish a connection to the PostgreSQL database
+        pg_hook = PostgresHook(postgres_conn_id='dw_postgres')
+
+        # Insert the data into the PostgreSQL table
+        df.to_sql(
+            name=f'{module}_{method}',
+            con=pg_hook.get_sqlalchemy_engine(),
+            if_exists='append',
+            index=False,
+        )
+
+
+    def generate_ingestion_dag(self):
+        """
+        Generate an Airflow DAG to ingest data from MinIO into a
+        PostgreSQL database. This method sets up the DAG configuration
+        and tasks based on predefined endpoints to read CSV files from
+        MinIO and append the data to the corresponding tables in PostgreSQL.
+        Returns:
+            A callable that when invoked, returns an instance of the
+            generated DAG.
+        """
+        @dag(
+            default_args=self.default_dag_args,
+            schedule_interval='0 7 * * *',
+            start_date=datetime(2023, 5, 1),
+            catchup=False,
+            doc_md=__doc__,
+        )
+        def matomo_data_ingestion():
+            """The main DAG for ingesting data from MinIO into the
+            PostgreSQL database.
+            """
+            for module, method in self.endpoints:
+
+                @task(task_id=f"ingest_{method}_{module}")
+                def ingest_data(module_: str, method_: str, **context):
+                    """Task to ingest data from MinIO into a PostgreSQL
+                    database.
+                    """
+                    self._ingest_into_postgres(
+                        module_, method_, context['data_interval_start']
+                    )
+
+                ingest_data(module, method)
+
+        return matomo_data_ingestion()
+
+# Instantiate the MatomoDagGenerator and generate the DAGs
 dag_generator = MatomoDagGenerator()
-dag_generator.generate_dag()
+extract_dag = dag_generator.generate_extraction_dag()
+ingest_dag = dag_generator.generate_ingestion_dag()
