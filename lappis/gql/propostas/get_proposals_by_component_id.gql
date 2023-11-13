@@ -1,0 +1,56 @@
+query PropostasPaginadas($id: ID!, $filter_date: String, $page: String) {
+  component(id: $id) {
+    id
+    name {
+      translation(locale: "pt-BR")
+    }
+    ... on Proposals {
+      id
+      name {
+        translation(locale: "pt-BR")
+      }
+      proposals(
+        filter: { publishedSince: $filter_date }
+        order: { publishedAt: "asc" }
+        after: $page
+      ) {
+        pageInfo {
+          hasNextPage
+          startCursor
+          endCursor
+        }
+        nodes {
+          id
+          title {
+            translation(locale: "pt-BR")
+          }
+          publishedAt
+          updatedAt
+          state
+          author {
+            name
+            organizationName
+          }
+          comments {
+            id
+            body
+            createdAt
+            author {
+              id
+              name
+            }
+          }
+          category {
+            name {
+              translation(locale: "pt-BR")
+            }
+          }
+          body {
+            translation(locale: "pt-BR")
+          }
+          official
+        }
+      }
+    }
+  }
+}
