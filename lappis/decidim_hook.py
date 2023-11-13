@@ -10,6 +10,7 @@ import requests
 from contextlib import closing
 from airflow.hooks.base import BaseHook
 import pandas as pd
+from pathlib import Path
 import re
 from inflection import underscore
 import inflect
@@ -19,96 +20,10 @@ from bs4 import BeautifulSoup
 from collections import defaultdict
 
 from json import loads
+from lappis.graphql import GraphQLHook
 
 
-class DecidimHook(BaseHook):
-    def __init__(self, conn_id: str):
-        conn_values = self.get_connection(conn_id)
-        self.api_url = conn_values.host
-        self.auth_url = urljoin(self.api_url, "api/sign_in")
-        self.payload = {
-            "user[email]": conn_values.login,
-            "user[password]": conn_values.password,
-        }
-
-    def run_graphql_post_query(self, graphql_query) -> dict[str, str]:
-        """
-            Execute a GraphQL POST query and retrieve the JSON response.
-
-            Args:
-                graphql_query (str): The GraphQL query to execute.
-
-            Returns:
-                dict[str, str]: A dictionary containing the JSON response.
-
-            Raises:
-                AssertionError: If the HTTP status code is not 200 (OK), an error is logged.
-
-            Example:
-                To execute a GraphQL query and retrieve the response:
-                >>> response = self.run_graphql_post_query(query)
-                >>> process_response_data(response)
-
-            Note:
-                This function sends a POST request to the specified API URL with the provided GraphQL query.
-                It checks if the HTTP status code is 200 (OK) and raises an AssertionError if not.
-        """
-        response = self.get_session().post(self.api_url, json={"query": graphql_query})
-        status_code = response.status_code
-        assert status_code == 200, logging.ERROR(
-            f"""Query:
-                                                        {graphql_query}
-                                                     has returned status code: {status_code}
-                                                    """
-        )
-
-        return response.json()
-
-    def run_graphql_post_pagineted_query(
-        self, pagineted_graphql_query: str, endcursor: str = "null"
-    ):
-        """
-        Execute a paginated GraphQL POST query and retrieve results page by page.
-
-        Args:
-            paginated_graphql_query (str): The GraphQL query to execute for pagination.
-            endcursor (str, optional): The cursor to start pagination. Defaults to "null".
-
-        Yields:
-            dict: A dictionary containing the JSON response for each page.
-
-        Note:
-            This function is designed to handle paginated GraphQL queries. It starts with the provided endcursor
-            and retrieves pages of results until there are no more pages. The results are yielded page by page.
-
-        Example:
-            To fetch paginated results:
-            >>> for page in self.run_graphql_post_paginated_query(query, endcursor="some_cursor"):
-            ...     process_page_data(page)
-
-        """
-        variables = {"after": endcursor}
-        response = self.get_session().post(
-            self.api_url,
-            json={"query": pagineted_graphql_query, "variables": variables},
-        )
-        response_json = response.json()
-
-        # TODO: Trocar para uma forma mais geral e não apenas proposals.
-        new_endcursor = response_json["data"]["component"]["proposals"]["pageInfo"][
-            "endCursor"
-        ]
-        hasnextpage = response_json["data"]["component"]["proposals"]["pageInfo"][
-            "hasNextPage"
-        ]
-
-        if hasnextpage:
-            yield from self.run_graphql_post_pagineted_query(
-                pagineted_graphql_query, endcursor=new_endcursor
-            )
-
-        yield response_json
-
+class DecidimHook(GraphQLHook):
     def get_component_link_component_by_id(self, component_id: int):
         component_type = self.get_component_type(component_id)
         participatory_space = self.get_participatory_space_from_component_id(
@@ -125,59 +40,6 @@ class DecidimHook(BaseHook):
 
         return link_base
 
-    def _get_proposals_subquery(self, update_date_filter: datetime = None, **kawrgs):
-        assert update_date_filter is not None, logging.ERROR(
-            "Porposals need the update_date_filter to run."
-        )
-
-        query = f"""
-            ... on Proposals{{
-                id
-                name {{
-                    translation(locale: "pt-BR")
-                }}
-                proposals(filter: {{publishedSince: "{update_date_filter.strftime("%Y-%m-%d")}"}}, order: {{publishedAt: "asc"}}, after: $after) {{
-                    pageInfo {{
-                        hasNextPage
-                        startCursor
-                        endCursor
-                    }}
-                    nodes {{
-                        id
-                        title {{
-                            translation(locale: "pt-BR")
-                        }}
-                        publishedAt
-                        updatedAt
-                        state
-                        author {{
-                            name
-                            organizationName
-                        }}
-                        comments{{
-                                id
-                                body
-                                createdAt
-                                author {{
-                                    id
-                                    name
-                                }}
-                            }}
-                    category {{
-                        name {{
-                                translation(locale: "pt-BR")
-                            }}
-                        }}
-                        body {{
-                            translation(locale: "pt-BR")
-                        }}
-                            official
-                        }}
-                    }}
-                }}
-            """
-        return query
-
     def get_component_type(self, component_id: str) -> str:
         graphql_query = f"""
                     {{
@@ -186,18 +48,10 @@ class DecidimHook(BaseHook):
                         }}
                     }}
                     """
-        response = self.run_graphql_post_query(graphql_query=graphql_query)
+        response = self.run_graphql_query(graphql_query=graphql_query)
 
         assert response["data"]["component"] is not None, response
         return response["data"]["component"]["__typename"]
-
-    def _get_component_query(self, component_id: str, **kawrgs):
-        component_type = self.get_component_type(component_id)
-
-        if component_type == "Proposals":
-            update_date_filter = kawrgs.get("update_date_filter", None)
-
-            return self._get_proposals_subquery(update_date_filter=update_date_filter)
 
     def get_participatory_space_from_component_id(
         self, component_id: int
@@ -212,7 +66,7 @@ class DecidimHook(BaseHook):
         }}
         """
 
-        response = self.run_graphql_post_query(graphql_query)
+        response = self.run_graphql_query(graphql_query)
         participatory_space = response["data"]["component"]["participatorySpace"]
 
         lower_first_letter = lambda s: s[:1].lower() + s[1:] if s else ""
@@ -233,7 +87,7 @@ class DecidimHook(BaseHook):
         }}
         """
 
-        response = self.run_graphql_post_query(graphql_query)
+        response = self.run_graphql_query(graphql_query)
         participatory_space = response["data"][participatory_space["type"]]
         participatory_space["type_for_links"] = underscore(type_of_space).split("_")[-1]
 
@@ -255,27 +109,12 @@ class DecidimHook(BaseHook):
     def _build_comment_thread(
         self, parent_comment: dict[str], proposal_id: int, thread_level: int = 1
     ):
-        graphql_query = f"""{{
-                            commentable(
-                                id: "{parent_comment['id']}"
-                                type: "Decidim::Comments::Comment"
-                                locale: "pt-BR"
-                                toggleTranslations: true
-                            ) {{
-                            id
-                            comments {{
-                                id
-                                body
-                                createdAt
-                                author {{
-                                    id
-                                    name
-                                }}
-                            }}
-                        }}
-                    }}
-                """
-        result = self.run_graphql_post_query(graphql_query)
+        graphql_query = self.get_graphql_query_from_file(
+            Path(__file__).parent.joinpath(
+                "./graphQL_queries/commentable/get_comments_by_commentable_id.gql"
+            )
+        )
+        result = self.run_graphql_query(graphql_query)
         commentable = result["data"]["commentable"]
 
         if thread_level == 1:  # Root level
@@ -343,7 +182,7 @@ class DecidimHook(BaseHook):
         component_type = self.get_component_type(component_id).lower()
 
         result = None
-        for page in self.run_graphql_post_pagineted_query(graphql_query):
+        for page in self.run_graphql_pagineted_query(graphql_query):
             if result is None:
                 result = page
             else:
@@ -443,20 +282,3 @@ class DecidimHook(BaseHook):
         df.sort_values(by=["updatedAt"], inplace=True)
 
         return df
-
-    def get_session(self) -> requests.Session:
-        """Create a requests session with decidim based on Airflow
-        connection host, login and password values.
-
-        Returns:
-            requests.Session: session object authenticaded.
-        """
-        session = requests.Session()
-
-        try:
-            r = session.post(self.auth_url, data=self.payload)
-            r.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            logging.info("An login error occurred: %s", str(e))
-        else:
-            return session
