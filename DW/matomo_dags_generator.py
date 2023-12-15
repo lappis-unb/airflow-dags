@@ -149,6 +149,28 @@ class MatomoDagGenerator:
                 fetch_data(module, method)
 
         return matomo_data_extraction()
+    
+    def generate_weekly_extraction_dag(self):
+        @dag(
+            default_args=self.default_dag_args,
+            schedule_interval='0 5 * * 1',
+            start_date=datetime(2023, 5, 1),
+            catchup=False,
+            doc_md=__doc__,
+        )
+        def matomo_weekly_data_extraction():
+            for module, method in self.endpoints:
+                @task(task_id=f"extract_weekly_{method}_{module}")
+                def fetch_weekly_data(module_: str, method_: str, **context):
+                    data = self.get_matomo_data(module_,
+                                                method_,
+                                                context['data_interval_start'],
+                                                frequency='weekly')
+                    self.save_to_minio(data, module_, method_, context['data_interval_start'])
+
+                fetch_weekly_data(module, method)
+
+        return matomo_weekly_data_extraction()
 
 
     def _ingest_into_postgres(self,
@@ -223,8 +245,31 @@ class MatomoDagGenerator:
                 ingest_data(module, method)
 
         return matomo_data_ingestion()
+    
+    def generate_weekly_ingestion_dag(self):
+        @dag(
+            default_args=self.default_dag_args,
+            schedule_interval='0 8 * * 2',
+            start_date=datetime(2023, 5, 1),
+            catchup=False,
+            doc_md=__doc__,
+        )
+        def matomo_weekly_data_ingestion():
+            for module, method in self.endpoints:
+                @task(task_id=f"ingest_weekly_{method}_{module}")
+                def ingest_weekly_data(module_: str, method_: str, **context):
+                    self._ingest_into_postgres(
+                        module_, method_, context['data_interval_start']
+                    )
+
+                ingest_weekly_data(module, method)
+
+        return matomo_weekly_data_ingestion()
 
 # Instantiate the MatomoDagGenerator and generate the DAGs
 dag_generator = MatomoDagGenerator()
 extract_dag = dag_generator.generate_extraction_dag()
+weekly_extract_dag = dag_generator.generate_weekly_extraction_dag()
 ingest_dag = dag_generator.generate_ingestion_dag()
+weekly_ingest_dag = dag_generator.generate_weekly_ingestion_dag()
+
