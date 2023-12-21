@@ -33,8 +33,9 @@ def _create_s3_client():
                         region_name='us-east-1')
 
 
-def _generate_s3_filename(module, method, execution_date):
-    return f'{module}_{method}_{execution_date.strftime("%Y-%m-%d")}.csv'
+def _generate_s3_filename(module, method, period, execution_date):
+    return (f'{module}_{method}_{period}_'
+            f'{execution_date.strftime("%Y-%m-%d")}.csv')
 
 
 def add_temporal_columns(
@@ -128,11 +129,11 @@ class MatomoDagGenerator:
             raise Exception(f"Failed to fetch data for {module}.{method}. Status code: {response.status_code}")
 
 
-    def save_to_minio(self, data, module, method, execution_date):
+    def save_to_minio(self, data, module, method, period, execution_date):
         minio_conn = BaseHook.get_connection('minio_connection_id')
         MINIO_BUCKET = minio_conn.schema
         s3_client = _create_s3_client()
-        filename = _generate_s3_filename(module, method, execution_date)
+        filename = _generate_s3_filename(module, method, period, execution_date)
         s3_client.put_object(Body=data,
                              Bucket=MINIO_BUCKET,
                              Key=filename,
