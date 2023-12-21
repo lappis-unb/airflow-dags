@@ -88,24 +88,38 @@ class MatomoDagGenerator:
     }
 
 
-    def get_matomo_data(self, module, method, execution_date):
+    def get_matomo_data(self, module, method, execution_date, period):
         matomo_conn = BaseHook.get_connection('matomo_connection_id')
         MATOMO_URL = matomo_conn.host
         TOKEN_AUTH = matomo_conn.password
         SITE_ID = matomo_conn.login
-        date_filter = execution_date.strftime("%Y-%m-%d")
+
+        # Determine the date filter based on the period
+        if period == 'day':
+            date_filter = execution_date.strftime("%Y-%m-%d")
+        elif period == 'week':
+            # Calculate the last day of the previous week
+            last_day_of_week = execution_date - timedelta(days=execution_date.weekday() + 1)
+            date_filter = last_day_of_week.strftime("%Y-%m-%d")
+        elif period == 'month':
+            # Calculate the last day of the previous month
+            first_day_of_month = execution_date.replace(day=1)
+            last_day_of_previous_month = first_day_of_month - timedelta(days=1)
+            date_filter = last_day_of_previous_month.strftime("%Y-%m-%d")
+        else:
+            raise ValueError("Invalid period. Choose 'day', 'week', or 'month'.")
 
         params = {
             'module': 'API',
             'idSite': SITE_ID,
-            'period': 'day',
+            'period': period,
             'date': date_filter,
             'format': 'csv',
             'token_auth': TOKEN_AUTH,
             'method': f'{module}.{method}'
         }
 
-        logger.info('Extracting data for %s', date_filter)
+        logger.info(f'Extracting {period} data for {date_filter}')
         response = requests.get(MATOMO_URL, params=params)
 
         if response.status_code == 200:
