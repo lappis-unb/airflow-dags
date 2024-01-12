@@ -1,4 +1,4 @@
-query Comments($id: ID!) {
+query Comments($id: String!) {
   commentable(
     id: $id
     type: "Decidim::Comments::Comment"

@@ -31,7 +31,7 @@ from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.providers.telegram.hooks.telegram import TelegramHook
 
-from lappis.decidim import DecidimHook
+from lappis.graphql.hooks.graphql import GraphQLHook
 from requests.exceptions import HTTPError
 from telegram.error import RetryAfter
 from tenacity import RetryError
@@ -61,7 +61,7 @@ class DecidimOnOffDAGGenerator:
         default_args = {
             "owner": "Paulo G./Thais R.",
             "start_date": datetime(2023, 8, 21),
-            "end_date": datetime(2023, 8, 25),
+            "end_date": None,
             "depends_on_past": False,
             "retries": 3,
             "retry_delay": timedelta(minutes=1),
@@ -140,12 +140,9 @@ class DecidimOnOffDAGGenerator:
                         input checkbox `Participantes podem criar propostas`.
                 """
 
-                component_url: str = Variable.get(DECIDIM_URL)
-                assert component_url.endswith("/edit")
+                session = GraphQLHook(DECIDIM_CONN_ID).get_session()
 
-                session = DecidimHook(DECIDIM_CONN_ID).get_session()
-
-                return_component_page = session.get(f"{component_url}")
+                return_component_page = session.get(f"{self.decidim_url}")
                 if return_component_page.status_code != 200:
                     raise HTTPError(
                         f"Status code is {return_component_page.status_code} and not 200."
@@ -153,6 +150,8 @@ class DecidimOnOffDAGGenerator:
 
                 b = BeautifulSoup(return_component_page.text, "html.parser")
                 html_form = b.find(class_=PAGE_FORM_CLASS)
+
+                logging.info(f"HTML Form:\n{html_form}")
 
                 dict_form = _convert_html_form_to_dict(html_form)
                 form_input_id = _find_form_input_id(dict_form)
@@ -164,7 +163,7 @@ class DecidimOnOffDAGGenerator:
                     dict_form[form_input_id] = ["0"]
 
                 data = list(dict_form.items())
-                session.post(component_url.rstrip("/edit"), data=data)
+                session.post(self.decidim_url.rstrip("/edit"), data=data)
                 session.close()
 
             @task
@@ -179,9 +178,9 @@ class DecidimOnOffDAGGenerator:
                 if proposals_status:
                     message = "✅ <b>[ATIVADO]</b> \n\n<i>Participantes podem criar propostas</i>"
                 else:
-                    message = "🚫 <b>[DESATIVADO]</b> \n\n<i>Participantes podem criar propostas</i>"
+                    message = "🚫 <b>[DESATIVADO]</b> \n\n<i>Participantes não podem criar propostas</i>"
 
-                TelegramHook(telegram_conn_id=TELEGRAM_CONN_ID).send_message(
+                TelegramHook(telegram_conn_id=self.telegram_conn_id).send_message(
                     api_params={"text": message}
                 )
 
