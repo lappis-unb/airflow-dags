@@ -20,28 +20,21 @@ If there's new messages to send, call [send_telegram_messages].
 
 # pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
 
-import os
-import yaml
-
-import time
-from datetime import datetime, tzinfo, timezone, timedelta
-from typing import Tuple
-from urllib.parse import urljoin
 import logging
+import os
+import time
+from datetime import datetime, timedelta, timezone
 from typing import Union
-import pendulum
-from bs4 import BeautifulSoup
-import pandas as pd
 
+import yaml
 from airflow.decorators import dag, task
 from airflow.models import Variable
-from airflow.hooks.base import BaseHook
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.telegram.hooks.telegram import TelegramHook
 from telegram.error import RetryAfter
 from tenacity import RetryError
 
-from lappis.decidim import DecidimHook
+from lappis.decidim_hook import DecidimHook
 
 # from airflow_commons.slack_messages import send_slack
 
@@ -68,7 +61,7 @@ class DecidimNotifierDAGGenerator:
 
         # DAG
         default_args = {
-            "owner": "vitor",
+            "owner": "Paulo G./Thais R.",
             "start_date": self.start_date,
             "depends_on_past": False,
             "retries": 0,
@@ -120,10 +113,8 @@ class DecidimNotifierDAGGenerator:
                 """
 
                 component_dict = DecidimHook(
-                    DECIDIM_CONN_ID
-                ).get_component_by_component_id(
-                    component_id, update_date_filter=update_date
-                )
+                    DECIDIM_CONN_ID, component_id=component_id
+                ).get_component(update_date_filter=update_date)
 
                 return component_dict
 
@@ -154,8 +145,8 @@ class DecidimNotifierDAGGenerator:
                 }
 
                 proposals_df = DecidimHook(
-                    DECIDIM_CONN_ID
-                ).component_json_to_dataframe(component_id, proposals_json)
+                    DECIDIM_CONN_ID, component_id
+                ).component_json_to_dataframe(proposals_json)
                 if proposals_df.empty:
                     return result
 
@@ -182,7 +173,7 @@ class DecidimNotifierDAGGenerator:
                         f"\n{row['title.translation']}"
                         "\n"
                         f"\n<b>Autor</b>"
-                        f"\n{row['author.name']} {row['author.organizationName']}"
+                        f"\n{author_name} {organization_name}"
                         "\n"
                         "\n<b>Categoria</b>"
                         f"\n{row['category']}"

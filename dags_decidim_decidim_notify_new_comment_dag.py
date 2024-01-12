@@ -1,28 +1,21 @@
 # pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
 
-import os
-import yaml
-
-import time
-from datetime import datetime, tzinfo, timezone, timedelta
-from typing import Tuple
-from urllib.parse import urljoin
 import logging
+import os
+import time
+from datetime import datetime, timedelta, timezone
 from typing import Union
-import pendulum
-from bs4 import BeautifulSoup
-import pandas as pd
 
+import pandas as pd
+import yaml
 from airflow.decorators import dag, task
 from airflow.models import Variable
-from airflow.hooks.base import BaseHook
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.telegram.hooks.telegram import TelegramHook
 from telegram.error import RetryAfter
 from tenacity import RetryError
 
-from lappis.decidim import DecidimHook
-
+from lappis.decidim_hook import DecidimHook
 
 DECIDIM_CONN_ID = "api_decidim"
 MESSAGE_COOLDOWN_DELAY = 30
@@ -31,7 +24,7 @@ MESSAGE_COOLDOWN_RETRIES = 10
 
 class DecidimNotifierDAGGenerator:
     def generate_dag(
-        self, telegram_conn_id: str, component_id: str, process_id: str, start_date: str
+        self, telegram_conn_id: str, component_id: str, process_id: str, start_date: str, **kwargs
     ):
         self.component_id = component_id
         self.process_id = process_id
@@ -92,8 +85,8 @@ class DecidimNotifierDAGGenerator:
                     dict: result of decidim API query on comments.
                 """
 
-                msgs_dict = DecidimHook(DECIDIM_CONN_ID).get_comments_from_component_id(
-                    component_id, update_date_filter=update_date
+                msgs_dict = DecidimHook(DECIDIM_CONN_ID, component_id).get_comments(
+                    update_date_filter=update_date
                 )
 
                 return msgs_dict
