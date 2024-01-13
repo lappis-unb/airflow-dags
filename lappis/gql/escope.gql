@@ -1,0 +1,11 @@
+query scope($id: !ID) {
+  participatoryProcess(id:$id){
+    scope {
+      id
+      name {
+        translation(locale:"pt-BR")
+      }
+    }
+  }
+}
+

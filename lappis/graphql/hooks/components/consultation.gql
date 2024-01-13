@@ -1,0 +1,10 @@
+query ComponentsInConsultations($date: String) {
+  consultations(filter: {publishedSince: $date}) {
+    ... on Consultation {
+      components {
+        id
+        __typename
+      }
+    }
+  }
+}
