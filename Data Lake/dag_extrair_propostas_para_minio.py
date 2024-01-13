@@ -16,9 +16,9 @@ from airflow.decorators import dag, task
 from airflow.models import Variable
 import boto3
 
-from lappis.decidim_hook import DecidimHook
-from lappis.graphql.hooks.graphql import GraphQLHook
-from lappis.components.proposals import ProposalsHook
+from plugins.decidim_hook import DecidimHook
+from plugins.graphql.hooks.graphql import GraphQLHook
+from plugins.components.proposals import ProposalsHook
 from airflow.hooks.base_hook import BaseHook
 from pathlib import Path
 import numpy as np
