@@ -1,0 +1,54 @@
+query meetingQuery {
+  component(id: 91) {
+    participatorySpace {
+      id
+      title {
+        translation(locale: "pt-BR")
+      }
+      type
+    }
+    name {
+      translation(locale: "pt-BR")
+    }
+    ... on Meetings {
+      meetings {
+        nodes {
+          id
+          category {
+            id
+            name {
+              translation(locale: "pt-BR")
+            }
+          }
+          scope {
+            id
+            name {
+              translation(locale: "pt-BR")
+            }
+          }
+          title {
+            translation(locale: "pt-BR")
+          }
+          description {
+            locales
+          }
+          startTime
+          endTime
+          attendeeCount
+          contributionCount
+          attendingOrganizations
+          address
+          location {
+            locales
+          }
+          reference
+          comments {
+            formattedBody
+          }
+          typeOfMeeting
+          onlineMeetingUrl
+        }
+      }
+    }
+  }
+}

@@ -1,6 +1,11 @@
 query PropostasPaginadas($id: ID!, $filter_date: String, $page: String) {
   component(id: $id) {
     id
+    participatorySpace {
+      id
+      type
+      __typename
+    }
     name {
       translation(locale: "pt-BR")
     }
@@ -24,9 +29,34 @@ query PropostasPaginadas($id: ID!, $filter_date: String, $page: String) {
           title {
             translation(locale: "pt-BR")
           }
+          address
+          meeting{
+            address
+          }
           publishedAt
           updatedAt
           state
+          reference
+          answer{
+            translation(locale: "pt-BR")
+          }
+          endorsementsCount
+          totalCommentsCount
+          voteCount
+          attachments {
+            url
+            type
+          }
+          amendments {
+            emendation {
+              id
+            }
+            emendationType
+          }
+          coordinates {
+            latitude
+            longitude
+          }
           author {
             name
             organizationName
@@ -41,6 +71,7 @@ query PropostasPaginadas($id: ID!, $filter_date: String, $page: String) {
             }
           }
           category {
+            id
             name {
               translation(locale: "pt-BR")
             }

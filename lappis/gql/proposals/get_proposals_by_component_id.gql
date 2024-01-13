@@ -1,0 +1,87 @@
+query PropostasPaginadas($id: ID!, $filter_date: String, $page: String) {
+  component(id: $id) {
+    id
+    participatorySpace {
+      id
+      type
+      __typename
+    }
+    name {
+      translation(locale: "pt-BR")
+    }
+    ... on Proposals {
+      id
+      name {
+        translation(locale: "pt-BR")
+      }
+      proposals(
+        filter: { publishedSince: $filter_date }
+        order: { publishedAt: "asc" }
+        after: $page
+      ) {
+        pageInfo {
+          hasNextPage
+          startCursor
+          endCursor
+        }
+        nodes {
+          id
+          title {
+            translation(locale: "pt-BR")
+          }
+          address
+          meeting{
+            address
+          }
+          publishedAt
+          updatedAt
+          state
+          reference
+          answer{
+            translation(locale: "pt-BR")
+          }
+          endorsementsCount
+          totalCommentsCount
+          voteCount
+          attachments {
+            url
+            type
+          }
+          amendments {
+            emendation {
+              id
+            }
+            emendationType
+          }
+          coordinates {
+            latitude
+            longitude
+          }
+          author {
+            name
+            organizationName
+          }
+          comments {
+            id
+            body
+            createdAt
+            author {
+              id
+              name
+            }
+          }
+          category {
+            id
+            name {
+              translation(locale: "pt-BR")
+            }
+          }
+          body {
+            translation(locale: "pt-BR")
+          }
+          official
+        }
+      }
+    }
+  }
+}
