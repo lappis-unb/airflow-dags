@@ -2,12 +2,12 @@
 
 ## Introdução
 
-Esta documentação descreve a DAG.
+Descrição da DAG, seus objetivos e escopo.
 
 ## Informações Gerais
 
 - **Nome da DAG:** MinhaDAG
-- **Descrição:** Esta DAG realiza tarefas XYZ para automação de processos.
+- **Descrição:** Breve descrição
 - **Autor:** Seu Nome
 - **Versão:** 1.0
 - **Data de Criação:** DD/MM/AAAA
@@ -16,46 +16,49 @@ Esta documentação descreve a DAG.
 
 Antes de executar a DAG, certifique-se de configurar corretamente os seguintes parâmetros:
 
-1. **Configuração 1:** Descrição da configuração 1.
-   - **Passo 1:** ...
-   - **Passo 2:** ...
+1. **Configuração de ambiente:** Subir o airflow e minIO.
+    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+        - **airflow** O airflow se encontra no: http://localhost:8080
 
-2. **Configuração 2:** Descrição da configuração 2.
+2. **Rodar as tarefas:** Testando a dag.
+    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+        - **airflow** O airflow se encontra no: http://localhost:8080
+
+    - **Passo 2:** Para rodar via terminal entre no container docker: ´docker exec -ti airflow-envs-airflow-webserver-1 bash´
+
+    - **Passo 3:** Para rodar a Dag: ´airflow dags test <nome_da_dag>´
+
+    - **Passo 4:** Para rodar uma tarefa específica: ´airflow tasks test <nome_da_dag> <nome_da_task>´
+
+3. **Configuração 3:** Descrição da configuração 3
    - **Passo 1:** ...
    - **Passo 2:** ...
 
 ## Descrição das Tarefas
 
-### Início
-
-- **Descrição:** Ponto de partida da DAG.
+- **Nome:** task_a
+- **Descrição:** Descrição da tarefa.
 - **Dependências:** Nenhuma.
-- **Ações:** Inicializa a execução da DAG.
+- **Task inicial:** Sim ou Não
+- **Task final:** Sim ou Não
 
-### Task_A
 
-- **Descrição:** Tarefa que realiza a ação A.
-- **Dependências:** Início.
-- **Ações:** Executa a ação A.
+- **Nome:** task_b
+- **Descrição:** Descrição da tarefa.
+- **Dependências:** Nenhuma
+- **Task inicial:** Sim ou Não
+- **Task final:** Sim ou Não
 
-### Task_B
 
-- **Descrição:** Tarefa que realiza a ação B.
-- **Dependências:** Task_A.
-- **Ações:** Executa a ação B.
+## Funções auxiliares
+(Apagar caso não exista)
 
-### Fim
-
-- **Descrição:** Ponto de término da DAG.
-- **Dependências:** Task_B.
-- **Ações:** Finaliza a execução da DAG.
+- **Nome:** nome_da_funçao
+- **Descrição:** Descrição da função
+- **Parâmetros:** (Apagar caso não exista)
+- **Retorno:** (Apagar caso não exista)
+- **Dependências:** Nenhuma
 
 ## Agendamento
 
-A DAG está agendada para ser executada de acordo com o seguinte cronograma:
-
-## Histórico de Versões
-
-| Versão | Data | Descrição | Autor |
-|--------|------|-----------|-------|
-| 1.0 | 11/01/2024 | Criação do documento de template para a documentação das DAGs | [Paulo Gonçalves](https://gitlab.com/PauloGoncalvesLima) |
+A DAG está agendada para ser executada ...
