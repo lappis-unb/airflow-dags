@@ -15,7 +15,7 @@ from airflow.providers.telegram.hooks.telegram import TelegramHook
 from telegram.error import RetryAfter
 from tenacity import RetryError
 
-from lappis.decidim_hook import DecidimHook
+from plugins.decidim_hook import DecidimHook
 
 DECIDIM_CONN_ID = "api_decidim"
 MESSAGE_COOLDOWN_DELAY = 30

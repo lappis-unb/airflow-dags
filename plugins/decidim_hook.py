@@ -1,5 +1,5 @@
-from lappis.components.base_component.component import ComponentBaseHook
-from lappis.components.proposals import ProposalsHook
+from plugins.components.base_component.component import ComponentBaseHook
+from plugins.components.proposals import ProposalsHook
 
 
 class ComponentNotSupported(Exception):

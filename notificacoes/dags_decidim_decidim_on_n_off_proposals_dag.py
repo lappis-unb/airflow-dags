@@ -31,7 +31,7 @@ from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.providers.telegram.hooks.telegram import TelegramHook
 
-from lappis.graphql.hooks.graphql import GraphQLHook
+from plugins.graphql.hooks.graphql import GraphQLHook
 from requests.exceptions import HTTPError
 from telegram.error import RetryAfter
 from tenacity import RetryError

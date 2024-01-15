@@ -21,7 +21,7 @@ from urllib.parse import urljoin
 import inflect
 from inflection import underscore
 
-from lappis.graphql.hooks.graphql import GraphQLHook
+from plugins.graphql.hooks.graphql import GraphQLHook
 
 class ComponentBaseHook():
 

@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 from datetime import datetime
-from lappis.components.base_component.component import ComponentBaseHook
+from plugins.components.base_component.component import ComponentBaseHook
 
 class ProposalsHook(ComponentBaseHook):
 
