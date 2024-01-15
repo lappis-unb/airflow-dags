@@ -1,0 +1,10 @@
+query ComponentsInParticipatoryProcess($date: String) {
+  participatoryProcesses(filter: {publishedSince: $date}) {
+    ... on ParticipatoryProcess {
+      components {
+        id
+        __typename
+      }
+    }
+  }
+}

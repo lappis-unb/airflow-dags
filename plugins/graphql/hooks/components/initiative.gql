@@ -1,0 +1,10 @@
+query ComponentsInInitiatives($date: String) {
+  initiatives(filter: {publishedSince: $date}) {
+    ... on Initiative {
+      components {
+        id
+        __typename
+      }
+    }
+  }
+}

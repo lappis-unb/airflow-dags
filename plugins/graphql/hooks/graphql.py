@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.parse import urljoin
 import requests
 from airflow.hooks.base import BaseHook
+from os import walk
 from typing import Optional, Union, Dict, Any, Generator
 
 
@@ -73,8 +74,8 @@ class GraphQLHook(BaseHook):
             self.api_url, json={"query": graphql_query, "variables": variables}
         )
         status_code = response.status_code
-        assert status_code == 200, logging.ERROR(
-            f"""Query:\n\n\t {graphql_query} \n\nhas returned status code: {status_code}"""
+        assert status_code == 200, logging.error(
+            f"""Query:\n\n\t {graphql_query} \n\nhas returned status code: {status_code}, with {response}"""
         )
 
         return response.json()
@@ -113,3 +114,33 @@ class GraphQLHook(BaseHook):
             )
 
         yield response
+    
+    def get_components_ids_by_type(self, component_type: str):
+        """
+        Gets all components id, filtered by type.
+
+        Parameters:
+            component_type(str): Component type.
+
+        Return:
+            result(list): List of all components id.
+        """
+        directory_path = Path(__file__).parent.joinpath("./components")
+
+        result = []
+        total_iter = 0
+        for path, _, files in walk(directory_path):
+            for file in files:
+                
+                query_path = f"{path}/{file}"
+                query = self.get_graphql_query_from_file(query_path)
+                component = self.run_graphql_query(query)
+                space_type = [*component["data"].keys()][0]
+
+                # print(component["data"][space_type])
+                for components in component["data"][space_type]:
+                    space_components = components["components"]
+                    result.extend([x["id"] for x in space_components if x["__typename"] == component_type])
+        return result
+
+

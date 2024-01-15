@@ -1,0 +1,10 @@
+query ComponentsInConferences($date: String) {
+  conferences(filter: {publishedSince: $date}) {
+    ... on Conference {
+      components {
+        id
+        __typename
+      }
+    }
+  }
+}

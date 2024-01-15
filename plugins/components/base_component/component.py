@@ -21,7 +21,7 @@ from urllib.parse import urljoin
 import inflect
 from inflection import underscore
 
-from lappis.graphql.hooks.graphql import GraphQLHook
+from plugins.graphql.hooks.graphql import GraphQLHook
 
 class ComponentBaseHook():
 
@@ -71,6 +71,37 @@ class ComponentBaseHook():
         assert response["data"]["component"] is not None, response
         return response["data"]["component"]["__typename"]
 
+    def get_participatory_escope(self):
+        """
+        Retrieves the ID and type of the participatory space with scope.
+
+        Returns:
+            dict[str, str]: The participatory space ID and type.
+        """
+        participatory_space = self.get_participatory_id_and_type()
+        
+        graphql_query = f"""
+            {{
+            {participatory_space["type"]}(id: {participatory_space["id"]}){{
+                id
+                scope {{
+                    id
+                    name {{
+                        translation(locale:"pt-BR")
+                    }}
+                }}
+            }}
+        }}
+        """
+        response = self.run_graphql_query(graphql_query)
+        try:
+            participatory_space = response["data"][participatory_space["type"]]
+            participatory_space["type_for_links"] = underscore(type_of_space).split("_")[-1]
+        except KeyError as error:
+            logging.error(response)
+            raise error
+        return participatory_space
+
     def get_participatory_id_and_type(self):
         """
         Recupera o ID e tipo do espaço participativo associado ao componente.
@@ -91,6 +122,12 @@ class ComponentBaseHook():
         participatory_space: dict[str, str] = response["data"]["component"][
             "participatorySpace"
         ]
+
+        lower_first_letter = lambda s: s[:1].lower() + s[1:] if s else ""
+        type_of_space = participatory_space["type"] = lower_first_letter(
+            participatory_space["type"].split("::")[-1]
+        )
+
         return participatory_space
 
     def get_participatory_space(self) -> dict[str, str]:
@@ -101,10 +138,7 @@ class ComponentBaseHook():
             dict[str, str]: Informações sobre o espaço participativo.
         """
         participatory_space = self.get_participatory_id_and_type()
-        lower_first_letter = lambda s: s[:1].lower() + s[1:] if s else ""
-        type_of_space = participatory_space["type"] = lower_first_letter(
-            participatory_space["type"].split("::")[-1]
-        )
+        
         graphql_query = f"""
             {{
             {participatory_space["type"]}(id: {participatory_space["id"]}){{
@@ -117,12 +151,20 @@ class ComponentBaseHook():
             }}
         }}
         """
-        response = self.graphql.run_graphql_query(graphql_query)
-        participatory_space = response["data"][participatory_space["type"]]
-        participatory_space["type_for_links"] = underscore(type_of_space).split("_")[-1]
+        response = self.run_graphql_query(graphql_query)
+        try:
+            participatory_space = response["data"][participatory_space["type"]]
+            lower_first_letter = lambda s: s[:1].lower() + s[1:] if s else ""
+            type_of_space = participatory_space["type"] = lower_first_letter(
+                participatory_space["type"].split("::")[-1]
+            )
+            participatory_space["type_for_links"] = underscore(type_of_space).split("_")[-1]
+        except KeyError as error:
+            print(response)
+            raise error
         return participatory_space
-
-    def _parse_comment(
+                
+    def _format_comment(
         self, comment: dict, root_component_id, parent_comment_id: int = None
     ) -> dict:
         """
