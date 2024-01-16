@@ -8,6 +8,7 @@ Descrição da DAG, seus objetivos e escopo.
 
 - **Nome da DAG:** MinhaDAG
 - **Descrição:** Breve descrição
+- **Agendamento:** A DAG está agendada para ser executada ...
 - **Autor:** Seu Nome
 - **Versão:** 1.0
 - **Data de Criação:** DD/MM/AAAA
@@ -58,7 +59,3 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Parâmetros:** (Apagar caso não exista)
 - **Retorno:** (Apagar caso não exista)
 - **Dependências:** Nenhuma
-
-## Agendamento
-
-A DAG está agendada para ser executada ...
