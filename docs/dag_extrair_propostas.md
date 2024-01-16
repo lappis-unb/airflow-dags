@@ -8,6 +8,7 @@ Esta Dag faz uma busca na api do decidim para pegar dados referentes as proposta
 
 - **Nome da DAG:** decidim_data_extraction
 - **Descrição:** DAG que gera CSV para alimentar o MinIO
+- **Agendamento:** todos os dias às 23h
 - **Autor:** Thaís e Paulo
 - **Versão:** 1.0
 - **Data de Criação:** 14/01/2024
@@ -76,7 +77,3 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Descrição:** Faz a conexão com o MinIO e salva os dados
 - **Parâmetros:** Dicionário de dados e nome do arquivo a ser salvo como CSV
 - **Dependências:** BaseHook
-
-## Agendamento
-
-A DAG está agendada para ser executada todos os dias às 23h.
