@@ -53,7 +53,7 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Nome:** get_propolsas_components_ids
 - **Descrição:** Retorna todos os ids de componentes
 - **Dependências:** GraphQLHook
-- **Task inicial:** Não
+- **Task inicial:** Sim
 - **Task final:** Não
 
 
@@ -61,14 +61,14 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Descrição:** Faz requisição de propostas na API do decidim, trata esses dados e salva no MinIO
 - **Dependências:** get_propolsas_components_ids e ProposalsHook
 - **Task inicial:** Não
-- **Task final:** Não
+- **Task final:** Sim
 
 
 - **Nome:** get_proposals_commments
 - **Descrição:** Faz requisição de comentários de propostas na API do decidim, trata esses dados e salva no MinIO
 - **Dependências:** get_propolsas_components_ids e ProposalsHook
 - **Task inicial:** Não
-- **Task final:** Não
+- **Task final:** Sim
 
 
 ## Funções auxiliares
