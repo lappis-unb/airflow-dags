@@ -178,6 +178,7 @@ class MatomoDagGenerator:
     def _ingest_into_postgres(self,
                               module: str,
                               method: str,
+                              period: str,
                               execution_date: datetime):
         """
         Ingest data from a CSV file in MinIO into a PostgreSQL database.
@@ -190,7 +191,7 @@ class MatomoDagGenerator:
         """
         s3_client = _create_s3_client()
         minio_conn = BaseHook.get_connection('minio_connection_id')
-        filename = _generate_s3_filename(module, method, execution_date)
+        filename = _generate_s3_filename(module, method, period, execution_date)
 
         obj = s3_client.get_object(Bucket=minio_conn.schema, Key=filename)
         csv_content = obj['Body'].read().decode('utf-8')
@@ -205,7 +206,7 @@ class MatomoDagGenerator:
 
         # Insert the data into the PostgreSQL table
         df_with_temporal.to_sql(
-            name=f'{module}_{method}',
+            name=f'{module}_{method}_{period}',
             con=pg_hook.get_sqlalchemy_engine(),
             if_exists='append',
             index=False,
@@ -242,7 +243,7 @@ class MatomoDagGenerator:
                     database.
                     """
                     self._ingest_into_postgres(
-                        module_, method_, context['data_interval_start']
+                        module_, method_, period, context['data_interval_start']
                     )
 
                 ingest_data(module, method)
