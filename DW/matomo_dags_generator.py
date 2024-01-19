@@ -100,7 +100,8 @@ class MatomoDagGenerator:
             date_filter = execution_date.strftime("%Y-%m-%d")
         elif period == 'week':
             # Calculate the last day of the previous week
-            last_day_of_week = execution_date - timedelta(days=execution_date.weekday() + 1)
+            last_day_of_week = (
+                execution_date - timedelta(days=execution_date.weekday() + 1))
             date_filter = last_day_of_week.strftime("%Y-%m-%d")
         elif period == 'month':
             # Calculate the last day of the previous month
@@ -108,7 +109,8 @@ class MatomoDagGenerator:
             last_day_of_previous_month = first_day_of_month - timedelta(days=1)
             date_filter = last_day_of_previous_month.strftime("%Y-%m-%d")
         else:
-            raise ValueError("Invalid period. Choose 'day', 'week', or 'month'.")
+            raise ValueError("Invalid period. Choose 'day',"
+                             " 'week', or 'month'.")
 
         params = {
             'module': 'API',
@@ -126,7 +128,8 @@ class MatomoDagGenerator:
         if response.status_code == 200:
             return response.text
         else:
-            raise Exception(f"Failed to fetch data for {module}.{method}. Status code: {response.status_code}")
+            raise Exception(f"Failed to fetch data for {module}.{method}."
+                            f" Status code: {response.status_code}")
 
 
     def save_to_minio(self, data, module, method, period, execution_date):
@@ -191,7 +194,11 @@ class MatomoDagGenerator:
         """
         s3_client = _create_s3_client()
         minio_conn = BaseHook.get_connection('minio_connection_id')
-        filename = _generate_s3_filename(module, method, period, execution_date)
+        filename = _generate_s3_filename(
+            module,
+            method,
+            period,
+            execution_date)
 
         obj = s3_client.get_object(Bucket=minio_conn.schema, Key=filename)
         csv_content = obj['Body'].read().decode('utf-8')
@@ -243,7 +250,10 @@ class MatomoDagGenerator:
                     database.
                     """
                     self._ingest_into_postgres(
-                        module_, method_, period, context['data_interval_start']
+                        module_,
+                        method_,
+                        period,
+                        context['data_interval_start']
                     )
 
                 ingest_data(module, method)
