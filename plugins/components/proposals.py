@@ -34,17 +34,22 @@ class ProposalsHook(ComponentBaseHook):
             dict[str, str]: Information about the Decidim component.
         """
         update_date_filter: datetime = kwargs.get("update_date_filter", None)
-
-        graphql_query = self.get_graphql_query_from_file(
+        
+        graphql_query = self.graphql.get_graphql_query_from_file(
             Path(__file__).parent.joinpath(
-                "../gql/propostas/get_proposals_by_component_id.gql"
+                "../gql/proposals/get_proposals_by_component_id_without_filter_date.gql"
             )
         )
+        variables = {"id": self.component_id}
 
-        variables = {
-            "id": self.component_id,
-            "filter_date": update_date_filter.strftime("%Y-%m-%d"),
-        }
+        
+        if update_date_filter is not None:
+            graphql_query = self.graphql.get_graphql_query_from_file(
+                Path(__file__).parent.joinpath(
+                "../gql/proposals/get_proposals_by_component_id.gql"
+            )
+        )
+            variables["filter_date"] = update_date_filter.strftime("%Y-%m-%d") if isinstance(update_date_filter, datetime) else update_date_filter
 
         result = None
         for page in self.graphql.run_graphql_paginated_query(
@@ -78,8 +83,7 @@ class ProposalsHook(ComponentBaseHook):
         if update_date_filter is None:
             logging.error("update_date_filter-(datetime) is needed.")
             raise AttributeError
-        component = self.get_component(**kwargs)
-
+        component = self.get_component() # Get all the proposals.
         proposals = component[self.component_type.lower()]["nodes"]
 
         comments = []

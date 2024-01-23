@@ -25,6 +25,8 @@ import bs4
 import re
 from bs4 import BeautifulSoup
 import logging
+from plugins.yaml.config_reader import read_yaml_files_from_directory
+from pathlib import Path
 
 from airflow import DAG
 from airflow.decorators import dag, task
@@ -40,10 +42,10 @@ DECIDIM_CONN_ID = "api_decidim"
 PAGE_FORM_CLASS = "form edit_component"
 
 
-class DecidimOnOffDAGGenerator:
+class DecidimNotifierDAGGenerator:
     def generate_dag(
         self,
-        telegram_conn_id: str,
+        telegram_config: str,
         component_id: str,
         process_id: str,
         start_date: str,
@@ -53,7 +55,11 @@ class DecidimOnOffDAGGenerator:
     ):
         self.component_id = component_id
         self.process_id = process_id
-        self.telegram_conn_id = telegram_conn_id
+
+        self.telegram_conn_id = telegram_config["telegram_conn_id"]
+        self.telegram_chat_id = telegram_config["telegram_moderation_chat_id"]
+        self.telegram_topic_id = telegram_config["telegram_modereation_topic_id"]
+        
         self.most_recent_msg_time = f"most_recent_msg_time_{process_id}"
         self.start_date = datetime.fromisoformat(start_date.isoformat())
         self.decidim_url = decidim_url
@@ -117,9 +123,10 @@ class DecidimOnOffDAGGenerator:
                 Raises:
                     IndexError: If does not found a component of creation enabled.
                 """
-
-                pattern = r"component\[step_settings\]\[\d+\]\[creation_enabled\]"
+#name="component[default_step_settings][creation_enabled]"
+                pattern = r"component\[.*step_settings\]\[creation_enabled\]"
                 pattern_match = re.findall(pattern, str(dict_form))
+                logging.info(dict_form)
 
                 form_input_id = pattern_match.pop(0)
 
@@ -151,7 +158,8 @@ class DecidimOnOffDAGGenerator:
                 b = BeautifulSoup(return_component_page.text, "html.parser")
                 html_form = b.find(class_=PAGE_FORM_CLASS)
 
-                logging.info(f"HTML Form:\n{html_form}")
+                # logging.info(f"HTML Form:\n{html_form}")
+                logging.info(f"Requesting page form from {self.decidim_url}")
 
                 dict_form = _convert_html_form_to_dict(html_form)
                 form_input_id = _find_form_input_id(dict_form)
@@ -180,8 +188,8 @@ class DecidimOnOffDAGGenerator:
                 else:
                     message = "🚫 <b>[DESATIVADO]</b> \n\n<i>Participantes não podem criar propostas</i>"
 
-                TelegramHook(telegram_conn_id=self.telegram_conn_id).send_message(
-                    api_params={"text": message}
+                TelegramHook(telegram_conn_id=self.telegram_conn_id, chat_id=self.telegram_chat_id).send_message(
+                    api_params={"text": message, "message_thread_id": self.telegram_topic_id}
                 )
 
             set_proposals_availability(proposals_status) >> send_telegram(
@@ -191,38 +199,23 @@ class DecidimOnOffDAGGenerator:
         return decidim_on_n_off_proposals
 
 
-def yaml_to_dag(filepath):
+def yaml_to_dag(process_config: dict):
     """
     Recive the path to configuration file and generate an airflow dag.
     """
-    with open(filepath, "r") as file:
-        yaml_dict = yaml.safe_load(file)
-        DecidimOnOffDAGGenerator().generate_dag(
-            **yaml_dict["process_params"],
-            dag_id="decidim_set_on_proposals",
-            schedule="0 8 * * *",
-        )(True)
 
-        DecidimOnOffDAGGenerator().generate_dag(
-            **yaml_dict["process_params"],
-            dag_id="decidim_set_off_proposals",
-            schedule="0 22 * * *",
-        )(False)
+    DecidimNotifierDAGGenerator().generate_dag(
+        **process_config,
+        dag_id="decidim_set_on_proposals",
+        schedule="0 8 * * *",
+    )(True)
 
+    DecidimNotifierDAGGenerator().generate_dag(
+        **process_config,
+        dag_id="decidim_set_off_proposals",
+        schedule="0 22 * * *",
+    )(False)
 
-def read_yaml_files_from_directory():
-    """
-    Search for yaml files and send then.
-    """
-    cur_dir = os.path.dirname(os.path.abspath(__file__))
-    directory_path = os.path.join(cur_dir, "processes_confs")
-
-    for filename in os.listdir(directory_path):
-        # Check if the file is a YAML file
-        if filename.endswith(".yaml") or filename.endswith(".yml"):
-            filepath = os.path.join(directory_path, filename)
-            yaml_to_dag(filepath)
-
-
-read_yaml_files_from_directory()
-
+config_directory = Path(__file__).parent.parent.joinpath("./processes_confs")
+for config in read_yaml_files_from_directory(config_directory):
+    yaml_to_dag(config)

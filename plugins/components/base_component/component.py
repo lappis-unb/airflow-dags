@@ -20,7 +20,7 @@ from urllib.parse import urljoin
 
 import inflect
 from inflection import underscore
-
+import logging
 from plugins.graphql.hooks.graphql import GraphQLHook
 
 class ComponentBaseHook():
@@ -37,6 +37,9 @@ class ComponentBaseHook():
         self.component_id = component_id
         self.component_type: str = self.get_component_type()
 
+    def _lower_first_letter(self, string: str):
+        return string[:1].lower() + string[1:] if string else ""
+
     def get_component_link(self) -> str:
         """
         Recupera o link para o componente.
@@ -47,7 +50,7 @@ class ComponentBaseHook():
         participatory_space = self.get_participatory_space()
         inflect_engine = inflect.engine()
         link_base = urljoin(
-            self.api_url,
+            self.graphql.api_url,
             f"{inflect_engine.plural(participatory_space['type_for_links'])}/{participatory_space['slug']}/f/{self.component_id}/{self.component_type.lower()}",
         )
         del inflect_engine
@@ -93,10 +96,10 @@ class ComponentBaseHook():
             }}
         }}
         """
-        response = self.run_graphql_query(graphql_query)
+        response = self.graphql.run_graphql_query(graphql_query)
         try:
             participatory_space = response["data"][participatory_space["type"]]
-            participatory_space["type_for_links"] = underscore(type_of_space).split("_")[-1]
+            participatory_space["type_for_links"] = underscore(self._lower_first_letter(participatory_space["type"])).split("_")[-1]
         except KeyError as error:
             logging.error(response)
             raise error
@@ -123,8 +126,7 @@ class ComponentBaseHook():
             "participatorySpace"
         ]
 
-        lower_first_letter = lambda s: s[:1].lower() + s[1:] if s else ""
-        type_of_space = participatory_space["type"] = lower_first_letter(
+        participatory_space["type"] = self._lower_first_letter(
             participatory_space["type"].split("::")[-1]
         )
 
@@ -151,16 +153,15 @@ class ComponentBaseHook():
             }}
         }}
         """
-        response = self.run_graphql_query(graphql_query)
+        response = self.graphql.run_graphql_query(graphql_query)
         try:
             participatory_space = response["data"][participatory_space["type"]]
-            lower_first_letter = lambda s: s[:1].lower() + s[1:] if s else ""
-            type_of_space = participatory_space["type"] = lower_first_letter(
+            participatory_space["type"] = self._lower_first_letter(
                 participatory_space["type"].split("::")[-1]
             )
-            participatory_space["type_for_links"] = underscore(type_of_space).split("_")[-1]
+            participatory_space["type_for_links"] = underscore(participatory_space["type"]).split("_")[-1]
         except KeyError as error:
-            print(response)
+            logging.error(response)
             raise error
         return participatory_space
                 
@@ -201,7 +202,7 @@ class ComponentBaseHook():
             root_component_id (int): O ID do componente raiz.
             thread_level (int): O nível da thread de comentários.
         """
-        graphql_query = self.get_graphql_query_from_file(
+        graphql_query = self.graphql.get_graphql_query_from_file(
             Path(__file__).parent.joinpath(
                 "../../gql/commentable/get_comments_by_commentable_id.gql"
             )
@@ -210,11 +211,11 @@ class ComponentBaseHook():
         result = self.graphql.run_graphql_query(graphql_query, variables=query_params)
         commentable = result["data"]["commentable"]
         if thread_level == 1:  # Nível raiz
-            yield self._parse_comment(
+            yield self._format_comment(
                 parent_comment, root_component_id=root_component_id
             )
         for comment in commentable["comments"]:
-            yield self._parse_comment(
+            yield self._format_comment(
                 comment,
                 root_component_id=root_component_id,
                 parent_comment_id=parent_comment["id"],
