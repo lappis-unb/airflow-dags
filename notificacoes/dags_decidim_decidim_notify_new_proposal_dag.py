@@ -21,12 +21,12 @@ If there's new messages to send, call [send_telegram_messages].
 # pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
 
 import logging
-import os
+from pathlib import Path
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Union
 
-import yaml
+from plugins.yaml.config_reader import read_yaml_files_from_directory
 from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.operators.empty import EmptyOperator
@@ -47,7 +47,7 @@ MESSAGE_COOLDOWN_RETRIES = 10
 class DecidimNotifierDAGGenerator:
     def generate_dag(
         self,
-        telegram_conn_id: str,
+        telegram_config: str,
         component_id: str,
         process_id: str,
         start_date: str,
@@ -55,7 +55,11 @@ class DecidimNotifierDAGGenerator:
     ):
         self.component_id = component_id
         self.process_id = process_id
-        self.telegram_conn_id = telegram_conn_id
+
+        self.telegram_conn_id = telegram_config["telegram_conn_id"]
+        self.telegram_chat_id = telegram_config["telegram_moderation_chat_id"]
+        self.telegram_topic_id = telegram_config["telegram_modereation_topic_id"]
+        
         self.most_recent_msg_time = f"most_recent_msg_time_{process_id}"
         self.start_date = datetime.fromisoformat(start_date.isoformat())
 
@@ -220,8 +224,9 @@ class DecidimNotifierDAGGenerator:
                     for _ in range(MESSAGE_COOLDOWN_RETRIES):
                         try:
                             TelegramHook(
-                                telegram_conn_id=self.telegram_conn_id
-                            ).send_message(api_params={"text": message})
+                                telegram_conn_id=self.telegram_conn_id, chat_id=self.telegram_chat_id
+                            ).send_message(api_params={"text": message,                                     
+                                                       "message_thread_id": self.telegram_topic_id,})
                             break
                         except (RetryError, RetryAfter) as e:
                             logging.info("Exception caught: %s", e)
@@ -262,24 +267,6 @@ class DecidimNotifierDAGGenerator:
         return dedicim_notify_new_proposals()
 
 
-def read_yaml_files_from_directory():
-    cur_dir = os.path.dirname(os.path.abspath(__file__))
-    directory_path = os.path.join(cur_dir, "processes_confs")
-
-    for filename in os.listdir(directory_path):
-        # Check if the file is a YAML file
-        if filename.endswith(".yaml") or filename.endswith(".yml"):
-            filepath = os.path.join(directory_path, filename)
-
-            with open(filepath, "r") as file:
-                try:
-                    yaml_dict = yaml.safe_load(file)
-                    DecidimNotifierDAGGenerator().generate_dag(
-                        **yaml_dict["process_params"]
-                    )
-
-                except yaml.YAMLError as e:
-                    logging.ERROR(f"Error reading {filename}: {e}")
-
-
-read_yaml_files_from_directory()
+config_directory = Path(__file__).parent.parent.joinpath("./processes_confs")
+for config in read_yaml_files_from_directory(config_directory):
+    DecidimNotifierDAGGenerator().generate_dag(**config)

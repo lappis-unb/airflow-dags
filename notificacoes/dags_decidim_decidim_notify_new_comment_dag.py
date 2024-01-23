@@ -1,20 +1,18 @@
 # pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
 
 import logging
-import os
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Union
-
+from pathlib import Path
 import pandas as pd
-import yaml
 from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.telegram.hooks.telegram import TelegramHook
 from telegram.error import RetryAfter
 from tenacity import RetryError
-
+from plugins.yaml.config_reader import read_yaml_files_from_directory
 from plugins.decidim_hook import DecidimHook
 
 DECIDIM_CONN_ID = "api_decidim"
@@ -24,11 +22,14 @@ MESSAGE_COOLDOWN_RETRIES = 10
 
 class DecidimNotifierDAGGenerator:
     def generate_dag(
-        self, telegram_conn_id: str, component_id: str, process_id: str, start_date: str, **kwargs
+        self, telegram_config: str, component_id: str, process_id: str, start_date: str, **kwargs
     ):
+        self.telegram_conn_id = telegram_config["telegram_conn_id"]
+        self.telegram_chat_id = telegram_config["telegram_moderation_chat_id"]
+        self.telegram_topic_id = telegram_config["telegram_modereation_topic_id"]
+        
         self.component_id = component_id
         self.process_id = process_id
-        self.telegram_conn_id = telegram_conn_id
         self.most_recent_msg_time = f"most_recent_comment_time_{process_id}"
         self.start_date = datetime.fromisoformat(start_date.isoformat())
 
@@ -170,16 +171,11 @@ class DecidimNotifierDAGGenerator:
                 for message in comments_messages:
                     for _ in range(MESSAGE_COOLDOWN_RETRIES):
                         try:
-                            hook = TelegramHook(telegram_conn_id=self.telegram_conn_id)
-                            #! Possivel code smell ?
-                            telegram_topic = hook.get_connection(
-                                self.telegram_conn_id
-                            ).schema
-
+                            hook = TelegramHook(telegram_conn_id=self.telegram_conn_id, chat_id=self.telegram_chat_id)
                             hook.send_message(
                                 api_params={
                                     "text": message,
-                                    "message_thread_id": telegram_topic,
+                                    "message_thread_id": self.telegram_topic_id,
                                 }
                             )
 
@@ -220,25 +216,6 @@ class DecidimNotifierDAGGenerator:
 
         return dedicim_notify_new_comments()
 
-
-def read_yaml_files_from_directory():
-    cur_dir = os.path.dirname(os.path.abspath(__file__))
-    directory_path = os.path.join(cur_dir, "processes_confs")
-
-    for filename in os.listdir(directory_path):
-        # Check if the file is a YAML file
-        if filename.endswith(".yaml") or filename.endswith(".yml"):
-            filepath = os.path.join(directory_path, filename)
-
-            with open(filepath, "r") as file:
-                try:
-                    yaml_dict = yaml.safe_load(file)
-                    DecidimNotifierDAGGenerator().generate_dag(
-                        **yaml_dict["process_params"]
-                    )
-
-                except yaml.YAMLError as e:
-                    logging.ERROR(f"Error reading {filename}: {e}")
-
-
-read_yaml_files_from_directory()
+config_directory = Path(__file__).parent.parent.joinpath("./processes_confs")
+for config in read_yaml_files_from_directory(config_directory):
+    DecidimNotifierDAGGenerator().generate_dag(**config)

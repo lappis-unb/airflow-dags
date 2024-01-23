@@ -31,7 +31,7 @@ def save_to_minio(data, filename):
     MINIO_URL = minio_conn.host
     MINIO_ACCESS_KEY = minio_conn.login
     MINIO_SECRET_KEY = minio_conn.password
-    MINIO_BUCKET = minio_conn.schema
+    MINIO_BUCKET = "brasil-participativo-daily-csv"
 
     # Saving JSON to MinIO bucket using boto3
     s3_client = boto3.client('s3',
@@ -61,7 +61,7 @@ COMPONENT_TYPE_TO_EXTRACT = "Proposals"
 )
 def decidim_data_extraction():
 
-    exec_date = "{{ ds }}"
+    exec_date = "{{ yesterday_ds }}"
 
     @task
     def get_propolsas_components_ids():
@@ -69,27 +69,25 @@ def decidim_data_extraction():
         return all_components
 
     @task
-    def get_proposals(components_ids, execution_date:datetime):
+    def get_proposals(components_ids, filter_date:datetime):
         """
         Airflow task that uses variable `proposal_hook` to request
         proposals on dedicim API and treats the data.
         """
-
-        proposals_query_directory_path = Path(__file__).parent("./queries/get_proposals_by_component_id.gql")
-        filter_date = execution_date - timedelta(1)
-
+        proposals_query_directory_path = Path(__file__).parent.joinpath("./queries/get_proposals_by_component_id.gql")
+        final_data = None
         for component_id in components_ids:
             component_id = int(component_id)
+            logging.info(f"Starting component_id {component_id}")
             proposal_hook = ProposalsHook(DECIDIM_CONN_ID, component_id)
             
             proposals_query = proposal_hook.graphql.get_graphql_query_from_file(proposals_query_directory_path)
             data_normalized = None
 
-            proposals_variables = {'id': component_id, 'date': filter_date}
+            proposals_variables = {'id': component_id, 'filter_date': filter_date}
 
             data_dict = proposal_hook.graphql.run_graphql_paginated_query(
             proposals_query, COMPONENT_TYPE_TO_EXTRACT, variables=proposals_variables)
-
             json_data_list = [
                 data["data"]["component"]["proposals"]["nodes"]
                 for data in data_dict
@@ -102,8 +100,8 @@ def decidim_data_extraction():
             ) 
 
             if data_normalized.empty:
-                logging.warning(f"Nenhuma proposta cadastrada no dia {filter_date}.")
-                break
+                logging.warning(f"Nenhuma proposta cadastrada no dia {filter_date} para o componente {component_id}.")
+                continue
 
             participatory_space = proposal_hook.get_participatory_space()
             if participatory_space["type"] in ["ParticipatoryProcess", "Initiative", "Conference"]:
@@ -121,36 +119,16 @@ def decidim_data_extraction():
 
             ids = np.char.array(data_normalized["id"].values, unicode=True)
             data_normalized = data_normalized.assign(link=(link_base + "/" + ids).astype(str))
+            if final_data is None:
+                final_data = data_normalized
+            elif isinstance(final_data, pd.DataFrame):
+                final_data =  pd.concat([final_data, data_normalized]).reset_index(drop=True)
 
-        csv_string = data_normalized.to_csv(index=False)
-        save_to_minio(csv_string, f"{execution_date.strftime('%Y-%m-%d')}-proposals.csv")
-    
-    @task
-    def get_proposals_commments(components_ids, execution_date:datetime):
-        """
-        Airflow task that request each comments of
-        proposals on dedicim API and treats the data.
-        Args:
-            components_ids (list): list of components id
-            filter_date (string): date of proposals to be search
-        """
-        result_df = None
-        filter_date = execution_date - timedelta(1)
+        csv_string = final_data.sort_values(by="id").to_csv(index=False)
+        save_to_minio(csv_string, f"{filter_date}-proposals.csv")
 
-        for component_id in components_ids:
-            hook = ProposalsHook(component_id)
-            current_comments = hook.get_comments(update_date_filter=filter_date)
-            if result_df is None:
-                result_df = pd.DataFrame.from_records(current_comments)
-            else:
-                result_df = pd.concat([result_df, pd.DataFrame.from_records(current_comments)], axis=0)
-
-        csv_string = result_df.to_csv(index=False)
-        save_to_minio(csv_string, f"{execution_date.strftime('%Y-%m-%d')}-comments-in-proposals.csv")
-    
     proposals_ids_task = get_propolsas_components_ids()
     
     get_proposals(proposals_ids_task, exec_date)
-    get_proposals_commments(proposals_ids_task, exec_date)
 
 decidim_data_extraction()
