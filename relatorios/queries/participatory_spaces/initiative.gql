@@ -1,0 +1,8 @@
+query ComponentsInInitiative($space_id: ID!) {
+  initiative(id: $space_id) {
+    components {
+      id
+      __typename
+    }
+  }
+}

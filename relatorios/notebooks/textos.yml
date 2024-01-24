@@ -1,0 +1,81 @@
+introducao:
+  - |
+    O presente relatório apresenta a participação digital da 4ª Conferência Nacional da Juventude.
+    Apresentamos os principais indicadores de acesso e participação, propostas, comentários e dinâmica na plataforma.
+    O objetivo do relatório é guiar o ConJuv e organizadores da conferência nas estratégias de mobilização,
+    além de comunicar os indicadores da conferência.
+
+dados_gerais:
+  - |
+    Esses dados gerais são um panorama que abrange a quantidade total de propostas, votos e comentários desde o inicio Conjuv até
+    a data deste relatório, e também com uma análise do período da ultima semana.
+    
+dados_acesso:
+  - |
+    Os dados de acesso são referentes à visitação da página da conferência. Um indicador da mobilização realizada,
+    mas principalmente sobre o comportamento do usuário padrão na plataforma (quanto tempo permanecem no contexto da conferência digital).
+    Vale observar a taxa de abandono. Isso significa que o usuário acessa a plataforma,
+    mas não realiza qualquer ação na mesma. Essas métricas auxiliam os organizadores da conferência a verificar se a
+    quantidade de acesso na plataforma está de acordo com o previsto. Essas métricas também guiam a revisita das estratégias
+    de mobilização e de comunicação na plataforma.
+    
+dados_visitantes:
+  - |
+    Esses gráficos mostram a quantidade de Visitantes novos e Visitantes de retorno ao logo do período completo do
+    espaço participativo e no período da semana. Visitantes novos são usuários que nuncam utilizaram a plataforma e os
+    Visitantes de retorno são aqueles que ao menos uma vez interagiram na plataforma.
+
+perfil_visitante:
+  - |
+    Abaixo, tem uma imagem do comportamento real de um usuário típico.
+    Temos que a maioria dos usuários fazendo e comentando as propostas utilizam celulares, e as pessoas que passam mais
+    tempo na plataforma (normalmente cadastrando conferências regionais) utilizam o computador para acessar a plataforma.
+    Nos próximos relatórios traremos mais detalhes desse uso e dos fluxos realizados pelos usuários.
+
+grafico_linha1:
+  - |
+    Esse gráfico mostra o comportamento da quantidade total de Propostas, Votos e comentários do dia 31/08 até 11/10.
+
+grafico_linha2:
+  - |
+    Esse gráfico mostra o comportamento da quantidade total de Propostas, Votos e comentários do dia 04/10 até 11/10.
+
+mapa_1:
+  - |
+    Esse mapa explica a quantidade de acessos por Unidade Federativa do Brasil, durante o período do dia 31/08 até 11/10.
+
+mapa_2:
+  - |
+    Esse mapa explica a quantidade de acessos por Unidade Federativa do Brasil, durante o período do dia 04/10 até 11/10.
+
+top_20_propostas:
+  - |
+    As top 20 propostas mais votadas evidenciam as propostas com maior mobilização e maior interesse do jovem participante.
+    Vale observar também o número de comentários por propostas.
+
+temas:
+  - |
+    Os temas com o maior número de propostas são:
+
+participantes:
+  - |
+    Nesse tópico estão presentes os dados relacionados aos participantes da plataforma, onde é apresentado a quantidade total
+    de participantes e a distribuição de participantes com pontuações que variam de 0 à mais de 100 pontos, essa pontuação reflete
+    diretamente em como o usuário se comportou na plataforma.
+    Também é apresentado um histograma que indica a frequência de votos dados por participantes.
+
+dispositivos:
+  - |
+    Neste relatório, exploramos os dados relativos às visitas a um determinado site, analisando o 
+    tráfego por diferentes tipos de dispositivos. Ao investigar a distribuição de visitantes em 
+    relação aos dispositivos utilizados, podemos identificar tendências e preferências de acesso 
+    que podem ser valiosas para a tomada de decisões estratégicas.
+
+
+rodape:
+  - |
+    ¹ A taxa de rejeição é a porcentagem de visitantes que acessam uma única página em um site e saem 
+    (ou "rejeitam") sem interagir com outras páginas do site.
+
+    ² Visitas únicas representam o número de visitantes individuais únicos que acessaram
+    um site em um determinado período de tempo.

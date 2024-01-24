@@ -1,0 +1,8 @@
+query ComponentsInConferences($space_id: ID!) {
+  conference(id: $space_id) {
+    components {
+      id
+      __typename
+    }
+  }
+}
