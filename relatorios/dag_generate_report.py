@@ -1,6 +1,7 @@
 from airflow.decorators import dag, task
 from plugins.graphql.hooks.graphql import GraphQLHook
 from pathlib import Path
+from datetime import datetime, timedelta
 
 DECIDIM_CONN_ID = "api_decidim"
 
@@ -22,7 +23,6 @@ def _get_components_id_from_participatory_space(participatory_space_id:int, part
 
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     query = Path(__file__).parent.joinpath(f"./queries/components/get_proposals_by_component_id.gql").open().read()
-
     query_result = GraphQLHook(DECIDIM_CONN_ID).run_graphql_paginated_query(query, variables={"id": component_id, "start_date": start_date, "end_date": end_date})
 
     result_proposals_data = []
@@ -33,37 +33,38 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
         partipatory_space_id = component["participatorySpace"]["id"]
         partipatory_space_type = component["participatorySpace"]["type"].split("::")[-1]
         page_component_name = component["name"].get("translation", "-")
-
         page_proposals = component["proposals"]["nodes"]
-        for proposal in page_proposals:
-            proposal_id = proposal["id"]
-            proposal_title = proposal["title"].get("translation", "-")
-            proposal_published_at = proposal["publishedAt"]
-            proposal_updated_at = proposal["updatedAt"]
-            proposal_state = proposal["state"]
-            proposal_total_comments = proposal["totalCommentsCount"]
-            proposal_total_votes = proposal["voteCount"]
-            proposal_category_title = proposal["category"]["name"].get("translation", "-") if proposal["category"] else "-"
 
+        for proposal in page_proposals:
             result_proposals_data.append({
                 "page_component_id": page_component_id,
                 "partipatory_space_id": partipatory_space_id,
                 "partipatory_space_type": partipatory_space_type,
                 "page_component_name": page_component_name,
-                "proposal_id": proposal_id,
-                "proposal_title": proposal_title,
-                "proposal_published_at": proposal_published_at,
-                "proposal_updated_at": proposal_updated_at,
-                "proposal_state": proposal_state,
-                "proposal_total_comments": proposal_total_comments,
-                "proposal_total_votes": proposal_total_votes,
-                "proposal_category_title": proposal_category_title,
+                "proposal_id": proposal["id"],
+                "proposal_title": proposal["title"].get("translation", "-"),
+                "proposal_published_at": proposal["publishedAt"],
+                "proposal_updated_at": proposal["updatedAt"],
+                "proposal_state":  proposal["state"],
+                "proposal_total_comments": proposal["totalCommentsCount"],
+                "proposal_total_votes": proposal["voteCount"],
+                "proposal_category_title": proposal["category"]["name"].get("translation", "-") if proposal["category"] else "-",
             })
     return result_proposals_data
 
 
 @dag(
-
+    default_args={
+    "owner": "Joyce/Paulo",
+    "depends_on_past": False,
+    "retries": 0,
+    "retry_delay": timedelta(minutes=1),
+},
+    schedule=None,
+    catchup=False,
+    start_date=datetime(2023, 11, 10),
+    description=__doc__,
+    tags=["decidim", "reports"],
     )
 def generate_report_bp(email: str, start_date: str, end_date:str, participatory_space_id:int, participatory_space_type:str):
     """
@@ -74,7 +75,7 @@ def generate_report_bp(email: str, start_date: str, end_date:str, participatory_
     """
 
     @task
-    def get_components_ids(space_id:int, space_type: str):
+    def get_components_id(space_id:int, space_type: str):
         return _get_components_id_from_participatory_space(space_id, space_type)
 
     @task
@@ -86,3 +87,7 @@ def generate_report_bp(email: str, start_date: str, end_date:str, participatory_
                 result.extend(_get_proposals_data(component_data["id"], filter_start_date, filter_end_date))
         
         return result
+    
+    get_components_data(get_components_id(space_id=participatory_space_id, space_type=participatory_space_type), filter_start_date=start_date, filter_end_date=end_date)
+
+generate_report_bp("test@gmail.com", "2023-01-01", "2024-01-01", 4, "participatory_process")
