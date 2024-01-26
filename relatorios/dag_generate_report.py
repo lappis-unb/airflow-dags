@@ -95,6 +95,10 @@ def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, met
 
     return response.json()
 
+def _generate_report(bp_data, *matomo_data):
+    print(bp_data)
+    print(matomo_data)
+
 @dag(
     default_args={
     "owner": "Joyce/Paulo",
