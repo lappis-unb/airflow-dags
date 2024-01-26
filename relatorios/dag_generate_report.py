@@ -1,9 +1,13 @@
 from airflow.decorators import dag, task
 from plugins.graphql.hooks.graphql import GraphQLHook
+from airflow.hooks.base import BaseHook
 from pathlib import Path
 from datetime import datetime, timedelta
+import requests
+
 
 DECIDIM_CONN_ID = "api_decidim"
+
 
 def _get_components_id_from_participatory_space(participatory_space_id:int, participatory_space_type:str):
 
@@ -26,6 +30,8 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     query_result = GraphQLHook(DECIDIM_CONN_ID).run_graphql_paginated_query(query, variables={"id": component_id, "start_date": start_date, "end_date": end_date})
 
     result_proposals_data = []
+    result_partipatory_space_link = []
+
     for page in query_result:
 
         component = page["data"]["component"]
@@ -52,6 +58,25 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
             })
     return result_proposals_data
 
+def get_matomo_data(url: list, start_date: str, end_date: str):
+    matomo_connection = BaseHook.get_connection('matomo_conn')
+    MATOMO_URL = matomo_connection.host
+    TOKEN_AUTH = matomo_connection.password
+    SITE_ID = matomo_connection.login
+    date_filter = f"{start_date},{end_date}"
+
+    params = {
+        'module': 'API',
+        'idSite': SITE_ID,
+        'period': 'range',
+        'date': date_filter,
+        'segment': 'pageUrl=^URL',
+        'format': 'json',
+        'token_auth': TOKEN_AUTH
+    }
+
+    response = requests.get(MATOMO_URL, params=params)
+
 
 @dag(
     default_args={
@@ -60,12 +85,14 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     "retries": 0,
     "retry_delay": timedelta(minutes=1),
 },
+
     schedule=None,
     catchup=False,
     start_date=datetime(2023, 11, 10),
     description=__doc__,
     tags=["decidim", "reports"],
     )
+
 def generate_report_bp(email: str, start_date: str, end_date:str, participatory_space_id:int, participatory_space_type:str):
     """
         1. Pegar todos os componentes do espaço participativo.
