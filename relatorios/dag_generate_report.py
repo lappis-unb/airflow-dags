@@ -45,11 +45,9 @@ def _get_components_id_from_participatory_space(participatory_space_id:int, part
 
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     query = Path(__file__).parent.joinpath(f"./queries/components/get_proposals_by_component_id.gql").open().read()
-    query_result = GraphQLHook(DECIDIM_CONN_ID).run_graphql_paginated_query(query, variables={"id": component_id, "start_date": start_date, "end_date": end_date})
+    query_result = GraphQLHook(BP_CONN_ID).run_graphql_paginated_query(query, variables={"id": component_id, "start_date": start_date, "end_date": end_date})
 
     result_proposals_data = []
-    result_partipatory_space_link = []
-
     for page in query_result:
 
         component = page["data"]["component"]
