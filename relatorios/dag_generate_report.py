@@ -4,9 +4,18 @@ from airflow.hooks.base import BaseHook
 from pathlib import Path
 from datetime import datetime, timedelta
 import requests
+import inflect
+from inflection import underscore
 
 
-DECIDIM_CONN_ID = "api_decidim"
+BP_CONN_ID = "Brasil_Participativo"
+
+MATOMO_ENPOINTS = [
+        ('VisitsSummary', 'get'),  
+        ('VisitFrequency', 'get'), 
+        ('UserCountry', 'getRegion'), 
+        ('DevicesDetection', 'getType')
+]
 
 
 def _get_components_id_from_participatory_space(participatory_space_id:int, participatory_space_type:str):
