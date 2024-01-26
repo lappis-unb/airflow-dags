@@ -76,7 +76,7 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
             })
     return result_proposals_data
 
-def get_matomo_data(url: list, start_date: str, end_date: str):
+def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, method: str):
     matomo_connection = BaseHook.get_connection('matomo_conn')
     MATOMO_URL = matomo_connection.host
     TOKEN_AUTH = matomo_connection.password
@@ -88,11 +88,11 @@ def get_matomo_data(url: list, start_date: str, end_date: str):
         'idSite': SITE_ID,
         'period': 'range',
         'date': date_filter,
-        'segment': 'pageUrl=^URL',
+        'segment': f'pageUrl={url}',
         'format': 'json',
-        'token_auth': TOKEN_AUTH
+        'token_auth': TOKEN_AUTH,
+        'method': f'{module}.{method}'
     }
-
     response = requests.get(MATOMO_URL, params=params)
 
 
