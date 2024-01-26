@@ -136,6 +136,24 @@ def generate_report_bp(email: str, start_date: str, end_date:str, participatory_
         
         return result
     
-    get_components_data(get_components_id(space_id=participatory_space_id, space_type=participatory_space_type), filter_start_date=start_date, filter_end_date=end_date)
+    get_components_id_task = get_components_id(space_id=participatory_space_id, space_type=participatory_space_type)
+
+    matomo_tasks = []
+    for module_ep, method_ep in MATOMO_ENPOINTS:
+        @task(
+            task_id=f"get_matomo_{module_ep}_{method_ep}"
+        )
+        def generator_matomo_extractor(url: list, filter_start_date: str, filter_end_date: str, module: str, method: str):
+            return _get_matomo_data(url=url, start_date=filter_start_date, end_date=filter_end_date, module=module, method=method)
+        
+        matomo_tasks.append(generator_matomo_extractor(get_components_id_task["participatory_space_url"], start_date, end_date, module_ep, method_ep))
+
+    @task
+    def generate_report(bp_data, *matomo_data):
+        _generate_report(bp_data, matomo_data)
+
+    get_components_data_task = get_components_data(get_components_id_task["accepted_components"], filter_start_date=start_date, filter_end_date=end_date)
+
+    generate_report(get_components_data_task, *matomo_tasks)
 
 generate_report_bp("test@gmail.com", "2023-01-01", "2024-01-01", 4, "participatory_process")
