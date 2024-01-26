@@ -122,7 +122,7 @@ def generate_report_bp(email: str, start_date: str, end_date:str, participatory_
         3. Gerar o relatorio.
     """
 
-    @task
+    @task(multiple_outputs=True)
     def get_components_id(space_id:int, space_type: str):
         return _get_components_id_from_participatory_space(space_id, space_type)
 
