@@ -21,18 +21,27 @@ MATOMO_ENPOINTS = [
 def _get_components_id_from_participatory_space(participatory_space_id:int, participatory_space_type:str):
 
     accepted_components_types = ["Proposasls"]
-
+    graph_ql_hook = GraphQLHook(BP_CONN_ID)
     query = Path(__file__).parent.joinpath(f"./queries/participatory_spaces/{participatory_space_type}.gql").open().read()
-    query_result = GraphQLHook(DECIDIM_CONN_ID).run_graphql_query(query, variables={"space_id":  participatory_space_id})
-    components_inside_participatory_space = query_result["data"][list(query_result["data"].keys())[0]].get("components", None)
-    
+    query_result = graph_ql_hook.run_graphql_query(query, variables={"space_id":  participatory_space_id})
+
+    query_data = query_result["data"][list(query_result["data"].keys())[0]]
+
+    components_inside_participatory_space = query_data.get("components", None)
+    inflect_engine = inflect.engine()
+    link_participatory_space_type = underscore(query_data['__typename']).split("_")[-1]
+    participatory_space_url = f"{graph_ql_hook.api_url}/{inflect_engine.plural(link_participatory_space_type)}/{query_data['slug']}"
+
+
     accepted_components = []
     for component in components_inside_participatory_space:
         if component["__typename"] in accepted_components_types:
             accepted_components.append(component)
 
-    return accepted_components
-
+    return {
+            "accepted_components": accepted_components,
+            "participatory_space_url": participatory_space_url
+    }
 
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     query = Path(__file__).parent.joinpath(f"./queries/components/get_proposals_by_component_id.gql").open().read()
