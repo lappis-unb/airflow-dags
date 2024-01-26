@@ -93,6 +93,7 @@ def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, met
     }
     response = requests.get(MATOMO_URL, params=params)
 
+    return response.json()
 
 @dag(
     default_args={
