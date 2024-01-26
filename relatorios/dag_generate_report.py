@@ -111,7 +111,7 @@ def _generate_report(bp_data, *matomo_data):
     catchup=False,
     start_date=datetime(2023, 11, 10),
     description=__doc__,
-    tags=["decidim", "reports"],
+    tags=["decidim", "reports", "participacao", "bp"],
     )
 
 def generate_report_bp(email: str, start_date: str, end_date:str, participatory_space_id:int, participatory_space_type:str):
