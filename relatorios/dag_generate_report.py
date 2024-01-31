@@ -14,7 +14,7 @@ import re
 from io import BytesIO
 
 
-BP_CONN_ID = "Brasil_Participativo"
+BP_CONN_ID = "bp_conn"
 
 MATOMO_ENPOINTS = [
         ('VisitsSummary', 'get'),  
