@@ -1,6 +1,5 @@
-query ComponentsInParticipatoryProcess($date: String) {
-  participatoryProcesses(filter: {publishedSince: $date}) {
-    ... on ParticipatoryProcess {
+query ComponentsInParticipatoryProcess($space_id: ID!) {
+  participatoryProcess(id: $space_id) {
       slug
       __typename
       components {
@@ -9,4 +8,3 @@ query ComponentsInParticipatoryProcess($date: String) {
       }
     }
   }
-}
