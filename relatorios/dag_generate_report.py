@@ -23,38 +23,32 @@ MATOMO_ENPOINTS = [
         ('DevicesDetection', 'getType')
 ]
 
-
 def _get_components_id_from_participatory_space(participatory_space_id:int, participatory_space_type:str):
 
+    accepted_components_types = ["Proposals"]
     participatory_space_url = "https://brasilparticipativo.presidencia.gov.br"
 
-    accepted_components_types = ["Proposals"]
 
     graph_ql_hook = GraphQLHook(BP_CONN_ID)
     query = Path(__file__).parent.joinpath(f"./queries/participatory_spaces/{participatory_space_type}.gql").open().read()
     query_result = graph_ql_hook.run_graphql_query(query, variables={"space_id": participatory_space_id})
 
-    query_data = query_result["data"][list(query_result["data"].keys())[0]]
+    participatory_space_data = query_result["data"][list(query_result["data"].keys())[0]]
     inflect_engine = inflect.engine()
 
-    components_inside_participatory_space = query_data if len(query_data) > 0 else None
+    # components_inside_participatory_space = participatory_space_data if len(participatory_space_data) > 0 else None
 
-    participatory_space_urls = []
+    link_participatory_space_type = underscore(participatory_space_data['__typename']).split("_")[-1]
+    participatory_space_url = f"{participatory_space_url}/{inflect_engine.plural(link_participatory_space_type)}/{participatory_space_data['slug']}"
+
     accepted_components = []
-
-    if components_inside_participatory_space:
-        for item in components_inside_participatory_space:
-            if 'slug' in item:
-                link_participatory_space_type = underscore(item['__typename']).split("_")[-1]
-                participatory_space_urls.append(f"{participatory_space_url}/{inflect_engine.plural(link_participatory_space_type)}/{item['slug']}")
-
-            for component in item['components']:
-                if component["__typename"] in accepted_components_types:
-                    accepted_components.append(component)
+    for component in participatory_space_data["components"]:
+        if component["__typename"] in accepted_components_types:
+            accepted_components.append(component)
 
     return {
         "accepted_components": accepted_components,
-        "participatory_space_urls": participatory_space_urls
+        "participatory_space_url": participatory_space_url
     }
 
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
