@@ -99,20 +99,27 @@ def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, met
     TOKEN_AUTH = matomo_connection.password
     SITE_ID = matomo_connection.login
     date_filter = f"{start_date},{end_date}"
-
     params = {
         'module': 'API',
         'idSite': SITE_ID,
         'period': 'range',
         'date': date_filter,
-        'segment': f'pageUrl={url}',
-        'format': 'json',
+        'segment': f'pageUrl=^{url}',
+        'format': 'csv',
         'token_auth': TOKEN_AUTH,
         'method': f'{module}.{method}'
     }
-    response = requests.get(MATOMO_URL, params=params)
+    logging.info("Params para a requisição do matomo \n%s.", params)
 
-    return response.json()
+    response = requests.get(MATOMO_URL, params=params)
+    response.raise_for_status()
+
+    try:
+        return response.text
+    except requests.exceptions.JSONDecodeError as error:
+        logging.exception("Response text: %s", response.text)
+        raise error
+
 
 def _generate_report(bp_data, *matomo_data):
     print(bp_data)
