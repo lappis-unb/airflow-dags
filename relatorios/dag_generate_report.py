@@ -1,11 +1,17 @@
 from airflow.decorators import dag, task
 from plugins.graphql.hooks.graphql import GraphQLHook
+from plugins.report import ReportGenerator
 from airflow.hooks.base import BaseHook
 from pathlib import Path
 from datetime import datetime, timedelta
 import requests
 import inflect
 from inflection import underscore
+import logging
+import base64
+import pandas as pd
+import re
+from io import BytesIO
 
 
 BP_CONN_ID = "Brasil_Participativo"
