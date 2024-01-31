@@ -52,33 +52,44 @@ def _get_components_id_from_participatory_space(participatory_space_id:int, part
     }
 
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
-    query = Path(__file__).parent.joinpath(f"./queries/components/get_proposals_by_component_id.gql").open().read()
+    query = Path(__file__).parent.joinpath("./queries/components/get_proposals_by_component_id.gql").open().read()
     query_result = GraphQLHook(BP_CONN_ID).run_graphql_paginated_query(query, variables={"id": component_id, "start_date": start_date, "end_date": end_date})
 
     result_proposals_data = []
     for page in query_result:
-
-        component = page["data"]["component"]
-        page_component_id = component["id"]
-        partipatory_space_id = component["participatorySpace"]["id"]
-        partipatory_space_type = component["participatorySpace"]["type"].split("::")[-1]
-        page_component_name = component["name"].get("translation", "-")
-        page_proposals = component["proposals"]["nodes"]
+        component = page.get("data", {}).get("component", {})
+        if not component:
+            continue
+        
+        page_component_id = component.get("id")
+        participatory_space_id = component.get("participatorySpace", {}).get("id")
+        participatory_space_type = component.get("participatorySpace", {}).get("type", "").split("::")[-1]
+        page_component_name = component.get("name", {}).get("translation", "-")
+        page_proposals = component.get("proposals", {}).get("nodes", [])
 
         for proposal in page_proposals:
+            proposal_id = proposal.get("id")
+            proposal_title = proposal.get("title", {}).get("translation", "-")
+            proposal_published_at = proposal.get("publishedAt")
+            proposal_updated_at = proposal.get("updatedAt")
+            proposal_state = proposal.get("state")
+            proposal_total_comments = proposal.get("totalCommentsCount")
+            proposal_total_votes = proposal.get("voteCount")
+            proposal_category_title = proposal.get("category", {}).get("name", {}).get("translation", "-") if proposal.get("category") else "-"
+
             result_proposals_data.append({
                 "page_component_id": page_component_id,
-                "partipatory_space_id": partipatory_space_id,
-                "partipatory_space_type": partipatory_space_type,
+                "participatory_space_id": participatory_space_id,
+                "participatory_space_type": participatory_space_type,
                 "page_component_name": page_component_name,
-                "proposal_id": proposal["id"],
-                "proposal_title": proposal["title"].get("translation", "-"),
-                "proposal_published_at": proposal["publishedAt"],
-                "proposal_updated_at": proposal["updatedAt"],
-                "proposal_state":  proposal["state"],
-                "proposal_total_comments": proposal["totalCommentsCount"],
-                "proposal_total_votes": proposal["voteCount"],
-                "proposal_category_title": proposal["category"]["name"].get("translation", "-") if proposal["category"] else "-",
+                "proposal_id": proposal_id,
+                "proposal_title": proposal_title,
+                "proposal_published_at": proposal_published_at,
+                "proposal_updated_at": proposal_updated_at,
+                "proposal_state": proposal_state,
+                "proposal_total_comments": proposal_total_comments,
+                "proposal_total_votes": proposal_total_votes,
+                "proposal_category_title": proposal_category_title,
             })
     return result_proposals_data
 
