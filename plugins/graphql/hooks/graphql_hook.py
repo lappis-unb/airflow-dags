@@ -165,10 +165,15 @@ class GraphQLHook(BaseHook):
 
         print(response["data"]["component"])
 
-        variables["page"] = response["data"]["component"][component_type.lower()]["pageInfo"]["endCursor"]
-        hasnextpage = response["data"]["component"][component_type.lower()]["pageInfo"]["hasNextPage"]
+        if component_type:
+            component_type_lower = component_type.lower()
+        else:
+            component_type_lower = ""
 
-        if hasnextpage:
+        variables["page"] = response["data"]["component"].get(component_type_lower, {}).get("pageInfo", {}).get("endCursor")
+        has_next_page = response["data"]["component"].get(component_type_lower, {}).get("pageInfo", {}).get("hasNextPage")
+
+        if has_next_page:
             yield from self.run_graphql_paginated_query(
                 paginated_query,
                 component_type=component_type,
