@@ -99,7 +99,7 @@ class GraphQLHook(BaseHook):
         session = requests.Session()
 
         try:
-            r = session.post(self.auth_url, data=self.payload)
+            r = session.post(self.auth_url, data=self.payload, verify=False)
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
             logging.info("A login error occurred: %s", e)
