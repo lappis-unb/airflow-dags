@@ -8,11 +8,6 @@ import requests
 import inflect
 from inflection import underscore
 import logging
-import base64
-import pandas as pd
-import re
-from io import BytesIO
-
 
 BP_CONN_ID = "bp_conn"
 
@@ -28,15 +23,12 @@ def _get_components_id_from_participatory_space(participatory_space_id:int, part
     accepted_components_types = ["Proposals"]
     participatory_space_url = "https://brasilparticipativo.presidencia.gov.br"
 
-
     graph_ql_hook = GraphQLHook(BP_CONN_ID)
     query = Path(__file__).parent.joinpath(f"./queries/participatory_spaces/{participatory_space_type}.gql").open().read()
     query_result = graph_ql_hook.run_graphql_query(query, variables={"space_id": participatory_space_id})
 
     participatory_space_data = query_result["data"][list(query_result["data"].keys())[0]]
     inflect_engine = inflect.engine()
-
-    # components_inside_participatory_space = participatory_space_data if len(participatory_space_data) > 0 else None
 
     link_participatory_space_type = underscore(participatory_space_data['__typename']).split("_")[-1]
     participatory_space_url = f"{participatory_space_url}/{inflect_engine.plural(link_participatory_space_type)}/{participatory_space_data['slug']}"
@@ -124,6 +116,21 @@ def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, met
 def _generate_report(bp_data, *matomo_data):
     print(bp_data)
     print(matomo_data)
+    path_to_report = Path(__file__).parent.joinpath("./template_relatorio.docx")
+    report_generator = ReportGenerator()
+    df_bp = report_generator.create_bp_dataframe(bp_data)
+    
+    num_proposals, num_votes, num_comments = report_generator.calculate_totals(bp_data)
+    daily_graph = report_generator.generate_daily_plot(df_bp)
+
+    data_to_insert = [
+        ("Número total de propostas:", num_proposals),
+        ("Número total de votos:", num_votes),
+        ("Número total de comentários:", num_comments)
+    ]
+    report_generator.insert_data_docx(path_to_report, data_to_insert, daily_graph)
+
+    return df_bp, daily_graph
 
 @dag(
     default_args={
@@ -176,10 +183,12 @@ def generate_report_bp(email: str, start_date: str, end_date:str, participatory_
 
     @task
     def generate_report(bp_data, *matomo_data):
-        _generate_report(bp_data, matomo_data)
+        return _generate_report(bp_data, *matomo_data)
 
     get_components_data_task = get_components_data(get_components_id_task["accepted_components"], filter_start_date=start_date, filter_end_date=end_date)
 
     generate_report(get_components_data_task, *matomo_tasks)
 
-generate_report_bp("test@gmail.com", "2023-01-01", "2024-01-01", 4, "participatory_process")
+generate_report_bp("test@gmail.com", "2023-01-01", "2024-01-01", 2, "participatory_process")
+
+
