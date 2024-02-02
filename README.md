@@ -2,12 +2,12 @@
 
 ## Contribuição
 
-Para fazer contribuições leia esse documento: [fluxo de desenvolvimento da engenharia de dados](https://gitlab.com/lappis-unb/decidimbr/ecossistemasl/-/wikis/estrutura/Engenharia-de-Dados/Fluxo%20de%20Desenvolvimento)
+Para fazer contribuições leia esse documento: [fluxo de desenvolvimento da engenharia de dados](https://gitlab.com/lappis-unb/decidimbr/ecossistemasl/-/wikis/estrutura/Servi%C3%A7os-de-Dados/Fluxo%20de%20Desenvolvimento)
 
 
 ## Documentação da arquitetura
 
-Para ler os detalhes sobre a arquitetura de dados acesse a [documentação de arquitetura.](https://gitlab.com/lappis-unb/decidimbr/ecossistemasl/-/wikis/estrutura/Engenharia-de-Dados/Arquitetura-de-dados)
+Para ler os detalhes sobre a arquitetura de dados acesse a [documentação de arquitetura.](https://gitlab.com/lappis-unb/decidimbr/ecossistemasl/-/wikis/estrutura/Servi%C3%A7os-de-Dados/Arquitetura-de-dados)
 
 ## Estrutura de Repositório de DAGs Airflow
 
@@ -27,10 +27,3 @@ Este repositório contém DAGs (Directed Acyclic Graphs) do Apache Airflow organ
 
 ## Processes_Confs:
   - Armazena arquivos YAML para configurar DAGs com diferentes parametrizações. Os arquivos YAML contêm configurações específicas para a geração dinâmica de DAGs, permitindo uma maior flexibilidade.
-
-
-### Histórico de Versões
-
-| Versão | Data | Descrição | Autor |
-|--------|------|-----------|-------|
-| 1.0 | 13/01/2024 | Criação do README.md | [Paulo Gonçalves](https://gitlab.com/PauloGoncalvesLima) |
