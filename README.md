@@ -1,10 +1,10 @@
 # Repositório de DAGs do Brasil Participativo
 ## OnBoarding
-Para inicializar nosso projeto siga nosso tutorial de [instalação](https://gitlab.com/lappis-unb/decidimbr/airflow-envs/-/wikis/home)!
+Para inicializar nosso projeto siga nosso tutorial de [instalação](docs/onboarding.md)!
 
 ## Contribuição
 
-Para apoiar o projeto, leia o nosso guia de [contribuição](https://gitlab.com/lappis-unb/decidimbr/airflow-dags/-/blob/fix/documentacao/CONTRIBUTING.md?ref_type=heads).
+Para apoiar o projeto, leia o nosso guia de [contribuição](CONTRIBUTING.md).
 
 E para entender um pouco mais, leia também nosso  [fluxo de desenvolvimento da engenharia de dados](https://gitlab.com/lappis-unb/decidimbr/ecossistemasl/-/wikis/estrutura/Engenharia-de-Dados/Fluxo%20de%20Desenvolvimento).
 
@@ -34,11 +34,3 @@ Este repositório contém DAGs (Directed Acyclic Graphs) do Apache Airflow organ
 
 ## Processes_Confs:
   - Armazena arquivos YAML para configurar DAGs com diferentes parametrizações. Os arquivos YAML contêm configurações específicas para a geração dinâmica de DAGs, permitindo uma maior flexibilidade.
-
-
-### Histórico de Versões
-
-| Versão | Data | Descrição | Autor |
-|--------|------|-----------|-------|
-| 1.0 | 13/01/2024 | Criação do README.md | [Paulo Gonçalves](https://gitlab.com/PauloGoncalvesLima) |
-| 2.0 | 01/02/2024 | Adição de guias  | [Laura Pinos](https://gitlab.com/laurapinos) |

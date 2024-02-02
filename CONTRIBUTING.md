@@ -1,20 +1,20 @@
 # Como contribuir com o AIRFLOW-DAGS?
 
 Estamos muito felizes por você estar lendo isso, seja bem vindo ao time de serviços de dados.
-Segue algumas informações necessárias para iniciar com sua contribuição!
+Seguem algumas informações necessárias para iniciar sua contribuição!
 
 ## Politica de Branchs
 A nomeclatura de branches que segue o padrão "tipo-da-mudança/descrição" é uma abordagem estruturada e informativa para gerenciar branches em repositórios de controle de versão, especialmente no contexto de commits convencionais. Essa convenção de nomenclatura utiliza tokens derivados dos tipos de mudanças definidos no padrão de commits convencionais para categorizar as branches de forma clara e compreensível.
 A estrutura "tipo-da-mudança/nome-descritivo" pode ser desdobrada da seguinte maneira:
 
 
-Tipo da Mudança (Token): O tipo da mudança é um token que descreve a natureza da alteração que está sendo realizada na branch. Esses tokens são extraídos dos tipos descritos no Conventional Commits, como "feat" para novos recursos, "fix" para correções de bugs, "chore" para tarefas de manutenção, "docs" para documentação, entre outros. Isso ajuda a categorizar a natureza da branch.
+Tipo da Mudança (Token): O tipo da mudança é um token que descreve a natureza da alteração que está sendo realizada na branch. Esses tokens são extraídos dos tipos descritos no Conventional Commits, e estão descritos na seção `Politica de Commits.`
 
 
-descrição: É uma breve descrição que esclarece o propósito da branch de forma clara e concisa. Deve explicar o que está sendo desenvolvido na branch, para que outras pessoas da equipe possam entender facilmente a sua finalidade.
+Descrição: É uma breve descrição que esclarece o propósito da branch de forma clara e concisa. Deve explicar o que está sendo desenvolvido na branch, para que outras pessoas da equipe possam entender facilmente a sua finalidade. 
+A Convenções de nomenclatura utilizada será a `Kebab case`, que utliza traço para separar as palavras
 
-
-Por exemplo, se você estiver criando uma branch para adicionar um novo recurso de pesquisa em um projeto de software, a nomeclatura pode seguir o formato "feat/search-feature" ou "feat/implement-search." Isso torna evidente que a branch se destina à implementação de um novo recurso de pesquisa.
+Por exemplo, se você estiver criando uma branch para adicionar um novo recurso de pesquisa em um projeto de software, a nomeclatura pode seguir o formato `feat/search-feature` ou `feat/implement-search.` Isso torna evidente que a branch se destina à implementação de um novo recurso de pesquisa.
 
 ## Politica de Commits
 <details>
@@ -105,7 +105,7 @@ Inclua qualquer informação extra ou considerações para os revisores, como á
 ### Listas de Verificação do Pedido de Merge
 - [ ] O código segue as diretrizes de codificação do projeto.
 - [ ] A documentação reflete as alterações realizadas.
-- [ ] Já cobri os testes unitários.
+- [ ] Cumpre os requisitos dos testes unitários.
 
 ### Issue referenciada
 
@@ -130,14 +130,6 @@ Indique os responsáveis pelo desenvolvimento do PR/MR.
 ## Reviewers
 
 Se houver algum supervisor acompanhando o desenvolvimento da Issue referente ao PR/MR, marque-o. Caso contrário, deixe em branco.
-
-## Milestone
-
-Não se aplica a menos que seja solicitado.
-
-## Labels
-
-Utilize as labels que se aplicam ao problema, sendo obrigatório o uso das labels de MR, demarcadas por `MR::XXX...XXX`, e o uso da label `REVIEW::Needed`.
 
 ### Feature
 
