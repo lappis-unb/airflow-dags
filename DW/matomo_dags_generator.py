@@ -151,6 +151,7 @@ class MatomoDagGenerator:
                 start_date=datetime(2023, 5, 1),
                 catchup=False,
                 doc_md=__doc__,
+                tags=["matomo", "extraction"]
         )
         def matomo_data_extraction():
             matomo_period = {
@@ -237,6 +238,7 @@ class MatomoDagGenerator:
             start_date=datetime(2023, 5, 1),
             catchup=False,
             doc_md=__doc__,
+            tags=["matomo", "ingestion"]
         )
         def matomo_data_ingestion():
             """The main DAG for ingesting data from MinIO into the
