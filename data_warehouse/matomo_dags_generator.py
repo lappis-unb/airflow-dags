@@ -33,8 +33,9 @@ def _create_s3_client():
                         region_name='us-east-1')
 
 
-def _generate_s3_filename(module, method, execution_date):
-    return f'{module}_{method}_{execution_date.strftime("%Y-%m-%d")}.csv'
+def _generate_s3_filename(module, method, period, execution_date):
+    return (f'{module}_{method}_{period}_'
+            f'{execution_date.strftime("%Y-%m-%d")}.csv')
 
 
 def add_temporal_columns(
@@ -88,64 +89,91 @@ class MatomoDagGenerator:
     }
 
 
-    def get_matomo_data(self, module, method, execution_date):
+    def get_matomo_data(self, module, method, execution_date, period):
         matomo_conn = BaseHook.get_connection('matomo_connection_id')
         MATOMO_URL = matomo_conn.host
         TOKEN_AUTH = matomo_conn.password
         SITE_ID = matomo_conn.login
-        date_filter = execution_date.strftime("%Y-%m-%d")
+
+        # Determine the date filter based on the period
+        if period == 'day':
+            date_filter = execution_date.strftime("%Y-%m-%d")
+        elif period == 'week':
+            # Calculate the last day of the previous week
+            last_day_of_week = (
+                execution_date - timedelta(days=execution_date.weekday() + 1))
+            date_filter = last_day_of_week.strftime("%Y-%m-%d")
+        elif period == 'month':
+            # Calculate the last day of the previous month
+            first_day_of_month = execution_date.replace(day=1)
+            last_day_of_previous_month = first_day_of_month - timedelta(days=1)
+            date_filter = last_day_of_previous_month.strftime("%Y-%m-%d")
+        else:
+            raise ValueError("Invalid period. Choose 'day',"
+                             " 'week', or 'month'.")
 
         params = {
             'module': 'API',
             'idSite': SITE_ID,
-            'period': 'day',
+            'period': period,
             'date': date_filter,
             'format': 'csv',
             'token_auth': TOKEN_AUTH,
             'method': f'{module}.{method}'
         }
 
-        logger.info('Extracting data for %s', date_filter)
+        logger.info(f'Extracting {period} data for {date_filter}')
         response = requests.get(MATOMO_URL, params=params)
 
         if response.status_code == 200:
             return response.text
         else:
-            raise Exception(f"Failed to fetch data for {module}.{method}. Status code: {response.status_code}")
+            raise Exception(f"Failed to fetch data for {module}.{method}."
+                            f" Status code: {response.status_code}")
 
 
-    def save_to_minio(self, data, module, method, execution_date):
+    def save_to_minio(self, data, module, method, period, execution_date):
         minio_conn = BaseHook.get_connection('minio_connection_id')
         MINIO_BUCKET = minio_conn.schema
         s3_client = _create_s3_client()
-        filename = _generate_s3_filename(module, method, execution_date)
+        filename = _generate_s3_filename(module, method, period, execution_date)
         s3_client.put_object(Body=data,
                              Bucket=MINIO_BUCKET,
                              Key=filename,
                              ContentType='text/csv')
 
 
-    def generate_extraction_dag(self):
+    def generate_extraction_dag(self, period: str, schedule: str):
         @dag(
+                dag_id=f'matomo_extraction_{period}',
                 default_args=self.default_dag_args,
-                schedule_interval='0 5 * * *',
+                schedule=schedule,
                 start_date=datetime(2023, 5, 1),
                 catchup=False,
                 doc_md=__doc__,
+                tags=["matomo", "extraction"]
         )
         def matomo_data_extraction():
+            matomo_period = {
+                'daily': 'day',
+                'weekly': 'week',
+                'monthly': 'month',
+            }
             for module, method in self.endpoints:
                 @task(task_id=f"extract_{method}_{module}")
                 def fetch_data(module_: str, method_: str, **context):
-                    data = self.get_matomo_data(module_,
-                                            method_,
-                                            context['data_interval_start']
-                    )
-                    self.save_to_minio(data,
-                                module_,
-                                method_,
-                                context['data_interval_start']
-                    )
+                    data = self.get_matomo_data(
+                        module_,
+                        method_,
+                        context['data_interval_start'],
+                        matomo_period[period])
+                    self.save_to_minio(
+                        data,
+                        module_,
+                        method_,
+                        period,
+                        context['data_interval_start'])
+
                 fetch_data(module, method)
 
         return matomo_data_extraction()
@@ -154,6 +182,7 @@ class MatomoDagGenerator:
     def _ingest_into_postgres(self,
                               module: str,
                               method: str,
+                              period: str,
                               execution_date: datetime):
         """
         Ingest data from a CSV file in MinIO into a PostgreSQL database.
@@ -166,7 +195,11 @@ class MatomoDagGenerator:
         """
         s3_client = _create_s3_client()
         minio_conn = BaseHook.get_connection('minio_connection_id')
-        filename = _generate_s3_filename(module, method, execution_date)
+        filename = _generate_s3_filename(
+            module,
+            method,
+            period,
+            execution_date)
 
         obj = s3_client.get_object(Bucket=minio_conn.schema, Key=filename)
         csv_content = obj['Body'].read().decode('utf-8')
@@ -181,14 +214,14 @@ class MatomoDagGenerator:
 
         # Insert the data into the PostgreSQL table
         df_with_temporal.to_sql(
-            name=f'{module}_{method}',
+            name=f'{module}_{method}_{period}',
             con=pg_hook.get_sqlalchemy_engine(),
             if_exists='append',
             index=False,
         )
 
 
-    def generate_ingestion_dag(self):
+    def generate_ingestion_dag(self, period: str, schedule: str):
         """
         Generate an Airflow DAG to ingest data from MinIO into a
         PostgreSQL database. This method sets up the DAG configuration
@@ -199,11 +232,13 @@ class MatomoDagGenerator:
             generated DAG.
         """
         @dag(
+            dag_id=f'matomo_ingestion_{period}',
             default_args=self.default_dag_args,
-            schedule_interval='0 7 * * *',
+            schedule=schedule,
             start_date=datetime(2023, 5, 1),
             catchup=False,
             doc_md=__doc__,
+            tags=["matomo", "ingestion"]
         )
         def matomo_data_ingestion():
             """The main DAG for ingesting data from MinIO into the
@@ -217,14 +252,22 @@ class MatomoDagGenerator:
                     database.
                     """
                     self._ingest_into_postgres(
-                        module_, method_, context['data_interval_start']
+                        module_,
+                        method_,
+                        period,
+                        context['data_interval_start']
                     )
 
                 ingest_data(module, method)
 
         return matomo_data_ingestion()
 
-# Instantiate the MatomoDagGenerator and generate the DAGs
+
+# Instantiate the DAGs dynamically
 dag_generator = MatomoDagGenerator()
-extract_dag = dag_generator.generate_extraction_dag()
-ingest_dag = dag_generator.generate_ingestion_dag()
+dag_generator.generate_extraction_dag(period='daily', schedule='0 5 * * *')
+dag_generator.generate_ingestion_dag(period='daily', schedule='0 7 * * *')
+dag_generator.generate_extraction_dag(period='weekly', schedule='0 5 * * 1')
+dag_generator.generate_ingestion_dag(period='weekly', schedule='0 7 * * 1')
+dag_generator.generate_extraction_dag(period='monthly', schedule='0 5 * 1 *')
+dag_generator.generate_ingestion_dag(period='monthly', schedule='0 7 * 1 *')
