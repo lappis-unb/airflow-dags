@@ -1,7 +1,6 @@
-"""
-DAG to set proposals availability on decidim. The result is
-the checkbox `Participantes podem criar propostas` marked as checked or
-not.
+"""DAG to set proposals availability on decidim.
+
+The result is the checkbox `Participantes podem criar propostas` marked as checked or not.
 
 When setting decidim's proposals availability:
 if proposals_status is true
@@ -14,41 +13,33 @@ else
 """
 
 # pylint: disable=import-error, invalid-name, expression-not-assigned
-import os
-import yaml
 
-import time
 
-from datetime import datetime, timedelta
-from collections import defaultdict
-import bs4
-import re
-from bs4 import BeautifulSoup
 import logging
-from plugins.yaml.config_reader import read_yaml_files_from_directory
-from pathlib import Path
+import re
+from collections import defaultdict
+from datetime import timedelta
 
-from airflow import DAG
+import bs4
 from airflow.decorators import dag, task
-from airflow.models import Variable
 from airflow.providers.telegram.hooks.telegram import TelegramHook
-
-from plugins.graphql.hooks.graphql import GraphQLHook
+from bs4 import BeautifulSoup
 from requests.exceptions import HTTPError
-from telegram.error import RetryAfter
-from tenacity import RetryError
+
+from plugins.graphql.hooks.graphql_hook import GraphQLHook
 
 DECIDIM_CONN_ID = "api_decidim"
 PAGE_FORM_CLASS = "form edit_component"
 
 
-class DecidimNotifierDAGGenerator:
+class DecidimNotifierDAGGenerator:  # noqa: D101
     def generate_dag(
         self,
         telegram_config: str,
         component_id: str,
         process_id: str,
         start_date: str,
+        end_date: str,
         decidim_url: str,
         dag_id: str,
         schedule: str,
@@ -57,17 +48,22 @@ class DecidimNotifierDAGGenerator:
         self.process_id = process_id
 
         self.telegram_conn_id = telegram_config["telegram_conn_id"]
-        self.telegram_chat_id = telegram_config["telegram_moderation_chat_id"]
-        self.telegram_topic_id = telegram_config["telegram_modereation_topic_id"]
-        
+        self.telegram_chat_id = telegram_config["telegram_group_id"]
+        self.telegram_topic_id = telegram_config["telegram_moderation_proposals_topic_id"]
+
         self.most_recent_msg_time = f"most_recent_msg_time_{process_id}"
-        self.start_date = datetime.fromisoformat(start_date.isoformat())
+        self.start_date = start_date if isinstance(start_date, str) else start_date.strftime("%Y-%m-%d")
+        if end_date is not None:
+            self.end_date = end_date if isinstance(end_date, str) else end_date.strftime("%Y-%m-%d")
+        else:
+            self.end_date = end_date
+
         self.decidim_url = decidim_url
 
         default_args = {
             "owner": "Paulo G./Thais R.",
-            "start_date": datetime(2023, 8, 21),
-            "end_date": None,
+            "start_date": self.start_date,
+            "end_date": self.end_date,
             "depends_on_past": False,
             "retries": 3,
             "retry_delay": timedelta(minutes=1),
@@ -82,6 +78,7 @@ class DecidimNotifierDAGGenerator:
             catchup=False,
             description=__doc__,
             tags=["decidim"],
+            is_paused_upon_creation=False,
         )
         def decidim_on_n_off_proposals(
             proposals_status: bool,
@@ -92,14 +89,15 @@ class DecidimNotifierDAGGenerator:
                 """Convert html <form> and <input> tags to python dictionary.
 
                 Args:
+                ----
                     html_form (bs4.element.Tag): beautiful soup object with
                         respective html <form> filtered.
 
                 Returns:
+                -------
                     defaultdict: a dictionary of lists with html input tag name
                     and value.
                 """
-
                 dict_output = defaultdict(list)
                 for tag in html_form.find_all("input"):
                     if tag.get("type", None) == "checkbox":
@@ -114,52 +112,52 @@ class DecidimNotifierDAGGenerator:
                 """Find a form input id using regex.
 
                 Args:
+                ----
                     dict_form (bs4.element.Tag): a dict contains beautiful soup objects
                         with respective html <form> filtered.
 
                 Returns:
+                -------
                     form_input_id: a string with form input id value.
 
                 Raises:
+                ------
                     IndexError: If does not found a component of creation enabled.
                 """
-#name="component[default_step_settings][creation_enabled]"
+                # name="component[default_step_settings][creation_enabled]"
                 pattern = r"component\[.*step_settings\]\[creation_enabled\]"
                 pattern_match = re.findall(pattern, str(dict_form))
                 logging.info(dict_form)
 
                 form_input_id = pattern_match.pop(0)
 
-                logging.info(f"FORM_INPUT_ID: {form_input_id}")
+                logging.info("FORM_INPUT_ID: %s", form_input_id)
 
                 return form_input_id
 
             @task
             def set_proposals_availability(proposals_status: bool):
-                """Airflow task that uses python requests to set the status
-                of html input checkbox `Participantes podem criar propostas`.
+                """Airflow task that makes a request to set status of `Participantes podem criar propostas`.
 
                 It means that a decidim component became available or unavailable
                 to receive new proposals.
 
                 Args:
+                ----
                     proposals_status (bool): the desired action on the html
                         input checkbox `Participantes podem criar propostas`.
                 """
-
                 session = GraphQLHook(DECIDIM_CONN_ID).get_session()
 
                 return_component_page = session.get(f"{self.decidim_url}")
                 if return_component_page.status_code != 200:
-                    raise HTTPError(
-                        f"Status code is {return_component_page.status_code} and not 200."
-                    )
+                    raise HTTPError(f"Status code is {return_component_page.status_code} and not 200.")
 
                 b = BeautifulSoup(return_component_page.text, "html.parser")
                 html_form = b.find(class_=PAGE_FORM_CLASS)
 
                 # logging.info(f"HTML Form:\n{html_form}")
-                logging.info(f"Requesting page form from {self.decidim_url}")
+                logging.info("Requesting page form from %s", self.decidim_url)
 
                 dict_form = _convert_html_form_to_dict(html_form)
                 form_input_id = _find_form_input_id(dict_form)
@@ -179,31 +177,32 @@ class DecidimNotifierDAGGenerator:
                 """Airflow task to send telegram message.
 
                 Args:
+                ----
                     proposals_status (bool): the desired action on the html
                         input checkbox `Participantes podem criar propostas`.
                 """
-
                 if proposals_status:
                     message = "✅ <b>[ATIVADO]</b> \n\n<i>Participantes podem criar propostas</i>"
                 else:
                     message = "🚫 <b>[DESATIVADO]</b> \n\n<i>Participantes não podem criar propostas</i>"
 
-                TelegramHook(telegram_conn_id=self.telegram_conn_id, chat_id=self.telegram_chat_id).send_message(
-                    api_params={"text": message, "message_thread_id": self.telegram_topic_id}
+                TelegramHook(
+                    telegram_conn_id=self.telegram_conn_id,
+                    chat_id=self.telegram_chat_id,
+                ).send_message(
+                    api_params={
+                        "text": message,
+                        "message_thread_id": self.telegram_topic_id,
+                    }
                 )
 
-            set_proposals_availability(proposals_status) >> send_telegram(
-                proposals_status
-            )
+            set_proposals_availability(proposals_status) >> send_telegram(proposals_status)
 
         return decidim_on_n_off_proposals
 
 
 def yaml_to_dag(process_config: dict):
-    """
-    Recive the path to configuration file and generate an airflow dag.
-    """
-
+    """Recive the path to configuration file and generate an airflow dag."""
     DecidimNotifierDAGGenerator().generate_dag(
         **process_config,
         dag_id="decidim_set_on_proposals",
@@ -216,6 +215,7 @@ def yaml_to_dag(process_config: dict):
         schedule="0 22 * * *",
     )(False)
 
-config_directory = Path(__file__).parent.parent.joinpath("./processes_confs")
-for config in read_yaml_files_from_directory(config_directory):
-    yaml_to_dag(config)
+
+# config_directory = Path(__file__).parent.parent.joinpath("./processes_confs")
+# for config in read_yaml_files_from_directory(config_directory):
+#     yaml_to_dag(config)

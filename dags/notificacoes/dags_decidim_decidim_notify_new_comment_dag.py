@@ -3,8 +3,9 @@
 import logging
 import time
 from datetime import datetime, timedelta, timezone
-from typing import Union
 from pathlib import Path
+from typing import Union
+
 import pandas as pd
 from airflow.decorators import dag, task
 from airflow.models import Variable
@@ -12,31 +13,43 @@ from airflow.operators.empty import EmptyOperator
 from airflow.providers.telegram.hooks.telegram import TelegramHook
 from telegram.error import RetryAfter
 from tenacity import RetryError
-from plugins.yaml.config_reader import read_yaml_files_from_directory
+
 from plugins.decidim_hook import DecidimHook
+from plugins.yaml.config_reader import read_yaml_files_from_directory
 
 DECIDIM_CONN_ID = "api_decidim"
 MESSAGE_COOLDOWN_DELAY = 30
 MESSAGE_COOLDOWN_RETRIES = 10
 
 
-class DecidimNotifierDAGGenerator:
+class DecidimNotifierDAGGenerator:  # noqa: D101
     def generate_dag(
-        self, telegram_config: str, component_id: str, process_id: str, start_date: str, **kwargs
+        self,
+        telegram_config: str,
+        component_id: str,
+        process_id: str,
+        start_date: str,
+        end_date: str,
+        **kwargs,
     ):
         self.telegram_conn_id = telegram_config["telegram_conn_id"]
-        self.telegram_chat_id = telegram_config["telegram_moderation_chat_id"]
-        self.telegram_topic_id = telegram_config["telegram_modereation_topic_id"]
-        
+        self.telegram_chat_id = telegram_config["telegram_group_id"]
+        self.telegram_topic_id = telegram_config["telegram_moderation_comments_topic_id"]
+
         self.component_id = component_id
         self.process_id = process_id
         self.most_recent_msg_time = f"most_recent_comment_time_{process_id}"
-        self.start_date = datetime.fromisoformat(start_date.isoformat())
+        self.start_date = start_date if isinstance(start_date, str) else start_date.strftime("%Y-%m-%d")
+        if end_date is not None:
+            self.end_date = end_date if isinstance(end_date, str) else end_date.strftime("%Y-%m-%d")
+        else:
+            self.end_date = end_date
 
         # DAG
         default_args = {
             "owner": "Paulo",
             "start_date": self.start_date,
+            "end_date": self.end_date,
             "depends_on_past": False,
             "retries": 0,
             # "on_failure_callback": send_slack,
@@ -51,14 +64,15 @@ class DecidimNotifierDAGGenerator:
             description=__doc__,
             max_active_runs=1,
             tags=["notificação", "decidim"],
+            is_paused_upon_creation=False,
         )
         def dedicim_notify_new_comments():
             @task
             def get_update_date(dag_start_date: datetime) -> datetime:
-                """Airflow task that retrieve last comment update date from
-                airflow variables.
+                """Airflow task that retrieve last comment update date from airflow variables.
 
-                Returns:
+                Returns
+                -------
                     datetime: last comment update from airflow variables.
                 """
                 date_format = "%Y-%m-%d %H:%M:%S%z"
@@ -75,17 +89,17 @@ class DecidimNotifierDAGGenerator:
 
             @task
             def get_comments(component_id: int, update_date: datetime):
-                """Airflow task that uses variable `graphql` to request
-                comments on dedicim API.
+                """Airflow task that uses variable `graphql` to request comments on dedicim API.
 
                 Args:
+                ----
                     component_id (int): id of the component to get updates from.
                     update_date (datetime): last comments update date.
 
                 Returns:
+                -------
                     dict: result of decidim API query on comments.
                 """
-
                 msgs_dict = DecidimHook(DECIDIM_CONN_ID, component_id).get_comments(
                     update_date_filter=update_date
                 )
@@ -94,22 +108,21 @@ class DecidimNotifierDAGGenerator:
 
             @task(multiple_outputs=True)
             def mount_telegram_messages(mensages_json: dict) -> dict:
-                """Airflow task that parse comments json, select only new or
-                updated comment, get the max comment date (new or update) and
-                mount message for telegram.
+                """Airflow task that parse comments json, select only new or updated comment.
 
                 Args:
+                ----
                     comments (dict): list of comments received on function
                         `get_comments`.
                     update_date (datetime): last comments update date.
 
                 Returns:
+                -------
                     dict: "comments_messages" (list): new/updated comments to
                             send on telegram.
                         "max_datetime" (str): max comment date (new or update).
 
                 """
-
                 result: dict[str, Union[list, datetime, None]] = {
                     "comments_messages": [],
                     "max_datetime": None,
@@ -119,9 +132,7 @@ class DecidimNotifierDAGGenerator:
                 if df.empty:
                     return result
 
-                df["creation_date"] = pd.to_datetime(
-                    df["creation_date"], format="ISO8601"
-                )
+                df["creation_date"] = pd.to_datetime(df["creation_date"], format="ISO8601")
 
                 for _, row in df.iterrows():
                     comment_message = (
@@ -139,22 +150,22 @@ class DecidimNotifierDAGGenerator:
 
                 result["max_datetime"] = df["creation_date"].max()
 
-                logging.info(f"Monted {len(result['comments_messages'])} menssages.")
+                logging.info("Monted %s menssages.", len(result["comments_messages"]))
                 return result
 
             @task.branch
             def check_if_new_comments(selected_comments: list) -> str:
-                """Airflow task branch that check if there is new or updated
-                comments to send on telegram.
+                """Airflow task branch that check if there is new or updated comments to send on telegram.
 
                 Args:
+                ----
                     selected_comments (list): list of selected comments
                         messages to send on telegram.
 
                 Returns:
+                -------
                     str: next Airflow task to be called
                 """
-
                 if selected_comments["comments_messages"]:
                     return "send_telegram_messages"
                 else:
@@ -165,13 +176,17 @@ class DecidimNotifierDAGGenerator:
                 """Airflow task to send telegram messages.
 
                 Args:
+                ----
                     comments_messages (list): List of comments telegram
                         messages to be send.
                 """
                 for message in comments_messages:
                     for _ in range(MESSAGE_COOLDOWN_RETRIES):
                         try:
-                            hook = TelegramHook(telegram_conn_id=self.telegram_conn_id, chat_id=self.telegram_chat_id)
+                            hook = TelegramHook(
+                                telegram_conn_id=self.telegram_conn_id,
+                                chat_id=self.telegram_chat_id,
+                            )
                             hook.send_message(
                                 api_params={
                                     "text": message,
@@ -183,21 +198,19 @@ class DecidimNotifierDAGGenerator:
                         except (RetryError, RetryAfter) as e:
                             logging.info("Exception caught: %s", e)
                             logging.warning(
-                                "Message refused by Telegram's flood control. "
-                                "Waiting %d seconds...",
+                                "Message refused by Telegram's flood control. Waiting %d seconds...",
                                 MESSAGE_COOLDOWN_DELAY,
                             )
                             time.sleep(MESSAGE_COOLDOWN_DELAY)
 
             @task
             def save_update_date(max_datetime: str):
-                """Airflow task to update last comment datetime saved on
-                airflow variables.
+                """Airflow task to update last comment datetime saved on airflow variables.
 
                 Args:
+                ----
                     max_datetime (str): last comment datetime
                 """
-
                 Variable.set(self.most_recent_msg_time, max_datetime)
 
             # Instantiation
@@ -215,6 +228,7 @@ class DecidimNotifierDAGGenerator:
             )
 
         return dedicim_notify_new_comments()
+
 
 config_directory = Path(__file__).parent.parent.joinpath("./processes_confs")
 for config in read_yaml_files_from_directory(config_directory):

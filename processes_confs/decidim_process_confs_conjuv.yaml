@@ -1,8 +1,0 @@
-process_id: CONJUV4
-component_id: 7
-start_date: 2023-01-01
-decidim_url: https://lab-decide.dataprev.gov.br/admin/assemblies/devdecidim/components/16/edit
-telegram_config:
-  telegram_conn_id: telegram_decidim
-  telegram_moderation_chat_id:
-  telegram_modereation_topic_id:

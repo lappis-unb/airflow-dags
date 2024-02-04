@@ -1,0 +1,98 @@
+[build-system]
+requires = ["setuptools>=42.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 110
+target-version = ['py38', 'py39', 'py310', 'py311']
+
+[tool.ruff]
+target-version = "py38"
+typing-modules = ["airflow.typing_compat"]
+line-length = 110
+
+extend-select = [
+    "I", # Missing required import (auto-fixable)
+    "UP", # Pyupgrade
+    "RUF100", # Unused noqa (auto-fixable)
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    "W",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    "N",
+    "G",
+    "ISC",
+    # isort
+    "I",
+    "RUF",
+    "B",
+    # We ignore more pydocstyle than we enable, so be more selective at what we enable
+    "D101",
+    "D106",
+    "D2",
+    "D3",
+    "D400",
+    # "D401", # Not enabled by ruff, but we don't want it
+    "D402",
+    "D403",
+    "D407",
+    "D408",
+    "D412",
+    "D419",
+    "TCH",  # Rules around TYPE_CHECKING blocks
+    "TID251",  # Specific modules or module members that may not be imported or accessed
+    "TID253",  # Ban certain modules from being imported at module level
+    "ISC",  # Checks for implicit literal string concatenation (auto-fixable)
+    "B006", # Checks for uses of mutable objects as function argument defaults.
+]
+ignore = [
+    "D203",
+    "D212",
+    "D213",
+    "D214",
+    "D215",
+    "E731",
+    "TCH003",  # Do not move imports from stdlib to TYPE_CHECKING block
+]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+
+[tool.pytest.ini_options]
+# * Disable `flaky` plugin for pytest. This plugin conflicts with `rerunfailures` because provide same marker.
+# * Disable `nose` builtin plugin for pytest. This feature deprecated in 7.2 and will be removed in pytest>=8
+# * And we focus on use native pytest capabilities rather than adopt another frameworks.
+addopts = "--cov-report term-missing --cov-report html:tests/reports/coverage_report_html --cov-report json:tests/reports/coverage_report.json --cov=dags --cov=plugins -rasl --verbosity=3 -p no:flaky -p no:nose"
+log_level = "INFO"
+filterwarnings = []
+python_files = [
+    "test_*.py",
+    "example_*.py",
+]
+pythonpath = [
+  "."
+]
+testpaths = [
+    "tests",
+]
+
+
+[tool.mypy]
+ignore_missing_imports = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = false
+plugins = []
+pretty = true
+show_error_codes = true
+disable_error_code = [
+    "annotation-unchecked",
+]

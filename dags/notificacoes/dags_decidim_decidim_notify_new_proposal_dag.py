@@ -1,6 +1,4 @@
-"""
-DAG to query Decidim software recent proposals and send result to
-telegram chat.
+"""DAG to query Decidim software recent proposals and send result to telegram chat.
 
 The DAG flow is:
 1. [task: get_update_date] Get the last telegram message proposal date.
@@ -21,12 +19,11 @@ If there's new messages to send, call [send_telegram_messages].
 # pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
 
 import logging
-from pathlib import Path
 import time
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Union
 
-from plugins.yaml.config_reader import read_yaml_files_from_directory
 from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.operators.empty import EmptyOperator
@@ -35,6 +32,7 @@ from telegram.error import RetryAfter
 from tenacity import RetryError
 
 from plugins.decidim_hook import DecidimHook
+from plugins.yaml.config_reader import read_yaml_files_from_directory
 
 # from airflow_commons.slack_messages import send_slack
 
@@ -44,29 +42,34 @@ MESSAGE_COOLDOWN_DELAY = 30
 MESSAGE_COOLDOWN_RETRIES = 10
 
 
-class DecidimNotifierDAGGenerator:
+class DecidimNotifierDAGGenerator:  # noqa: D101
     def generate_dag(
         self,
         telegram_config: str,
         component_id: str,
         process_id: str,
         start_date: str,
+        end_date: str,
         **kwargs,
     ):
         self.component_id = component_id
         self.process_id = process_id
 
         self.telegram_conn_id = telegram_config["telegram_conn_id"]
-        self.telegram_chat_id = telegram_config["telegram_moderation_chat_id"]
-        self.telegram_topic_id = telegram_config["telegram_modereation_topic_id"]
-        
-        self.most_recent_msg_time = f"most_recent_msg_time_{process_id}"
-        self.start_date = datetime.fromisoformat(start_date.isoformat())
+        self.telegram_chat_id = telegram_config["telegram_group_id"]
+        self.telegram_topic_id = telegram_config["telegram_moderation_proposals_topic_id"]
 
+        self.most_recent_msg_time = f"most_recent_msg_time_{process_id}"
+        self.start_date = start_date if isinstance(start_date, str) else start_date.strftime("%Y-%m-%d")
+        if end_date is not None:
+            self.end_date = end_date if isinstance(end_date, str) else end_date.strftime("%Y-%m-%d")
+        else:
+            self.end_date = end_date
         # DAG
         default_args = {
             "owner": "Paulo G./Thais R.",
             "start_date": self.start_date,
+            "end_date": self.end_date,
             "depends_on_past": False,
             "retries": 0,
             # "on_failure_callback": send_slack,
@@ -81,14 +84,15 @@ class DecidimNotifierDAGGenerator:
             description=__doc__,
             max_active_runs=1,
             tags=["notificação", "decidim"],
+            is_paused_upon_creation=False,
         )
         def dedicim_notify_new_proposals():
             @task
             def get_update_date(dag_start_date: datetime) -> datetime:
-                """Airflow task that retrieve last proposal update date from
-                airflow variables.
+                """Airflow task that retrieve last proposal update date from airflow variables.
 
-                Returns:
+                Returns
+                -------
                     datetime: last proposal update from airflow variables.
                 """
                 date_format = "%Y-%m-%d %H:%M:%S%z"
@@ -105,73 +109,65 @@ class DecidimNotifierDAGGenerator:
 
             @task
             def get_proposals(component_id: int, update_date: datetime):
-                """Airflow task that uses variable `graphql` to request
-                proposals on dedicim API.
+                """Airflow task that uses variable `graphql` to request proposals on dedicim API.
 
                 Args:
+                ----
                     component_id (int): id of the component to get updates from.
                     update_date (datetime): last proposals update date.
 
                 Returns:
+                -------
                     dict: result of decidim API query on proposals.
                 """
-
-                component_dict = DecidimHook(
-                    DECIDIM_CONN_ID, component_id=component_id
-                ).get_component(update_date_filter=update_date)
+                component_dict = DecidimHook(DECIDIM_CONN_ID, component_id=component_id).get_component(
+                    update_date_filter=update_date
+                )
 
                 return component_dict
 
             @task(multiple_outputs=True)
-            def mount_telegram_messages(
-                component_id, proposals_json: dict, update_date: datetime
-            ) -> dict:
-                """Airflow task that parse proposals json, select only new or
-                updated proposal, get the max proposal date (new or update) and
-                mount message for telegram.
+            def mount_telegram_messages(component_id, proposals_json: dict, update_date: datetime) -> dict:
+                """Airflow task that parse proposals json, to mount telegram messages.
 
                 Args:
+                ----
                     proposals (dict): list of proposals received on function
                         `get_proposals`.
                     update_date (datetime): last proposals update date.
 
                 Returns:
+                -------
                     dict: "proposals_messages" (list): new/updated proposals to
                             send on telegram.
                         "max_datetime" (str): max proposal date (new or update).
 
                 """
-
-                logging.info(f"Recived proposals {proposals_json}")
+                logging.info("Recived proposals %s", proposals_json)
                 result: dict[str, Union[list, datetime, None]] = {
                     "proposals_messages": [],
                     "max_datetime": None,
                 }
 
-                proposals_df = DecidimHook(
-                    DECIDIM_CONN_ID, component_id
-                ).component_json_to_dataframe(proposals_json)
+                proposals_df = DecidimHook(DECIDIM_CONN_ID, component_id).component_json_to_dataframe(
+                    proposals_json
+                )
                 if proposals_df.empty:
                     return result
 
                 # filter dataframe to only newer than update_date
                 proposals_df_new = proposals_df[
-                    (proposals_df["publishedAt"] > update_date)
-                    | (proposals_df["updatedAt"] > update_date)
+                    (proposals_df["publishedAt"] > update_date) | (proposals_df["updatedAt"] > update_date)
                 ].copy()
 
                 for _, row in proposals_df_new.iterrows():
                     state = row["state"]
 
-                    organization_name = (
-                        row["author.organizationName"]
-                        if "author.organizationName" in row
-                        else ""
-                    )
-                    author_name = row["author.name"] if "author.name" in row else "-"
-
+                    organization_name = row.get("author.organizationName", "")
+                    author_name = row.get("author.name", "-")
+                    formated_date = row["date"].strftime("%d/%m/%Y %H:%M")
                     proposal_message = (
-                        f"{state['emoji']} Proposta <b>{state['label']}</b>em {row['date'].strftime('%d/%m/%Y %H:%M')}"
+                        f"{state['emoji']} Proposta <b>{state['label']}</b>em {formated_date}"
                         "\n"
                         "\n<b>Proposta</b>"
                         f"\n{row['title.translation']}"
@@ -191,22 +187,22 @@ class DecidimNotifierDAGGenerator:
 
                 result["max_datetime"] = proposals_df_new["date"].max()
 
-                logging.info(f"Built {len(result['proposals_messages'])} menssages.")
+                logging.info("Built %s menssages.", len(result["proposals_messages"]))
                 return result
 
             @task.branch
             def check_if_new_proposals(selected_proposals: list) -> str:
-                """Airflow task branch that check if there is new or updated
-                proposals to send on telegram.
+                """Airflow task branch that check if there is new or updated proposals to send on telegram.
 
                 Args:
+                ----
                     selected_proposals (list): list of selected proposals
                         messages to send on telegram.
 
                 Returns:
+                -------
                     str: next Airflow task to be called
                 """
-
                 if selected_proposals["proposals_messages"]:
                     return "send_telegram_messages"
                 else:
@@ -217,6 +213,7 @@ class DecidimNotifierDAGGenerator:
                 """Airflow task to send telegram messages.
 
                 Args:
+                ----
                     proposals_messages (list): List of proposals telegram
                         messages to be send.
                 """
@@ -224,36 +221,37 @@ class DecidimNotifierDAGGenerator:
                     for _ in range(MESSAGE_COOLDOWN_RETRIES):
                         try:
                             TelegramHook(
-                                telegram_conn_id=self.telegram_conn_id, chat_id=self.telegram_chat_id
-                            ).send_message(api_params={"text": message,                                     
-                                                       "message_thread_id": self.telegram_topic_id,})
+                                telegram_conn_id=self.telegram_conn_id,
+                                chat_id=self.telegram_chat_id,
+                            ).send_message(
+                                api_params={
+                                    "text": message,
+                                    "message_thread_id": self.telegram_topic_id,
+                                }
+                            )
                             break
                         except (RetryError, RetryAfter) as e:
                             logging.info("Exception caught: %s", e)
                             logging.warning(
-                                "Message refused by Telegram's flood control. "
-                                "Waiting %d seconds...",
+                                "Message refused by Telegram's flood control. Waiting %d seconds...",
                                 MESSAGE_COOLDOWN_DELAY,
                             )
                             time.sleep(MESSAGE_COOLDOWN_DELAY)
 
             @task
             def save_update_date(max_datetime: str):
-                """Airflow task to update last proposal datetime saved on
-                airflow variables.
+                """Airflow task to update last proposal datetime saved on airflow variables.
 
                 Args:
+                ----
                     max_datetime (str): last proposal datetime
                 """
-
                 Variable.set(self.most_recent_msg_time, max_datetime)
 
             # Instantiation
             update_date = get_update_date(start_date)
             proposals_json = get_proposals(component_id, update_date)
-            selected_proposals = mount_telegram_messages(
-                component_id, proposals_json, update_date
-            )
+            selected_proposals = mount_telegram_messages(component_id, proposals_json, update_date)
             check_if_new_proposals_task = check_if_new_proposals(selected_proposals)
 
             # Orchestration
