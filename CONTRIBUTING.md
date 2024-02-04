@@ -1,167 +1,88 @@
-# Como contribuir com o AIRFLOW-DAGS?
+# Como contribuir?
 
-Estamos muito felizes por você estar lendo isso, seja bem vindo ao time de serviços de dados.
-Seguem algumas informações necessárias para iniciar sua contribuição!
+Antes de iniciar sua contribuição, recomendamos que revise nosso [Onboarding](https://gitlab.com/groups/lappis-unb/decidimbr/servicos-de-dados/-/wikis/Onboarding).
 
-## Politica de Branchs
-A nomeclatura de branches que segue o padrão "tipo-da-mudança/descrição" é uma abordagem estruturada e informativa para gerenciar branches em repositórios de controle de versão, especialmente no contexto de commits convencionais. Essa convenção de nomenclatura utiliza tokens derivados dos tipos de mudanças definidos no padrão de commits convencionais para categorizar as branches de forma clara e compreensível.
-A estrutura "tipo-da-mudança/nome-descritivo" pode ser desdobrada da seguinte maneira:
+Esse guia apresenta normas e informações para auxiliar no fluxo de desenvolvimento e manutenção de DAGs.
+
+## Git workflow
+
+O modelo que vamos seguir se baseia em duas branches principais, a "main" e "development", além das ramificações secundárias para features ou correções de bugs. Essa estrutura torna mais claro o ciclo de vida do desenvolvimento, desde a criação de novas funcionalidades até a implantação de versões estáveis.
+
+### Diagrama do git flow
+
+![02_Feature_branches.svg](../airflow-dags/docs/img/git_flow.svg)
+
+#### Fluxo de Desenvolvimento
+
+Primeiramente, **cada nova mudança deve ser desenvolvida em uma branch exclusiva**, o que facilita o gerenciamento de mudanças e a colaboração da equipe.
+
+Uma vez que a mudança está pronta para ser incorporada ao projeto, um "Merge Request" (MR) deve ser aberto para a branch "development". Isso permite que a equipe revise a alteração, compartilhe feedback e assegure a aderência aos padrões de qualidade e ao objetivo do projeto.
+
+Após a aprovação e testes bem-sucedidos em um ambiente de teste ou "stage", a alteração está pronta para ser mesclada na branch "development". Somente após ter sido testada e aprovada nesse ambiente que um commit de "development" para "main" deve ser realizado. Essa abordagem ajuda a manter a branch "main" como uma representação estável e confiável do código do projeto, garantindo que apenas as alterações devidamente validadas sejam incorporadas à versão principal.
+
+#### Nomeclatura de branches
+
+A nomeclatura de branches que segue o padrão **"tipo-da-mudança/descrição"** é uma abordagem estruturada e informativa para gerenciar branches em repositórios de controle de versão, especialmente no contexto de commits convencionais. Essa convenção de nomenclatura utiliza tokens derivados dos tipos de mudanças definidos no padrão de commits convencionais para categorizar as branches de forma clara e compreensível.
+
+A estrutura **"tipo-da-mudança/nome-descritivo"** pode ser desdobrada da seguinte maneira:
+
+1. **Tipo da Mudança (Token)**: O tipo da mudança é um token que descreve a natureza da alteração que está sendo realizada na branch. Esses tokens são extraídos dos tipos descritos no Conventional Commits, e estão descritos na seção `Politica de Commits.`
+
+2. **descrição**: É uma breve descrição que esclarece o propósito da branch de forma clara e concisa. Deve explicar o que está sendo desenvolvido na branch, para que outras pessoas da equipe possam entender facilmente a sua finalidade.
+
+Por exemplo, se você estiver criando uma branch para adicionar um novo recurso de pesquisa em um projeto de software, a nomeclatura pode seguir o formato "feat/relatorio-mobilizacao" ou "feat/busca." Isso torna evidente que a branch se destina à implementação de um novo recurso de pesquisa.
 
 
-Tipo da Mudança (Token): O tipo da mudança é um token que descreve a natureza da alteração que está sendo realizada na branch. Esses tokens são extraídos dos tipos descritos no Conventional Commits, e estão descritos na seção `Politica de Commits.`
-
-
-Descrição: É uma breve descrição que esclarece o propósito da branch de forma clara e concisa. Deve explicar o que está sendo desenvolvido na branch, para que outras pessoas da equipe possam entender facilmente a sua finalidade. 
-A Convenções de nomenclatura utilizada será a `Kebab case`, que utliza traço para separar as palavras
-
-Por exemplo, se você estiver criando uma branch para adicionar um novo recurso de pesquisa em um projeto de software, a nomeclatura pode seguir o formato `feat/search-feature` ou `feat/implement-search.` Isso torna evidente que a branch se destina à implementação de um novo recurso de pesquisa.
 
 ## Politica de Commits
-<details>
-<summary>Prefixo</summary>
 
-## feat:
+A nossa política de commits adota o padrão [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) como diretriz fundamental para o registro de alterações no nosso código. Este padrão incentiva a clareza e consistência nas mensagens de commit, facilitando a compreensão e rastreamento das mudanças ao longo do tempo. 
 
-Utilizado para novas funcionalidades ou adições ao código.
+Padão de commit
+### **prefixo(sufixo): descrição**
+
+**Exemplo**: 
+```
+docs(dag-notificacao-proposta): documentação inicial da dag de envio de mensagem de novas propostas.
+```
+
+### Prefixo
+
+- **feat**: Utilizado para novas funcionalidades ou adições ao código. Feat de features.
+- **fix**: Usado para correções de bugs.
+- **chore**: Geralmente associado a tarefas de manutenção, ajustes de configuração ou outras atividades não relacionadas a funcionalidades ou bugs.
+- **docs**: Reservado para alterações na documentação.
+- **refactor**: Utilizado quando há refatoração de código sem alterar comportamento externo.
+- **test**: Associado a adições ou modificações nos testes.
+- **build**: Relacionado a mudanças no sistema de build ou dependências.
+- **ci**: Envolvendo ajustes ou melhorias em configurações de integração contínua.
+- **perf**: Usado para melhorias de desempenho.
+- **revert**: Utilizado para reverter uma alteração anterior.
 
 
-## fix:
-
-Usado para correções de bugs.
-
-
-## chore:
-
-Geralmente associado a tarefas de manutenção, ajustes de configuração ou outras atividades não relacionadas a funcionalidades ou bugs.
-
-## docs:
-
-Reservado para alterações na documentação.
-
-## refactor:
-
-Utilizado quando há refatoração de código sem alterar comportamento externo.
-
-## test:
-
-Associado a adições ou modificações nos testes.
-
-## build:
-
-Relacionado a mudanças no sistema de build ou dependências.
-
-## ci:
-
-Envolvendo ajustes ou melhorias em configurações de integração contínua.
-
-## perf:
-
-Usado para melhorias de desempenho.
-
-## revert:
-
-Utilizado para reverter uma alteração anterior.
-
-</details>
-
---- 
-
-<details>
-<summary>Sufixo</summary>
-
-<br>
+### Sufixo
 
 No sufixo, deve estar em parentese aonde que está sendo feita a mudança, seguido de dois pontos e sua mensagem.
 
-**Exemplo**: `docs(dag-notify-proposals): documentação inicial da dag de envio de mensagem de novas propostas`.
 
-</details>
+## Revisão e qualidade do código
 
-[< voltar](padroes-do-projeto)
+Para manter a qualidade do código, adotamos uma série de medidas automatizadas e de padrão de código. 
 
-## Politica de Merge Request
-<details>
-<summary>Description</summary>
+### Pre-commit
 
-<br>
+Para ajudar o desenvolvedor com os gargalos que podem ser gerados durante os testes de integração contínua, a ferramenta [pre-commit](https://pre-commit.com/) analisa o código que será commitado e realiza algumas alterações na formatação desse código, seguindo padrões de boas práticas python.
 
-![image](uploads/584baff990dec8c9b2e66f6e29dc38ad/image.png)
+Para instalar as dependências utilize o comando:
 
-## Template
+```
+pip install -r requirements.txt
+```
+Para instalar:
 
-```md
-### Descrição
-Este pedido de merge aborda e descreve o problema ou história do usuário que está sendo tratado.
-
-### Alterações Realizadas
-Forneça trechos de código ou capturas de tela conforme necessário.
-
-### Problemas Relacionados
-Forneça links para os problemas ou solicitações de funcionalidades relacionados.
-
-### Notas Adicionais
-Inclua qualquer informação extra ou considerações para os revisores, como áreas impactadas no código-fonte.
-
-### Listas de Verificação do Pedido de Merge
-- [ ] O código segue as diretrizes de codificação do projeto.
-- [ ] A documentação reflete as alterações realizadas.
-- [ ] Cumpre os requisitos dos testes unitários.
-
-### Issue referenciada
-
-Closes <link-da-issue>
+```
+pre-commit install
 ```
 
-</details>
-
----
-
-<details>
-<summary>Tags</summary>
-
-<br>
-
-![image](uploads/877964133f49473f83916df5eab2267a/image.png)
-
-## Assignees
-
-Indique os responsáveis pelo desenvolvimento do PR/MR.
-
-## Reviewers
-
-Se houver algum supervisor acompanhando o desenvolvimento da Issue referente ao PR/MR, marque-o. Caso contrário, deixe em branco.
-
-### Feature
-
-Usado quando o PR/MR inclue alguma nova funcionalidade ao produto.
-
-### Bug
-
-Usado quando o PR/MR resolve algum bug.
-
-### Hotfix
-
-Usado quando o PR/MR inclui alguma modificacao relativamente curta e rapida de revisar.
-
-### Refactor
-
-Usado quando o PR/MR inclui refatoracao de codigo.
-
-### Testing
-
-Usado quando o PR/MR inclui testes para o software.
-
-### Enhancement
-
-Usado quando o PR/MR inclui melhorias ou modificacoes que nao se enquadram em uma nova funcionalidade.
-
-### Documentation
-
-Usado quando o PR/MR inclui modificacoes em documentacao.
-
-</details>
-
-[< voltar](padroes-do-projeto)
-
-## Padrões de qualidade do código e testes
+Agora tudo que for commitado irá passar pelo pre-commit, e as alterações necessárias serão feitas pela ferramenta. Após as alterações é necessário adicionar e commitar novamente.
 
