@@ -1,40 +1,41 @@
-
-"""
-Class for authenticating with Decidim using Airflow connection details,
-retrieving information about proposals, and extracting related comments.
-
-Note:
-    This class extends the ComponentBaseHook class.
-"""
-
 # pylint: disable=invalid-name
 
 
 import logging
 import re
+from datetime import datetime
 from json import loads
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
-from datetime import datetime
+
 from plugins.components.base_component.component import ComponentBaseHook
 
+
 class ProposalsHook(ComponentBaseHook):
+    """Class for retrieving information about proposals, and extracting related comments.
+
+    Note:
+    ----
+        This class extends the `ComponentBaseHook` class.
+
+    """
 
     def get_component(self, **kwargs) -> dict[str, str]:
         """
         Retrieves information about the Decidim component, proposals.
 
         Args:
+        ----
             **kwargs: Additional keyword arguments.
 
         Returns:
+        -------
             dict[str, str]: Information about the Decidim component.
         """
         update_date_filter: datetime = kwargs.get("update_date_filter", None)
-        
         graphql_query = self.graphql.get_graphql_query_from_file(
             Path(__file__).parent.joinpath(
                 "../gql/proposals/get_proposals_by_component_id_without_filter_date.gql"
@@ -42,14 +43,15 @@ class ProposalsHook(ComponentBaseHook):
         )
         variables = {"id": self.component_id}
 
-        
         if update_date_filter is not None:
             graphql_query = self.graphql.get_graphql_query_from_file(
-                Path(__file__).parent.joinpath(
-                "../gql/proposals/get_proposals_by_component_id.gql"
+                Path(__file__).parent.joinpath("../gql/proposals/get_proposals_by_component_id.gql")
             )
-        )
-            variables["filter_date"] = update_date_filter.strftime("%Y-%m-%d") if isinstance(update_date_filter, datetime) else update_date_filter
+            variables["filter_date"] = (
+                update_date_filter.strftime("%Y-%m-%d")
+                if isinstance(update_date_filter, datetime)
+                else update_date_filter
+            )
 
         result = None
         for page in self.graphql.run_graphql_paginated_query(
@@ -58,14 +60,14 @@ class ProposalsHook(ComponentBaseHook):
             if result is None:
                 result = page
             else:
-                result["data"]["component"][self.component_type.lower()][
-                    "nodes"
-                ].extend(
+                result["data"]["component"][self.component_type.lower()]["nodes"].extend(
                     page["data"]["component"][self.component_type.lower()]["nodes"]
                 )
 
         logging.info(
-            f"Total quantity of {self.component_type.capitalize()}: {len(result['data']['component'][self.component_type.lower()]['nodes'])}"
+            "Total quantity of %s: %s",
+            self.component_type.capitalize(),
+            len(result["data"]["component"][self.component_type.lower()]["nodes"]),
         )
         return result["data"]["component"]
 
@@ -74,41 +76,37 @@ class ProposalsHook(ComponentBaseHook):
         Retrieves comments associated with the Decidim component's proposals.
 
         Args:
+        ----
             **kwargs: Additional keyword arguments.
 
         Returns:
+        -------
             dict: Parsed comments in JSON format.
         """
         update_date_filter = kwargs.get("update_date_filter")
         if update_date_filter is None:
             logging.error("update_date_filter-(datetime) is needed.")
             raise AttributeError
-        component = self.get_component() # Get all the proposals.
+        component = self.get_component()  # Get all the proposals.
         proposals = component[self.component_type.lower()]["nodes"]
 
         comments = []
         for proposal in proposals:
-            comments.extend(
-                self.get_comments_threads(
-                    proposal["comments"], root_component_id=proposal["id"]
-                )
-            )
+            comments.extend(self.get_comments_threads(proposal["comments"], root_component_id=proposal["id"]))
 
         df = pd.DataFrame(comments)
 
         if df.empty:
             return None
 
-        df["mask_date"] = pd.to_datetime(
-            df["creation_date"], utc=True, format="ISO8601"
-        )
+        df["mask_date"] = pd.to_datetime(df["creation_date"], utc=True, format="ISO8601")
         df_mask = df["mask_date"] > update_date_filter
 
         link_base = self.get_component_link()
-        logging.info(f"Dataframe columns: {df.columns}")
+        logging.info("Dataframe columns: %s", df.columns)
         ids = np.char.array(df["root_component_id"].values, unicode=True)
         df = df.assign(link=(link_base + "/" + ids).astype(str))
-        
+
         comments_as_json = loads(df.loc[df_mask, ::].to_json(orient="records"))
         return comments_as_json
 
@@ -116,12 +114,13 @@ class ProposalsHook(ComponentBaseHook):
         """Parse decidim API json return to a pandas DataFrame.
 
         Args:
+        ----
             proposals (dict): API json return
 
         Returns:
+        -------
             pd.DataFrame: json parsed into pandas DataFrame
         """
-
         link_base = self.get_component_link()
 
         json_component = json_component[self.component_type.lower()]["nodes"]
@@ -132,9 +131,7 @@ class ProposalsHook(ComponentBaseHook):
             return df
 
         df["_category"] = ""
-        category_columns_in_df = set(["category.name.translation", "category"]).intersection(
-            set(df.columns)
-        )
+        category_columns_in_df = set(["category.name.translation", "category"]).intersection(set(df.columns))
         for column in category_columns_in_df:
             df["_category"] += df[column]
 
@@ -174,12 +171,8 @@ class ProposalsHook(ComponentBaseHook):
         df_mask = df["updatedAt"] > df["publishedAt"]
         get_state = lambda state, default: state_map.get(state, state_map.get(default))
 
-        df.loc[df_mask, "state"] = df[df_mask]["state"].apply(
-            get_state, args=("others",)
-        )
-        df.loc[(~df_mask), "state"] = df[(~df_mask)]["state"].apply(
-            get_state, args=("new",)
-        )
+        df.loc[df_mask, "state"] = df[df_mask]["state"].apply(get_state, args=("others",))
+        df.loc[(~df_mask), "state"] = df[(~df_mask)]["state"].apply(get_state, args=("new",))
 
         df.loc[df_mask, "date"] = df[df_mask]["updatedAt"]
         df.loc[(~df_mask), "date"] = df[(~df_mask)]["publishedAt"]
@@ -187,9 +180,7 @@ class ProposalsHook(ComponentBaseHook):
         df.replace({None: "-", "": "-"}, inplace=True)
 
         if "author.organizationName" in df:
-            df["author.organizationName"].replace(
-                to_replace=["Brasil Participativo"], value="", inplace=True
-            )
+            df["author.organizationName"].replace(to_replace=["Brasil Participativo"], value="", inplace=True)
             df["author.organizationName"].replace({"-": ""}, inplace=True)
 
         df.sort_values(by=["updatedAt"], inplace=True)

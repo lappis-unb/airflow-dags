@@ -1,0 +1,11 @@
+FROM python:3.8-slim
+
+WORKDIR /py-env
+
+COPY ./requirements* /py-env
+
+RUN pip3 install -r requirements.testing.txt && pip3 install -r requirements.txt
+
+WORKDIR /py-app
+COPY setup* .
+COPY pyproject.toml .

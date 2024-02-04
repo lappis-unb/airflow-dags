@@ -1,0 +1,21 @@
+query ComponentsInConferences($date: String) {
+  conferences(filter: {publishedSince: $date}) {
+    ... on Conference {
+      id
+      __typename
+      startDate
+      endDate
+      title {
+        translation(locale: "pt-BR")
+      }
+      slug
+      components {
+        id
+        __typename
+        name {
+          translation(locale: "pt-BR")
+        }
+      }
+    }
+  }
+}
