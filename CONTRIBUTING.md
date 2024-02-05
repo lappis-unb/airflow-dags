@@ -89,7 +89,7 @@ Para manter a qualidade do código, adotamos uma série de medidas automatizadas
         ```
 
 2. Definir um limite para os loops
-   - ***Justificativa:*** Garantir limites previsíveis, sejam limites superiores ou infeirores. para loops para a execução controlada de DAGs. Isso simplifica a análise estática e contribui para uma pipeline mais robusta.
+   - ***Justificativa:*** Garantir limites previsíveis nos loops, sejam limites superiores ou inferiores. Isso simplifica a análise estática e contribui para uma pipeline mais robusta.
 
       - *Exemplo Ruim:*
 
@@ -123,7 +123,7 @@ Para manter a qualidade do código, adotamos uma série de medidas automatizadas
 
        - [Porque ***list comprehension*** é mais rapida que um for normal com append](https://stackoverflow.com/a/30245465/11281346)
 
-4. Nenhuma função deve ser maiores que 60 linhas.
+4. Nenhuma função deve ser maior que 60 linhas.
    - ***Justificativa:*** No contexto do Airflow, funções mais curtas e focadas são cruciais para manter a clareza das tarefas. Isso facilita a manutenção, testes e compreensão das DAGs.
 
      - *Exemplo Ruim:*
@@ -184,7 +184,7 @@ Para manter a qualidade do código, adotamos uma série de medidas automatizadas
            # lógica de processamento usando local_data
        ```
 
-7. Cada função chamadora deve verificar o valor de retorno de funções não-void.
+7. Cada função, com o retorno não-none, chamada deve ter verificado o valor de retorno.
    - ***Justificativa:*** Verificar os retornos de tarefas é crucial para identificar falhas e realizar ações adequadas em caso de erros. Ignorar valores de retorno pode resultar em execuções não detectadas.
      - *Exemplo Ruim:*
 
@@ -201,7 +201,7 @@ Para manter a qualidade do código, adotamos uma série de medidas automatizadas
            raise ValueError("Error in processing data")
        ```
 
-8. Todo codigo deve ter seu arquivo de testes e deve passar na analise estatica do Mypy.
+8. Todo código deve ter seu arquivo de testes e deve passar na análise estática do Mypy.
     - ***Justificativa:*** Incorporar testes unitários e análise estática com o MyPy é crucial para assegurar a robustez do código. O MyPy, ao realizar verificações estáticas de tipo, ajuda a identificar potenciais bugs antes que o código entre em produção, aumentando a confiança na qualidade do software.
 
 ### Pre-commit
