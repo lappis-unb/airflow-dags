@@ -10,7 +10,7 @@ O modelo que vamos seguir se baseia em duas branches principais, a "main" e "dev
 
 ### Diagrama do git flow
 
-![02_Feature_branches.svg](../airflow-dags/docs/img/git_flow.svg)
+![02_Feature_branches.svg](docs/img/git_flow.svg)
 
 #### Fluxo de Desenvolvimento
 
