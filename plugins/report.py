@@ -66,7 +66,53 @@ class ReportGenerator:
 
         return daily_graph
     
-    '''def load_data(self, shp_path, json_path):
+    def generate_device_graph(self, matomo_data):
+        matomo_data= matomo_data.sort_values('nb_visits', ascending=False).head(3)
+
+        fig, ax = plt.subplots()
+        ax.pie(matomo_data['nb_visits'], labels=matomo_data['label'], autopct='%1.1f%%')
+        ax.axis('equal')  
+
+        plt.show()
+
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
+
+        device_graph = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+        buffer.close()
+
+        return device_graph
+    
+    def generate_theme_ranking(self, df_bp):
+        df_bp['nome_tema'] = df_bp['proposal_category_title'].apply(lambda x: x['name']['translation'] if isinstance(x, dict) and 'name' in x and 'translation' in x['name'] else None)
+
+        df_filtered = df_bp.dropna(subset=['nome_tema'])
+
+        rank_category = df_filtered.groupby('nome_tema').agg(
+            Quantidade_de_Propostas=pd.NamedAgg(column='proposal_id', aggfunc='count'),
+            Quantidade_de_Votos=pd.NamedAgg(column='proposal_total_votes', aggfunc='sum'),
+            Quantidade_de_Comentários=pd.NamedAgg(column='proposal_total_comments', aggfunc='sum')
+        ).reset_index()
+
+        rank_category.columns = ['Tema', 'Quantidade de Propostas', 'Quantidade de Votos', 'Quantidade de Comentários']
+
+        rank_temas = rank_category.sort_values(by='Quantidade de Propostas', ascending=False)
+
+        return rank_temas
+    
+    def generate_top_proposals(self, df_bp):
+        df_ranking = df_bp.sort_values(by='proposal_total_votes', ascending=False)
+        
+        top_proposals = df_ranking.head(20)
+        
+        columns = ['proposal_id', 'proposal_title', 'proposal_category_title', 'proposal_total_votes', 'proposal_total_comments']
+        
+        top_proposals_filtered = top_proposals[columns]
+        
+        return top_proposals_filtered
+    
         brasil = gpd.read_file(shp_path)
         dados = pd.read_json(json_path)
         return brasil, dados
