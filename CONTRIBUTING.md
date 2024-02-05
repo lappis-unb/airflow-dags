@@ -32,17 +32,17 @@ A estrutura **"tipo-da-mudança/nome-descritivo"** pode ser desdobrada da seguin
 
 Por exemplo, se você estiver criando uma branch para adicionar um novo recurso de pesquisa em um projeto de software, a nomeclatura pode seguir o formato "feat/relatorio-mobilizacao" ou "feat/busca." Isso torna evidente que a branch se destina à implementação de um novo recurso de pesquisa.
 
-
-
 ## Politica de Commits
 
-A nossa política de commits adota o padrão [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) como diretriz fundamental para o registro de alterações no nosso código. Este padrão incentiva a clareza e consistência nas mensagens de commit, facilitando a compreensão e rastreamento das mudanças ao longo do tempo. 
+A nossa política de commits adota o padrão [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) como diretriz fundamental para o registro de alterações no nosso código. Este padrão incentiva a clareza e consistência nas mensagens de commit, facilitando a compreensão e rastreamento das mudanças ao longo do tempo.
 
 Padão de commit
+
 ### **prefixo(sufixo): descrição**
 
-**Exemplo**: 
-```
+**Exemplo**:
+
+```markdown
 docs(dag-notificacao-proposta): documentação inicial da dag de envio de mensagem de novas propostas.
 ```
 
@@ -59,15 +59,13 @@ docs(dag-notificacao-proposta): documentação inicial da dag de envio de mensag
 - **perf**: Usado para melhorias de desempenho.
 - **revert**: Utilizado para reverter uma alteração anterior.
 
-
 ### Sufixo
 
 No sufixo, deve estar em parentese aonde que está sendo feita a mudança, seguido de dois pontos e sua mensagem.
 
-
 ## Revisão e qualidade do código
 
-Para manter a qualidade do código, adotamos uma série de medidas automatizadas e de padrão de código. 
+Para manter a qualidade do código, adotamos uma série de medidas automatizadas e de padrão de código.
 
 ### Pre-commit
 
@@ -75,14 +73,14 @@ Para ajudar o desenvolvedor com os gargalos que podem ser gerados durante os tes
 
 Para instalar as dependências utilize o comando:
 
-```
+```bash
 pip install -r requirements.txt
 ```
-Para instalar:
 
-```
+Para inicializar o pre-commit:
+
+```bash
 pre-commit install
 ```
 
 Agora tudo que for commitado irá passar pelo pre-commit, e as alterações necessárias serão feitas pela ferramenta. Após as alterações é necessário adicionar e commitar novamente.
-
