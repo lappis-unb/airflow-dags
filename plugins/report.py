@@ -2,11 +2,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import re
 from io import BytesIO
-import geopandas as gpd
-from docx import Document
 import base64
-from docx.shared import Pt
-from docx.enum.table import WD_ALIGN_VERTICAL
+import geopandas as gpd
+import pandas as pd
+from string import Template
+from pathlib import Path
+from io import StringIO
+
 
 class ReportGenerator:
     def __init__(self):
@@ -29,10 +31,10 @@ class ReportGenerator:
 
         return df_bp
 
-    def calculate_totals(self, bp_data):
-        num_proposals = len(bp_data)
-        num_votes = sum(proposal['proposal_total_votes'] for proposal in bp_data)
-        num_comments = sum(proposal['proposal_total_comments'] for proposal in bp_data)
+    def calculate_totals(self, df_bp):
+        num_proposals = len(df_bp)
+        num_votes = df_bp['proposal_total_votes'].sum()
+        num_comments = df_bp['proposal_total_comments'].sum()
         return num_proposals, num_votes, num_comments
 
     def generate_daily_plot(self, df_bp):
@@ -66,11 +68,17 @@ class ReportGenerator:
 
         return daily_graph
     
-    def generate_device_graph(self, matomo_data):
-        matomo_data= matomo_data.sort_values('nb_visits', ascending=False).head(3)
+    def generate_device_graph(self, *matomo_data):
+        
+        dataframes = []
+        for csv_string in matomo_data:
+            df = pd.read_csv(StringIO(csv_string))  # Uso correto do StringIO
+            dataframes.append(df)
+        df_matomo = pd.concat(dataframes, ignore_index=True)
 
+        matomo_data_sorted = df_matomo.sort_values('nb_visits', ascending=False).head(3)
         fig, ax = plt.subplots()
-        ax.pie(matomo_data['nb_visits'], labels=matomo_data['label'], autopct='%1.1f%%')
+        ax.pie(matomo_data_sorted['nb_visits'], labels=matomo_data_sorted['label'], autopct='%1.1f%%')
         ax.axis('equal')  
 
         plt.show()
@@ -113,19 +121,20 @@ class ReportGenerator:
         
         return top_proposals_filtered
     
+    def load_data(self, shp_path, matomo_data):
         brasil = gpd.read_file(shp_path)
-        dados = pd.read_json(json_path)
-        return brasil, dados
-
+        dados_visitas = pd.read_csv(matomo_data)
+        return brasil, dados_visitas
+    
     def filter_and_rename(self, dados, pais, coluna):
         dados_filtrados = dados[dados['country'] == pais]
         dados_filtrados = dados_filtrados.rename(columns={'region': coluna})
         return dados_filtrados
-
+    
     def create_map(self, brasil, dados, index_coluna, join_coluna):
         mapa = brasil.set_index(index_coluna).join(dados.set_index(join_coluna))
         return mapa
-
+    
     def plot_map(self, mapa, coluna):
         fig, ax = plt.subplots(figsize=(12, 8))
         mapa.boundary.plot(ax=ax, linewidth=0.5, color='k')
@@ -141,40 +150,6 @@ class ReportGenerator:
         map_graph = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
         buffer.close()
-
+        
         return map_graph
     
-    def devices_plot(json_path, n=3):
-        dados = pd.read_json(json_path)
-        
-        dados = dados.sort_values('nb_visits', ascending=False).head(n)
-        
-        fig, ax = plt.subplots()
-        ax.pie(dados['nb_visits'], labels=dados['label'], autopct='%1.1f%%')
-        ax.axis('equal')  
-        
-        plt.show()
-
-        buffer = BytesIO()
-        plt.savefig(buffer, format='png')
-        buffer.seek(0)
-
-        dev_graph = base64.b64encode(buffer.getvalue()).decode('utf-8')
-
-        buffer.close()
-
-        return dev_graph'''
-    
-    def insert_data_docx(self, template_path, data_to_insert, daily_graph):
-        doc = Document(template_path)
-
-        table = doc.add_table(rows=1, cols=2)
-        for key, value in data_to_insert:
-            row_cells = table.add_row().cells
-            row_cells[0].text = key
-            row_cells[1].text = str(value)
-
-        doc.add_picture(BytesIO(base64.b64decode(daily_graph)), width=Pt(400), height=Pt(300))
-
-        doc.save(template_path)
-        
