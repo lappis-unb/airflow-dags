@@ -1,0 +1,10 @@
+query ComponentsInParticipatoryProcess($space_id: ID!) {
+  participatoryProcess(id: $space_id) {
+      slug
+      __typename
+      components {
+        id
+        __typename
+      }
+    }
+  }

@@ -1,0 +1,10 @@
+query ComponentsInAssembly($space_id: ID!) {
+  assembly(id: $space_id) {
+    slug
+    __typename
+    components {
+      id
+      __typename
+    }
+  }
+}

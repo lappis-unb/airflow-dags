@@ -1,0 +1,10 @@
+query ComponentsInConferences($space_id: ID!) {
+  conference(id: $space_id) {
+    slug
+    __typename
+    components {
+      id
+      __typename
+    }
+  }
+}

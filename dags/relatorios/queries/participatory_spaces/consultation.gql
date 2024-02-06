@@ -1,0 +1,10 @@
+query ComponentsInConsultations($space_id: ID!) {
+  consultation(id: $space_id) {
+    slug
+    __typename
+    components {
+      id
+      __typename
+    }
+  }
+}
