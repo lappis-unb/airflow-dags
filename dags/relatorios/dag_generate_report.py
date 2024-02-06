@@ -1,6 +1,6 @@
 from airflow.decorators import dag, task
-from plugins.graphql.hooks.graphql import GraphQLHook
-from plugins.report import ReportGenerator
+from plugins.graphql.hooks.graphql_hook import GraphQLHook
+from plugins.reports.report import ReportGenerator
 from airflow.hooks.base import BaseHook
 from pathlib import Path
 from datetime import datetime, timedelta
