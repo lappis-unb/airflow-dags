@@ -75,7 +75,7 @@ class ReportGenerator:
         
         dataframes = []
         for csv_string in matomo_data:
-            df = pd.read_csv(StringIO(csv_string))  # Uso correto do StringIO
+            df = pd.read_csv(StringIO(csv_string)) 
             dataframes.append(df)
         df_matomo = pd.concat(dataframes, ignore_index=True)
 
@@ -155,49 +155,15 @@ class ReportGenerator:
         buffer.close()
         
         return map_graph
-    
-    def devices_plot(json_path, n=3):
-        dados = pd.read_json(json_path)
         
-        dados = dados.sort_values('nb_visits', ascending=False).head(n)
-        
-        fig, ax = plt.subplots()
-        ax.pie(dados['nb_visits'], labels=dados['label'], autopct='%1.1f%%')
-        ax.axis('equal')  
-        
-        plt.show()
-
-        buffer = BytesIO()
-        plt.savefig(buffer, format='png')
-        buffer.seek(0)
-
-        dev_graph = base64.b64encode(buffer.getvalue()).decode('utf-8')
-
-        buffer.close()
-
-        return dev_graph
-    
-    def insert_data_docx(self, template_path, data_to_insert, daily_graph):
-        doc = Document(template_path)
-
-        table = doc.add_table(rows=1, cols=2)
-        for key, value in data_to_insert:
-            row_cells = table.add_row().cells
-            row_cells[0].text = key
-            row_cells[1].text = str(value)
-
-        doc.add_picture(BytesIO(base64.b64decode(daily_graph)), width=Pt(400), height=Pt(300))
-
-        doc.save(template_path)
-        
-    def render_html(template_path, output_path):
+    '''def render_html(template_path, output_path):
         env = Environment(loader=FileSystemLoader(searchpath="./"))
     
         tabela_dados = pd.read_csv("relatorio.csv")
     
         data = {
             "title": "Título Dinâmico",
-            "header": "Conteúdo Dinâmico",
+            "header": "Visão Geral",
             "table_data": tabela_dados.to_html(index=False),
         }
         content = f"<h1> { header }</h1> <!-- Inclui a tabela dinâmica --> {{ table_data | safe }}"
@@ -206,12 +172,13 @@ class ReportGenerator:
         with open(output_path, "w") as output_file:
             output_file.write(rendered_html)
 # Exemplo de template
-# header = "<!DOCTYPE html> <html xmlns:th='http://www.thymeleaf.org'><head><style th:replace='inc/bootstrap :: inc'></style><link rel='stylesheet' href='style.css'></head><body><div id='header'>Put your header content here...</div><div id='footer'>Put your footer content here... <br />Page <span class='pagenumber'></span> of <span class='pagecount'></span></div><div id='content'>"
+header = "<!DOCTYPE html> <html xmlns:th='http://www.thymeleaf.org'><head><style th:replace='inc/bootstrap :: inc'></style><link rel='stylesheet' href='style.css'></head><body><div id='header'>Put your header content here...</div><div id='footer'>Put your footer content here... <br />Page <span class='pagenumber'></span> of <span class='pagecount'></span></div><div id='content'>"
 
-# content = "<h1>{header}</h1> <!-- Inclui a tabela dinâmica --> {table_data}"
+content = "<h1>{header}</h1> <!-- Inclui a tabela dinâmica --> {table_data}"
 
-# footer_path = "</div></body></html>"
-# output_path = "output.html"
+footer_path = "</div></body></html>"
+output_path = "output.html"
 
-# template_path = header + content + footer_path
-# render_html(template_path, output_path)
+template_path = header + content + footer_path
+render_html(template_path, output_path)
+'''

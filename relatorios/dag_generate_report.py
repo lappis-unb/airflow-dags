@@ -112,26 +112,39 @@ def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, met
         logging.exception("Response text: %s", response.text)
         raise error
 
-
 def _generate_report(bp_data, *matomo_data):
     print(bp_data)
-    print(matomo_data)
-    path_to_report = Path(__file__).parent.joinpath("./template_relatorio.docx")
+    print(*matomo_data)
+    print(type(*matomo_data))
+    
     report_generator = ReportGenerator()
     df_bp = report_generator.create_bp_dataframe(bp_data)
+
+    num_proposals, num_votes, num_comments = report_generator.calculate_totals(df_bp)
+    data_to_insert = {
+        "Propostas": num_proposals,
+        "Votos": num_votes,
+        "Comentários": num_comments
+    }
     
-    num_proposals, num_votes, num_comments = report_generator.calculate_totals(bp_data)
     daily_graph = report_generator.generate_daily_plot(df_bp)
+    
+    device_graph = report_generator.generate_device_graph(*matomo_data)
+    rank_temas = report_generator.generate_theme_ranking(df_bp)
+    top_proposals_filtered = report_generator.generate_top_proposals(df_bp)
+    
+    shp_path = Path(__file__).parent.joinpath("./shapefile/estados_2010.shp").resolve()
+    brasil, dados = report_generator.load_data(shp_path, matomo_data[0]) 
+    dados_brasil = report_generator.filter_and_rename(dados, 'br', 'UF')
+    mapa = report_generator.create_map(brasil, dados_brasil, 'sigla', 'UF')
+    
+    map_graph = report_generator.plot_map(mapa, 'nb_visits')
+    
+    final_html = report_generator.generate_html_report(rank_temas, top_proposals_filtered, daily_graph, device_graph, map_graph, template_dir="caminho_para_seu_template")
 
-    data_to_insert = [
-        ("Número total de propostas:", num_proposals),
-        ("Número total de votos:", num_votes),
-        ("Número total de comentários:", num_comments)
-    ]
-    report_generator.insert_data_docx(path_to_report, data_to_insert, daily_graph)
+    return final_html
 
-    return df_bp, daily_graph
-
+        
 @dag(
     default_args={
     "owner": "Joyce/Paulo",
