@@ -1,6 +1,39 @@
 stages:
   - tests
   - lint
+  - copy
+
+Push-new-image-to-registry:
+  stage: copy
+  tags:
+    - docker
+  services:
+    - docker:dind
+  image: docker
+  inherit:
+    default: false
+  script:
+    - echo "---------- install git ----------"
+    - apk update
+    - apk add git
+
+    - echo "---------- Cloning the repository ----------"
+    - git clone https://airflow-docker:$ACCESS_DOCKER_DAGS@gitlab.com/lappis-unb/decidimbr/airflow-docker.git
+
+    - echo "---------- Copying files to build the image ----------"
+    - mv airflow-docker/requirements.txt .
+    - mv airflow-docker/requirements-uninstall.txt .
+    - mv airflow-docker/Dockerfile .
+
+    - echo "---------- Updating the Dockerfile ----------"
+    - echo "COPY ./dags ./dags" >> Dockerfile
+    - echo "COPY ./plugins ./dags" >> Dockerfile 
+    - rm -rf airflow-docker
+
+    - echo "--------- Building the image ----------"
+    - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+    - docker build -t $CI_REGISTRY_IMAGE .
+    - docker push $CI_REGISTRY_IMAGE
 
 default:
   image: python:3.10-slim
