@@ -1,10 +1,10 @@
 stages:
   - lint
   - tests
-  - copy
+  - build
 
-Push-new-image-to-registry:
-  stage: copy
+push-image-to-registry:
+  stage: build
   tags:
     - docker
   services:
@@ -27,7 +27,7 @@ Push-new-image-to-registry:
 
     - echo "---------- Updating the Dockerfile ----------"
     - echo "COPY ./dags ./dags" >> Dockerfile
-    - echo "COPY ./plugins ./dags" >> Dockerfile 
+    - echo "COPY ./plugins ./dags" >> Dockerfile
     - rm -rf airflow-docker
 
     - echo "--------- Building the image ----------"
