@@ -13,13 +13,6 @@ from plugins.reports.report import ReportGenerator
 
 BP_CONN_ID = "bp_conn"
 
-MATOMO_ENPOINTS = [
-    ("VisitsSummary", "get"),
-    ("VisitFrequency", "get"),
-    ("UserCountry", "getRegion"),
-    ("DevicesDetection", "getType"),
-]
-
 
 def _get_components_id_from_participatory_space(participatory_space_id: int, participatory_space_type: str):
     accepted_components_types = ["Proposals"]
@@ -34,9 +27,9 @@ def _get_components_id_from_participatory_space(participatory_space_id: int, par
     )
     query_result = graph_ql_hook.run_graphql_query(query, variables={"space_id": participatory_space_id})
 
-    participatory_space_data = next(iter(query_result["data"].keys()))
+    participatory_space_data = query_result["data"][next(iter(query_result["data"].keys()))]
+    logging.info(participatory_space_data)
     inflect_engine = inflect.engine()
-
     link_space_type = inflect_engine.plural(underscore(participatory_space_data["__typename"]).split("_")[-1])
     participatory_space_url = f"{space_url}/{link_space_type}/{participatory_space_data['slug']}"
 
@@ -129,11 +122,7 @@ def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, met
         raise error
 
 
-def _generate_report(bp_data, *matomo_data):
-    print(bp_data)
-    print(*matomo_data)
-    print(type(*matomo_data))
-
+def _generate_graphs(bp_data, visits_summary, visits_frequency, user_contry, devices_detection):
     report_generator = ReportGenerator()
     df_bp = report_generator.create_bp_dataframe(bp_data)
 
@@ -142,27 +131,33 @@ def _generate_report(bp_data, *matomo_data):
 
     daily_graph = report_generator.generate_daily_plot(df_bp)
 
-    device_graph = report_generator.generate_device_graph(*matomo_data)
+    device_graph = report_generator.generate_device_graph(devices_detection)
     rank_temas = report_generator.generate_theme_ranking(df_bp)
     top_proposals_filtered = report_generator.generate_top_proposals(df_bp)
 
     shp_path = Path(__file__).parent.joinpath("./shapefile/estados_2010.shp").resolve()
-    brasil, dados = report_generator.load_data(shp_path, matomo_data[0])
+    brasil, dados = report_generator.load_data(shp_path, user_contry)
     dados_brasil = report_generator.filter_and_rename(dados, "br", "UF")
     mapa = report_generator.create_map(brasil, dados_brasil, "sigla", "UF")
 
     map_graph = report_generator.plot_map(mapa, "nb_visits")
 
-    final_html = report_generator.generate_html_report(
-        rank_temas,
-        top_proposals_filtered,
-        daily_graph,
-        device_graph,
-        map_graph,
-        template_dir="caminho_para_seu_template",
-    )
+    # final_html = report_generator.generate_html_report(
+    #     rank_temas,
+    #     top_proposals_filtered,
+    #     daily_graph,
+    #     device_graph,
+    #     map_graph,
+    #     template_dir="caminho_para_seu_template",
+    # )
 
-    return final_html
+    return {
+        "rank_temas": rank_temas,
+        "top_proposals": top_proposals_filtered,
+        "daily_graph": daily_graph,
+        "device_graph": device_graph,
+        "map_graph": map_graph,
+    }
 
 
 @dag(
@@ -207,32 +202,43 @@ def generate_report_bp(
         space_id=participatory_space_id, space_type=participatory_space_type
     )
 
-    matomo_tasks = []
-    for module_ep, method_ep in MATOMO_ENPOINTS:
-
-        @task(task_id=f"get_matomo_{module_ep}_{method_ep}")
-        def generator_matomo_extractor(
+    def _get_matomo_extractor(matomo_module: str, matomo_method: str):
+        @task(task_id=f"get_matomo_{matomo_module}_{matomo_method}")
+        def matomo_extractor(
             url: list, filter_start_date: str, filter_end_date: str, module: str, method: str
         ):
             return _get_matomo_data(
                 url=url, start_date=filter_start_date, end_date=filter_end_date, module=module, method=method
             )
 
-        matomo_tasks.append(
-            generator_matomo_extractor(
-                get_components_id_task["participatory_space_url"], start_date, end_date, module_ep, method_ep
-            )
+        return matomo_extractor(
+            get_components_id_task["participatory_space_url"],
+            start_date,
+            end_date,
+            matomo_module,
+            matomo_method,
         )
 
-    @task
-    def generate_report(bp_data, *matomo_data):
-        return _generate_report(bp_data, *matomo_data)
+    matomo_visits_summary_task = _get_matomo_extractor("VisitsSummary", "getUniqueVisitors")
+    matomo_visits_frequency_task = _get_matomo_extractor("VisitFrequency", "get")
+    matomo_user_contry_task = _get_matomo_extractor("UserCountry", "getRegion")
+    matomo_devices_detection_task = _get_matomo_extractor("DevicesDetection", "getType")
+
+    @task(multiple_outputs=True)
+    def generate_report(bp_data, visits_summary, visits_frequency, user_contry, devices_detection):
+        return _generate_graphs(bp_data, visits_summary, visits_frequency, user_contry, devices_detection)
 
     get_components_data_task = get_components_data(
         get_components_id_task["accepted_components"], filter_start_date=start_date, filter_end_date=end_date
     )
 
-    generate_report(get_components_data_task, *matomo_tasks)
+    generate_report(
+        get_components_data_task,
+        visits_summary=matomo_visits_summary_task,
+        visits_frequency=matomo_visits_frequency_task,
+        user_contry=matomo_user_contry_task,
+        devices_detection=matomo_devices_detection_task,
+    )
 
 
 generate_report_bp("test@gmail.com", "2023-01-01", "2024-01-01", 2, "participatory_process")
