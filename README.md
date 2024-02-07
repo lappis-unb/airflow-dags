@@ -4,6 +4,18 @@ Este repositório contém DAGs (Directed Acyclic Graphs) do Apache Airflow. As D
 
 Sobre o projeto [Brasil Participativo](https://brasilparticipativo.presidencia.gov.br/processes/brasilparticipativo/f/26/posts/99)
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Índice**
+
+- [Repositório de DAGs do Brasil Participativo](#reposit%C3%B3rio-de-dags-do-brasil-participativo)
+    - [Pré-requisitos](#pr%C3%A9-requisitos)
+    - [Instalação](#instala%C3%A7%C3%A3o)
+    - [Documentação Auxiliar](#documenta%C3%A7%C3%A3o-auxiliar)
+    - [Estrutura de Repositório](#estrutura-de-reposit%C3%B3rio)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## Pré-requisitos
 
 - [Docker](https://www.docker.com)
