@@ -63,6 +63,8 @@ class ReportGenerator:
 
         buffer = BytesIO()
         plt.savefig(buffer, format="png")
+        with open("/opt/airflow/airflow-tmp/device_graph.png", "wb") as file:
+            plt.savefig(file, format="png")
         buffer.seek(0)
 
         daily_graph = base64.b64encode(buffer.getvalue()).decode("utf-8")
@@ -71,14 +73,9 @@ class ReportGenerator:
 
         return daily_graph
 
-    def generate_device_graph(self, *matomo_data):
-        dataframes = []
-        for csv_string in matomo_data:
-            df = pd.read_csv(StringIO(csv_string))
-            dataframes.append(df)
-        df_matomo = pd.concat(dataframes, ignore_index=True)
-
-        matomo_data_sorted = df_matomo.sort_values("nb_visits", ascending=False).head(3)
+    def generate_device_graph(self, device_data):
+        df = pd.read_csv(StringIO(device_data))
+        matomo_data_sorted = df.sort_values("nb_visits", ascending=False).head(3)
         fig, ax = plt.subplots()
         ax.pie(matomo_data_sorted["nb_visits"], labels=matomo_data_sorted["label"], autopct="%1.1f%%")
         ax.axis("equal")
@@ -87,6 +84,8 @@ class ReportGenerator:
 
         buffer = BytesIO()
         plt.savefig(buffer, format="png")
+        with open("/opt/airflow/airflow-tmp/device_graph.png", "wb") as file:
+            plt.savefig(file, format="png")
         buffer.seek(0)
 
         device_graph = base64.b64encode(buffer.getvalue()).decode("utf-8")
@@ -146,12 +145,12 @@ class ReportGenerator:
 
     def load_data(self, shp_path, matomo_data):
         brasil = gpd.read_file(shp_path)
-        dados_visitas = pd.read_csv(matomo_data)
+        dados_visitas = pd.read_csv(StringIO(matomo_data))
         return brasil, dados_visitas
 
     def filter_and_rename(self, dados, pais, coluna):
-        dados_filtrados = dados[dados["country"] == pais]
-        dados_filtrados = dados_filtrados.rename(columns={"region": coluna})
+        dados_filtrados = dados[dados["metadata_country"] == pais]
+        dados_filtrados = dados_filtrados.rename(columns={"metadata_region": coluna})
         return dados_filtrados
 
     def create_map(self, brasil, dados, index_coluna, join_coluna):
@@ -168,6 +167,8 @@ class ReportGenerator:
 
         buffer = BytesIO()
         plt.savefig(buffer, format="png")
+        with open("/opt/airflow/airflow-tmp/map_visitas_por_estado.png", "wb") as file:
+            plt.savefig(file, format="png")
         buffer.seek(0)
 
         map_graph = base64.b64encode(buffer.getvalue()).decode("utf-8")
