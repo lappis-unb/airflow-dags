@@ -72,8 +72,14 @@ lint-markdown:
 
 .default_pytest: &default_pytest
   script:
-    - pytest .
+    - pytest . --junitxml=pytest_report.xml
   coverage: '/^TOTAL.+?(\d+\%)$/'
+  artifacts:
+    when: always
+    paths:
+      - pytest_report.xml
+    reports:
+      junit: pytest_report.xml
 
 
 pytest-3.8:
