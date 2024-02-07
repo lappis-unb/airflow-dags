@@ -26,40 +26,39 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 
 1. **Configuração de ambiente:** Subir o airflow e minIO.
     - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
-        - **airflow** O airflow se encontra no: http://localhost:8080
-        - **MinIO** O MinIO se encontra no: http://localhost:9001
+        - **airflow** O airflow se encontra no: <http://localhost:8080>
+        - **MinIO** O MinIO se encontra no: <http://localhost:9001>
 
 2. **Airflow:** Configuração do MinIO no Airflow.
     - **Passo 1:** Adicionar variáveis
         - **Nome:** api_decidim
-        - **Valor:** https://lab-decide.dataprev.gov.br/api
+        - **Valor:** <https://lab-decide.dataprev.gov.br/api>
 
     - **Passo 2:** Criar uma conexão para o MinIO no Airflow
-        - **Nome:** minio_connection_id 
-        - **host:** http://minio:9000
+        - **Nome:** minio_connection_id
+        - **host:** <http://minio:9000>
         - **schema:** matomo-daily-csv
         - **login:** lappis
         - **password:** lappisrocks
 
     - **Passo 3:** Criar uma conexão para o Matomo no Airflow
         - **Nome:** matomo_connection_id
-        - **host:** https://ew.dataprev.gov.br/
+        - **host:** <https://ew.dataprev.gov.br/>
         - **login:** 18
         - **password:** [token de acesso produção]
-    
+
     - **Passo 4:** Abrir o MinIO e criar um bucket com o mesmo nome do schema (matomo-daily-csv)
 
 3. **Rodar as tarefas:** Testando a dag.
     - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
-        - **airflow** O airflow se encontra no: http://localhost:8080
-        - **MinIO** O MinIO se encontra no: http://localhost:9001
+        - **airflow** O airflow se encontra no: <http://localhost:8080>
+        - **MinIO** O MinIO se encontra no: <http://localhost:9001>
 
     - **Passo 2:** Para rodar via terminal entre no container docker: ´docker exec -ti airflow-envs-airflow-webserver-1 bash´
 
     - **Passo 3:** Para rodar a Dag: ´airflow dags test generate_extraction_dag´
 
     - **Passo 4:** Para rodar uma tarefa específica: ´airflow tasks test generate_extraction_dag <nome_da_task>´
-
 
 ## Descrição das Tarefas
 
@@ -69,13 +68,11 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task inicial:** Não
 - **Task final:** Não
 
-
 - **Nome:** ingest_data
 - **Descrição:** Faz ingestão dos dados do MinIO no PostgreSQL
 - **Dependências:** _ingest_into_postgres
 - **Task inicial:** Não
 - **Task final:** Não
-
 
 ## Funções auxiliares
 
@@ -83,12 +80,10 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Descrição:** Faz o login no MinIO
 - **Dependências:** BaseHook
 
-
 - **Nome:** _generate_s3_filename
 - **Descrição:** Retorna o nome do CSV
 - **Parâmetros:** modulo, método, data de execução
 - **Dependências:** Nenhuma
-
 
 - **Nome:** add_temporal_columns
 - **Descrição:** Adiciona colunas temporais ao DataFrame com base na data de execução

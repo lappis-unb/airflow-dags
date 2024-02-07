@@ -19,11 +19,11 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 
 1. **Configuração de ambiente:** Subir o airflow e minIO.
     - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
-        - **airflow** O airflow se encontra no: http://localhost:8080
+        - **airflow** O airflow se encontra no: <http://localhost:8080>
 
 2. **Rodar as tarefas:** Testando a dag.
     - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
-        - **airflow** O airflow se encontra no: http://localhost:8080
+        - **airflow** O airflow se encontra no: <http://localhost:8080>
 
     - **Passo 2:** Para rodar via terminal entre no container docker: ´docker exec -ti airflow-envs-airflow-webserver-1 bash´
 
@@ -43,15 +43,14 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task inicial:** Sim ou Não
 - **Task final:** Sim ou Não
 
-
 - **Nome:** task_b
 - **Descrição:** Descrição da tarefa.
 - **Dependências:** Nenhuma
 - **Task inicial:** Sim ou Não
 - **Task final:** Sim ou Não
 
-
 ## Funções auxiliares
+
 (Apagar caso não exista)
 
 - **Nome:** nome_da_funçao
