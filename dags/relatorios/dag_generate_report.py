@@ -219,7 +219,7 @@ def generate_report_bp(
             matomo_method,
         )
 
-    matomo_visits_summary_task = _get_matomo_extractor("VisitsSummary", "getUniqueVisitors")
+    matomo_visits_summary_task = _get_matomo_extractor("VisitsSummary", "get")
     matomo_visits_frequency_task = _get_matomo_extractor("VisitFrequency", "get")
     matomo_user_contry_task = _get_matomo_extractor("UserCountry", "getRegion")
     matomo_devices_detection_task = _get_matomo_extractor("DevicesDetection", "getType")
