@@ -13,6 +13,16 @@ repos:
   hooks:
   - id: black
 
+- repo: https://github.com/thlorenz/doctoc
+  rev: v2.2.0
+  hooks:
+  - id: doctoc
+    args:
+      - --gitlab
+      - --title=**Índice**
+      - --maxlevel=2
+      - --all
+
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.1.15
   hooks:
