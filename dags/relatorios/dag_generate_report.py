@@ -1,12 +1,13 @@
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
+
 import inflect
 import requests
 from airflow.decorators import dag, task
 from airflow.hooks.base import BaseHook
 from inflection import underscore
-´
+
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 from plugins.reports.report import ReportGenerator
 
@@ -24,21 +25,21 @@ def _get_components_id_from_participatory_space(participatory_space_id: int, par
         .open()
         .read()
     )
-    query_result = graph_ql_hook.run_graphql_query(query, variables={"space_id": participatory_space_id})
+    query_result = graph_ql_hook.run_graphql_query(query, variables={"space_id": space_id})
 
-    participatory_space_data = query_result["data"][next(iter(query_result["data"].keys()))]
-    logging.info(participatory_space_data)
+    space_data = query_result["data"][next(iter(query_result["data"].keys()))]
+    logging.info(space_data)
     inflect_engine = inflect.engine()
-    link_space_type = inflect_engine.plural(underscore(participatory_space_data["__typename"]).split("_")[-1])
-    participatory_space_url = f"{space_url}/{link_space_type}/{participatory_space_data['slug']}/{participatory_space_data['id']}"
-    print(participatory_space_url)
+    link_space_type = inflect_engine.plural(underscore(space_data["__typename"]).split("_")[-1])
+    space_url = f"{space_url}/{link_space_type}/{space_data['slug']}/{space_data['id']}"
+    print(space_url)
 
     accepted_components = []
-    for component in participatory_space_data["components"]:
+    for component in space_data["components"]:
         if component["__typename"] in accepted_components_types:
             accepted_components.append(component)
 
-    return {"accepted_components": accepted_components, "participatory_space_url": participatory_space_url}
+    return {"accepted_components": accepted_components, "space_url": space_url2}
 
 
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
@@ -241,4 +242,4 @@ def generate_report_bp(
     )
 
 
-generate_report_bp("test@gmail.com", "2023-01-01", "2024-01-01", 2, "participatory_process",138)
+generate_report_bp("test@gmail.com", "2023-01-01", "2024-01-01", 2, "participatory_process", 138)
