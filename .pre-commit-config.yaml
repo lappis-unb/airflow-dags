@@ -29,11 +29,15 @@ repos:
   rev: 22.10.0
   hooks:
   - id: black
+    args:
+      - "--diff"
+      - "--verbose"
+      - "--color"
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.1.15
   hooks:
   - id: ruff
-    types_or: [ python ]
-  - id: ruff-format
+    args:
+      - "--fix"
     types_or: [ python ]
