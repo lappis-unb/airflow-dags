@@ -150,9 +150,7 @@ def _generate_graphs(bp_data, visits_summary, visits_frequency, user_contry, dev
     description=__doc__,
     tags=["decidim", "reports", "participacao", "bp"],
 )
-def generate_report_bp(
-    email: str, start_date: str, end_date: str, component_id:int
-):
+def generate_report_bp(email: str, start_date: str, end_date: str, component_id: int):
     """
     Gera um relatorio para o BP.
 
@@ -167,13 +165,8 @@ def generate_report_bp(
         return _get_components_url(component_id)
 
     @task
-    def get_components_data(components_data: list, filter_start_date: str, filter_end_date: str):
-        result = []
-        for component_data in components_data:
-            if component_data["__typename"] == "Proposals":
-                result.extend(_get_proposals_data(component_data["id"], filter_start_date, filter_end_date))
-
-        return result
+    def get_component_data(component_id: int, filter_start_date: str, filter_end_date: str):
+        return _get_proposals_data(component_id, filter_start_date, filter_end_date)
 
     get_components_url_task = get_components_url(component_id)
 
@@ -203,7 +196,7 @@ def generate_report_bp(
     def generate_report(bp_data, visits_summary, visits_frequency, user_contry, devices_detection):
         return _generate_graphs(bp_data, visits_summary, visits_frequency, user_contry, devices_detection)
 
-    get_components_data_task = get_components_data(
+    get_components_data_task = get_component_data(
         component_id, filter_start_date=start_date, filter_end_date=end_date
     )
 
@@ -216,4 +209,4 @@ def generate_report_bp(
     )
 
 
-generate_report_bp("test@gmail.com", "2023-01-01", "2024-01-01", 2, "participatory_process", 138)
+generate_report_bp("test@gmail.com", "2023-01-01", "2024-01-01", 2)
