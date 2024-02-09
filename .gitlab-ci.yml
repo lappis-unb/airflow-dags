@@ -13,8 +13,6 @@ push-image-to-registry:
   inherit:
     default: false
   rules:
-    - changes:
-        - $CI_COMMIT_REF_NAME
     - if: $CI_COMMIT_REF_PROTECTED == "true"
   script:
     - echo "---------- install git ----------"
@@ -46,22 +44,35 @@ default:
     - pip install -r requirements.txt  # Install dependencies
     - pip install -r requirements.testing.txt  # Install testing dependencies
 
+.default_rule_python: &default_rule_python
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+    - changes:
+        - ./**/*.py
+        - ./requirements.*
+
+.default_pytest: &default_pytest
+  <<: *default_rule_python
+  script:
+    - pytest . --junitxml=pytest_report.xml
+  coverage: '/^TOTAL.+?(\d+\%)$/'
+  artifacts:
+    when: always
+    paths:
+      - pytest_report.xml
+    reports:
+      junit: pytest_report.xml
+
 lint-ruff:
   stage: lint
-  only:
-    changes:
-      - ./**/*.py
-      - ./requirements.*
+  <<: *default_rule_python
   script:
     - pip install ruff
     - ruff .
 
 lint-black:
   stage: lint
-  only:
-    changes:
-      - ./**/*.py
-      - ./requirements.*
+  <<: *default_rule_python
   script:
     - pip install black
     - black . --check --verbose --color
@@ -72,6 +83,8 @@ lint-markdown:
   inherit:
     default: false
   only:
+    refs:
+      - pushes
     changes:
       - ./**/*.md
   variables:
@@ -84,22 +97,6 @@ lint-markdown:
 
     - echo "---------- Stage 2 - Run markdownlint (v0.32.2) ----------"
     - bash -c "$(curl -fsSL https://raw.githubusercontent.com/CICDToolbox/markdown-lint/master/pipeline.sh)"
-
-.default_pytest: &default_pytest
-  only:
-    changes:
-      - ./**/*.py
-      - ./requirements.*
-  script:
-    - pytest . --junitxml=pytest_report.xml
-  coverage: '/^TOTAL.+?(\d+\%)$/'
-  artifacts:
-    when: always
-    paths:
-      - pytest_report.xml
-    reports:
-      junit: pytest_report.xml
-
 
 pytest-3.8:
   stage: tests
