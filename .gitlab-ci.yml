@@ -45,12 +45,11 @@ default:
     - pip install -r requirements.testing.txt  # Install testing dependencies
 
 .default_rule_python: &default_rule_python
-  only:
-    changes:
-      - ./**/*.py
-      - ./requirements.*
   rules:
     - if: $CI_COMMIT_REF_PROTECTED == "true"
+    - changes:
+        - ./**/*.py
+        - ./requirements.*
 
 .default_pytest: &default_pytest
   <<: *default_rule_python
