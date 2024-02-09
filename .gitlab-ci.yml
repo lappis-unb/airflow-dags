@@ -13,8 +13,6 @@ push-image-to-registry:
   inherit:
     default: false
   rules:
-    - changes:
-        - $CI_COMMIT_REF_NAME
     - if: $CI_COMMIT_REF_PROTECTED == "true"
   script:
     - echo "---------- install git ----------"
@@ -49,6 +47,8 @@ default:
 lint-ruff:
   stage: lint
   only:
+    refs:
+      - pushes
     changes:
       - ./**/*.py
       - ./requirements.*
@@ -59,6 +59,8 @@ lint-ruff:
 lint-black:
   stage: lint
   only:
+    refs:
+      - pushes
     changes:
       - ./**/*.py
       - ./requirements.*
@@ -72,6 +74,8 @@ lint-markdown:
   inherit:
     default: false
   only:
+    refs:
+      - pushes
     changes:
       - ./**/*.md
   variables:
@@ -87,6 +91,8 @@ lint-markdown:
 
 .default_pytest: &default_pytest
   only:
+    refs:
+      - pushes
     changes:
       - ./**/*.py
       - ./requirements.*
