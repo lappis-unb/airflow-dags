@@ -82,11 +82,10 @@ lint-markdown:
   image: node:20-bullseye
   inherit:
     default: false
-  only:
-    refs:
-      - pushes
-    changes:
-      - ./**/*.md
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+    - changes:
+        - ./**/*.md
   variables:
     SHOW_ERRORS: "true"
   script:
