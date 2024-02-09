@@ -170,10 +170,10 @@ def generate_report_bp(email: str, start_date: str, end_date: str, component_id:
 
     get_components_url_task = get_components_url(component_id)
 
-    def _get_matomo_extractor(matomo_module: str, matomo_method: str):
+    def _get_matomo_extractor(url: str, matomo_module: str, matomo_method: str):
         @task(task_id=f"get_matomo_{matomo_module}_{matomo_method}")
         def matomo_extractor(
-            url: list, filter_start_date: str, filter_end_date: str, module: str, method: str
+            url: str, filter_start_date: str, filter_end_date: str, module: str, method: str
         ):
             return _get_matomo_data(
                 url=url, start_date=filter_start_date, end_date=filter_end_date, module=module, method=method
@@ -187,10 +187,12 @@ def generate_report_bp(email: str, start_date: str, end_date: str, component_id:
             matomo_method,
         )
 
-    matomo_visits_summary_task = _get_matomo_extractor("VisitsSummary", "get")
-    matomo_visits_frequency_task = _get_matomo_extractor("VisitFrequency", "get")
-    matomo_user_contry_task = _get_matomo_extractor("UserCountry", "getRegion")
-    matomo_devices_detection_task = _get_matomo_extractor("DevicesDetection", "getType")
+    matomo_visits_summary_task = _get_matomo_extractor(get_components_url_task, "VisitsSummary", "get")
+    matomo_visits_frequency_task = _get_matomo_extractor(get_components_url_task, "VisitFrequency", "get")
+    matomo_user_contry_task = _get_matomo_extractor(get_components_url_task, "UserCountry", "getRegion")
+    matomo_devices_detection_task = _get_matomo_extractor(
+        get_components_url_task, "DevicesDetection", "getType"
+    )
 
     @task(multiple_outputs=True)
     def generate_report(bp_data, visits_summary, visits_frequency, user_contry, devices_detection):
