@@ -12,6 +12,10 @@ push-image-to-registry:
   image: docker
   inherit:
     default: false
+  rules:
+    - changes:
+        - $CI_COMMIT_REF_NAME
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
   script:
     - echo "---------- install git ----------"
     - apk update
@@ -44,12 +48,20 @@ default:
 
 lint-ruff:
   stage: lint
+  only:
+    changes:
+      - ./**/*.py
+      - ./requirements.*
   script:
     - pip install ruff
     - ruff .
 
 lint-black:
   stage: lint
+  only:
+    changes:
+      - ./**/*.py
+      - ./requirements.*
   script:
     - pip install black
     - black . --check --verbose --color
@@ -59,6 +71,9 @@ lint-markdown:
   image: node:20-bullseye
   inherit:
     default: false
+  only:
+    changes:
+      - ./**/*.md
   variables:
     SHOW_ERRORS: "true"
   script:
@@ -71,6 +86,10 @@ lint-markdown:
     - bash -c "$(curl -fsSL https://raw.githubusercontent.com/CICDToolbox/markdown-lint/master/pipeline.sh)"
 
 .default_pytest: &default_pytest
+  only:
+    changes:
+      - ./**/*.py
+      - ./requirements.*
   script:
     - pytest . --junitxml=pytest_report.xml
   coverage: '/^TOTAL.+?(\d+\%)$/'
