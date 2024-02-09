@@ -57,7 +57,7 @@ class ComponentBaseHook:
         inflect_engine = inflect.engine()
         link_base = urljoin(
             self.graphql.api_url,
-            f"{inflect_engine.plural(participatory_space['type_for_links'])}/{participatory_space['slug']}/f/{self.component_id}/{self.component_type.lower()}",
+            f"{inflect_engine.plural(participatory_space['type_for_links'])}/{participatory_space['slug']}/f/{self.component_id}/",
         )
         del inflect_engine
         return link_base

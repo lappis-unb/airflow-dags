@@ -2,43 +2,20 @@ import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import inflect
 import requests
 from airflow.decorators import dag, task
 from airflow.hooks.base import BaseHook
-from inflection import underscore
 
+from plugins.components.base_component.component import ComponentBaseHook
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 from plugins.reports.report import ReportGenerator
 
 BP_CONN_ID = "bp_conn"
 
 
-def _get_components_id_from_participatory_space(participatory_space_id: int, participatory_space_type: str):
-    accepted_components_types = ["Proposals"]
-    space_url = "https://brasilparticipativo.presidencia.gov.br"
-
-    graph_ql_hook = GraphQLHook(BP_CONN_ID)
-    query = (
-        Path(__file__)
-        .parent.joinpath(f"./queries/participatory_spaces/{participatory_space_type}.gql")
-        .open()
-        .read()
-    )
-    query_result = graph_ql_hook.run_graphql_query(query, variables={"space_id": participatory_space_id})
-
-    participatory_space_data = query_result["data"][next(iter(query_result["data"].keys()))]
-    logging.info(participatory_space_data)
-    inflect_engine = inflect.engine()
-    link_space_type = inflect_engine.plural(underscore(participatory_space_data["__typename"]).split("_")[-1])
-    participatory_space_url = f"{space_url}/{link_space_type}/{participatory_space_data['slug']}"
-
-    accepted_components = []
-    for component in participatory_space_data["components"]:
-        if component["__typename"] in accepted_components_types:
-            accepted_components.append(component)
-
-    return {"accepted_components": accepted_components, "participatory_space_url": participatory_space_url}
+def _get_components_url(component_id: int):
+    component_hook = ComponentBaseHook(BP_CONN_ID, component_id)
+    return component_hook.get_component_link()
 
 
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
@@ -173,9 +150,7 @@ def _generate_graphs(bp_data, visits_summary, visits_frequency, user_contry, dev
     description=__doc__,
     tags=["decidim", "reports", "participacao", "bp"],
 )
-def generate_report_bp(
-    email: str, start_date: str, end_date: str, participatory_space_id: int, participatory_space_type: str
-):
+def generate_report_bp(email: str, start_date: str, end_date: str, component_id: int):
     """
     Gera um relatorio para o BP.
 
@@ -185,51 +160,46 @@ def generate_report_bp(
     3. Gerar o relatorio.
     """
 
-    @task(multiple_outputs=True)
-    def get_components_id(space_id: int, space_type: str):
-        return _get_components_id_from_participatory_space(space_id, space_type)
+    @task
+    def get_components_url(component_id: int):
+        return _get_components_url(component_id)
 
     @task
-    def get_components_data(components_data: list, filter_start_date: str, filter_end_date: str):
-        result = []
-        for component_data in components_data:
-            if component_data["__typename"] == "Proposals":
-                result.extend(_get_proposals_data(component_data["id"], filter_start_date, filter_end_date))
+    def get_component_data(component_id: int, filter_start_date: str, filter_end_date: str):
+        return _get_proposals_data(component_id, filter_start_date, filter_end_date)
 
-        return result
+    get_components_url_task = get_components_url(component_id)
 
-    get_components_id_task = get_components_id(
-        space_id=participatory_space_id, space_type=participatory_space_type
-    )
-
-    def _get_matomo_extractor(matomo_module: str, matomo_method: str):
+    def _get_matomo_extractor(url: str, matomo_module: str, matomo_method: str):
         @task(task_id=f"get_matomo_{matomo_module}_{matomo_method}")
         def matomo_extractor(
-            url: list, filter_start_date: str, filter_end_date: str, module: str, method: str
+            url: str, filter_start_date: str, filter_end_date: str, module: str, method: str
         ):
             return _get_matomo_data(
                 url=url, start_date=filter_start_date, end_date=filter_end_date, module=module, method=method
             )
 
         return matomo_extractor(
-            get_components_id_task["participatory_space_url"],
+            url,
             start_date,
             end_date,
             matomo_module,
             matomo_method,
         )
 
-    matomo_visits_summary_task = _get_matomo_extractor("VisitsSummary", "get")
-    matomo_visits_frequency_task = _get_matomo_extractor("VisitFrequency", "get")
-    matomo_user_contry_task = _get_matomo_extractor("UserCountry", "getRegion")
-    matomo_devices_detection_task = _get_matomo_extractor("DevicesDetection", "getType")
+    matomo_visits_summary_task = _get_matomo_extractor(get_components_url_task, "VisitsSummary", "get")
+    matomo_visits_frequency_task = _get_matomo_extractor(get_components_url_task, "VisitFrequency", "get")
+    matomo_user_contry_task = _get_matomo_extractor(get_components_url_task, "UserCountry", "getRegion")
+    matomo_devices_detection_task = _get_matomo_extractor(
+        get_components_url_task, "DevicesDetection", "getType"
+    )
 
     @task(multiple_outputs=True)
     def generate_report(bp_data, visits_summary, visits_frequency, user_contry, devices_detection):
         return _generate_graphs(bp_data, visits_summary, visits_frequency, user_contry, devices_detection)
 
-    get_components_data_task = get_components_data(
-        get_components_id_task["accepted_components"], filter_start_date=start_date, filter_end_date=end_date
+    get_components_data_task = get_component_data(
+        component_id, filter_start_date=start_date, filter_end_date=end_date
     )
 
     generate_report(
@@ -241,4 +211,4 @@ def generate_report_bp(
     )
 
 
-generate_report_bp("test@gmail.com", "2023-01-01", "2024-01-01", 2, "participatory_process")
+generate_report_bp("test@gmail.com", "2023-01-01", "2024-01-01", 2)
