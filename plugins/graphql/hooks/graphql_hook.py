@@ -14,6 +14,7 @@ from urllib.parse import urljoin
 
 import requests
 from airflow.hooks.base import BaseHook
+from airflow.models.connection import Connection
 
 from plugins.utils.dict_utils import key_lookup
 
@@ -66,7 +67,11 @@ class GraphQLHook(BaseHook):
         ----
             conn_id (str): The connection ID used for authentication.
         """
+        assert isinstance(conn_id, str), "Param type of conn_id has to be str"
+
         conn_values = self.get_connection(conn_id)
+        assert isinstance(conn_values, Connection), "conn_values was not created correctly."
+
         self.conn_id = conn_id
         self.api_url = conn_values.host
         self.auth_url = urljoin(self.api_url, "api/sign_in")
@@ -87,6 +92,10 @@ class GraphQLHook(BaseHook):
         -------
             str: The contents of the GraphQL query file.
         """
+        assert Path(path_para_arquivo_query).exists(), f"Query file: {path_para_arquivo_query}, not found"
+        assert isinstance(
+            path_para_arquivo_query, (Path, str)
+        ), "Param path_para_arquivo_query has to be one of [str, Path]"
         with closing(open(path_para_arquivo_query)) as file:
             return file.read()
 
