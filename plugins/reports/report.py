@@ -201,9 +201,9 @@ class ReportGenerator:
 
         return top_proposals_list
 
-    def load_data(self, shp_path, user_contry):
+    def load_data(self, shp_path, user_country):
         brasil = gpd.read_file(shp_path)
-        dados_visitas = pd.read_csv(StringIO(user_contry))
+        dados_visitas = pd.read_csv(StringIO(user_country))
         return brasil, dados_visitas
 
     def filter_and_rename(self, dados, pais, coluna):

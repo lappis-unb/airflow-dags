@@ -1,10 +1,14 @@
+from datetime import datetime, timedelta  # noqa: I001
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import logging
-from datetime import datetime, timedelta
 from pathlib import Path
+import smtplib
 
-import requests
 from airflow.decorators import dag, task
 from airflow.hooks.base import BaseHook
+import requests
 
 from plugins.components.base_component.component import ComponentBaseHook
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
@@ -13,31 +17,9 @@ from plugins.reports.main import create_report_pdf
 BP_CONN_ID = "bp_conn"
 
 
-def _get_components_id_from_participatory_space(participatory_space_id: int, participatory_space_type: str):
-    accepted_components_types = ["Proposals"]
-    space_url = "https://brasilparticipativo.presidencia.gov.br"
-
-    graph_ql_hook = GraphQLHook(BP_CONN_ID)
-    query = (
-        Path(__file__)
-        .parent.parent.joinpath(f"./plugins/gql/reports/participatory_spaces/{participatory_space_type}.gql")
-        .open()
-        .read()
-    )
-    query_result = graph_ql_hook.run_graphql_query(query, variables={"space_id": participatory_space_id})
-
-    participatory_space_data = query_result["data"][next(iter(query_result["data"].keys()))]
-    logging.info(participatory_space_data)
-    inflect_engine = inflect.engine()
-    link_space_type = inflect_engine.plural(underscore(participatory_space_data["__typename"]).split("_")[-1])
-    participatory_space_url = f"{space_url}/{link_space_type}/{participatory_space_data['slug']}"
-
-    accepted_components = []
-    for component in participatory_space_data["components"]:
-        if component["__typename"] in accepted_components_types:
-            accepted_components.append(component)
-
-    return {"accepted_components": accepted_components, "participatory_space_url": participatory_space_url}
+def _get_components_url(component_id: int):
+    component_hook = ComponentBaseHook(BP_CONN_ID, component_id)
+    return component_hook.get_component_link()
 
 
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
@@ -124,15 +106,35 @@ def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, met
         raise error
 
 
-def _generate_graphs(bp_data, visits_summary, visits_frequency, user_contry, devices_detection):
-    # output_path = "/home/joyce/lappis/Airflow/airflow-dags/plugins/reports/output/relatorio-de-dados.pdf"
-    output_path = Path(__file__).parent / "relatorio-de-dados.pdf"
+def _generate_report(bp_data, visits_summary, visits_frequency, user_country, devices_detection):
+    pdf_bytes = create_report_pdf(bp_data, visits_summary, visits_frequency, user_country, devices_detection)
 
-    pdf_output = create_report_pdf(
-        bp_data, visits_summary, visits_frequency, user_contry, devices_detection, output_path
-    )
+    return {"pdf_bytes": pdf_bytes}
 
-    return {"pdf_output": pdf_output}
+
+def send_email_with_pdf(email: str, pdf_bytes: bytes, email_body: str, email_subject: str):
+    smtp_server = "smtp_server"
+    smtp_port = "port"
+    smtp_user = "email"
+    smtp_password = "password"
+
+    message = MIMEMultipart()
+    message["From"] = smtp_user
+    message["To"] = email
+    message["Subject"] = email_subject
+
+    message.attach(MIMEText(email_body, "plain"))
+
+    pdf_attachment = MIMEApplication(pdf_bytes, _subtype="pdf")
+    pdf_attachment.add_header("Content-Disposition", "attachment", filename="report.pdf")
+    message.attach(pdf_attachment)
+
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.starttls()
+        server.login(smtp_user, smtp_password)
+        server.send_message(message)
+
+    print("E-mail enviado com sucesso!")
 
 
 @dag(
@@ -194,13 +196,24 @@ def generate_report_bp(email: str, start_date: str, end_date: str, component_id:
 
     @task(multiple_outputs=True)
     def generate_data(bp_data, visits_summary, visits_frequency, user_contry, devices_detection):
-        return _generate_graphs(bp_data, visits_summary, visits_frequency, user_contry, devices_detection)
+        return _generate_report(bp_data, visits_summary, visits_frequency, user_contry, devices_detection)
+
+    @task
+    def send_report_email(
+        email: str, pdf_bytes: bytes, email_body: str, email_subject: str = "Seu Relatório"
+    ):
+        send_email_with_pdf(
+            email=email,
+            pdf_bytes=pdf_bytes,
+            email_body=email_body,
+            email_subject=email_subject,
+        )
 
     get_components_data_task = get_component_data(
         component_id, filter_start_date=start_date, filter_end_date=end_date
     )
 
-    generate_data(
+    generated_data = generate_data(
         get_components_data_task,
         visits_summary=matomo_visits_summary_task,
         visits_frequency=matomo_visits_frequency_task,
@@ -208,5 +221,11 @@ def generate_report_bp(email: str, start_date: str, end_date: str, component_id:
         devices_detection=matomo_devices_detection_task,
     )
 
+    send_report_email(
+        email=email,
+        pdf_bytes=generated_data["pdf_bytes"],
+        email_body="email_body",
+        email_subject="email_subject",
+    )
 
 generate_report_bp("test@gmail.com", "2023-01-01", "2024-01-01", 2)
