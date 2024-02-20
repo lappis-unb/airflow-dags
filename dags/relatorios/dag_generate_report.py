@@ -8,19 +8,44 @@ from airflow.hooks.base import BaseHook
 
 from plugins.components.base_component.component import ComponentBaseHook
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
-from plugins.reports.report import ReportGenerator
+from plugins.reports.main import create_report_pdf
 
 BP_CONN_ID = "bp_conn"
 
 
-def _get_components_url(component_id: int):
-    component_hook = ComponentBaseHook(BP_CONN_ID, component_id)
-    return component_hook.get_component_link()
+def _get_components_id_from_participatory_space(participatory_space_id: int, participatory_space_type: str):
+    accepted_components_types = ["Proposals"]
+    space_url = "https://brasilparticipativo.presidencia.gov.br"
+
+    graph_ql_hook = GraphQLHook(BP_CONN_ID)
+    query = (
+        Path(__file__)
+        .parent.parent.joinpath(f"./plugins/gql/reports/participatory_spaces/{participatory_space_type}.gql")
+        .open()
+        .read()
+    )
+    query_result = graph_ql_hook.run_graphql_query(query, variables={"space_id": participatory_space_id})
+
+    participatory_space_data = query_result["data"][next(iter(query_result["data"].keys()))]
+    logging.info(participatory_space_data)
+    inflect_engine = inflect.engine()
+    link_space_type = inflect_engine.plural(underscore(participatory_space_data["__typename"]).split("_")[-1])
+    participatory_space_url = f"{space_url}/{link_space_type}/{participatory_space_data['slug']}"
+
+    accepted_components = []
+    for component in participatory_space_data["components"]:
+        if component["__typename"] in accepted_components_types:
+            accepted_components.append(component)
+
+    return {"accepted_components": accepted_components, "participatory_space_url": participatory_space_url}
 
 
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     query = (
-        Path(__file__).parent.joinpath("./queries/components/get_proposals_by_component_id.gql").open().read()
+        Path(__file__)
+        .parent.parent.parent.joinpath("./plugins/gql/reports/components/get_proposals_by_component_id.gql")
+        .open()
+        .read()
     )
     query_result = GraphQLHook(BP_CONN_ID).run_graphql_paginated_query(
         query, variables={"id": component_id, "start_date": start_date, "end_date": end_date}
@@ -100,41 +125,14 @@ def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, met
 
 
 def _generate_graphs(bp_data, visits_summary, visits_frequency, user_contry, devices_detection):
-    report_generator = ReportGenerator()
-    df_bp = report_generator.create_bp_dataframe(bp_data)
+    # output_path = "/home/joyce/lappis/Airflow/airflow-dags/plugins/reports/output/relatorio-de-dados.pdf"
+    output_path = Path(__file__).parent / "relatorio-de-dados.pdf"
 
-    num_proposals, num_votes, num_comments = report_generator.calculate_totals(df_bp)
-    # data_to_insert = {"Propostas": num_proposals, "Votos": num_votes, "Comentários": num_comments}
+    pdf_output = create_report_pdf(
+        bp_data, visits_summary, visits_frequency, user_contry, devices_detection, output_path
+    )
 
-    daily_graph = report_generator.generate_daily_plot(df_bp)
-
-    device_graph = report_generator.generate_device_graph(devices_detection)
-    rank_temas = report_generator.generate_theme_ranking(df_bp)
-    top_proposals_filtered = report_generator.generate_top_proposals(df_bp)
-
-    shp_path = Path(__file__).parent.joinpath("./shapefile/estados_2010.shp").resolve()
-    brasil, dados = report_generator.load_data(shp_path, user_contry)
-    dados_brasil = report_generator.filter_and_rename(dados, "br", "UF")
-    mapa = report_generator.create_map(brasil, dados_brasil, "sigla", "UF")
-
-    map_graph = report_generator.plot_map(mapa, "nb_visits")
-
-    # final_html = report_generator.generate_html_report(
-    #     rank_temas,
-    #     top_proposals_filtered,
-    #     daily_graph,
-    #     device_graph,
-    #     map_graph,
-    #     template_dir="caminho_para_seu_template",
-    # )
-
-    return {
-        "rank_temas": rank_temas,
-        "top_proposals": top_proposals_filtered,
-        "daily_graph": daily_graph,
-        "device_graph": device_graph,
-        "map_graph": map_graph,
-    }
+    return {"pdf_output": pdf_output}
 
 
 @dag(
@@ -195,14 +193,14 @@ def generate_report_bp(email: str, start_date: str, end_date: str, component_id:
     )
 
     @task(multiple_outputs=True)
-    def generate_report(bp_data, visits_summary, visits_frequency, user_contry, devices_detection):
+    def generate_data(bp_data, visits_summary, visits_frequency, user_contry, devices_detection):
         return _generate_graphs(bp_data, visits_summary, visits_frequency, user_contry, devices_detection)
 
     get_components_data_task = get_component_data(
         component_id, filter_start_date=start_date, filter_end_date=end_date
     )
 
-    generate_report(
+    generate_data(
         get_components_data_task,
         visits_summary=matomo_visits_summary_task,
         visits_frequency=matomo_visits_frequency_task,
