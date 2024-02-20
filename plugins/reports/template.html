@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <meta charset="utf-8" />
+  <meta name="bp-report" content="Relatório de dados" />
+  <title>Relatório de dados</title>
+
+  <section class="fullpage">
+    <div class="cover-content">
+      <h1>{{ data.document.title }}</h1>
+      <p class="bp-title">Brasil Participativo</p>
+      <p class="document-date">({{ data.document.date }})</p>
+    </div>
+  </section>
+
+  <section class="fullpage">
+    <h1>Sumário</h1>
+    <ul>
+      <li><a href="#overview-section">Visão Geral</a></li>
+      <li><a href="#user-profile">Dados de Acesso</a></li>
+      <li><a href="#programs-ranking">Ranking dos Programas</a></li>
+      <li><a href="#proposals-ranking">TOP 20 Propostas Mais Votadas no Geral</a></li>
+    </ul>
+  </section>
+
+  {% macro create_table_from_dict(table) %}
+  <span>
+    <table>
+      <!-- Cabeçalhos da tabela -->
+      <thead>
+        <tr>
+          {% for header in table.keys() %}
+            <th>{{ header }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <!-- Dados da tabela -->
+      <tbody>
+        {% set max_length = 1 %}
+        {% for value in table.values() %}
+          {% if value is iterable and value is not string %}
+            {% if value|length > max_length %}
+              {% set max_length = value|length %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+
+        {% for i in range(max_length) %}
+          <tr>
+            {% for value in table.values() %}
+              {% if value is iterable and value is not string %}
+                {% if i < value|length %}
+                  <td>{{ value[i] }}</td>
+                {% else %}
+                  <td></td> <!-- Célula vazia para listas mais curtas -->
+                {% endif %}
+              {% else %}
+                {% if i == 0 %}
+                  <td>{{ value }}</td> <!-- Mostra o valor se não for uma lista -->
+                {% else %}
+                  <td></td> <!-- Célula vazia para valores não iteráveis nas linhas subsequentes -->
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </span>
+  {% endmacro %}
+
+
+  {% macro create_table_from_list_of_dicts(table) %}
+    <span>
+      <table>
+        <!-- Cabeçalhos da tabela -->
+        <thead>
+          <tr>
+            {% if table %}
+              {% for header in table[0].keys() %}
+                <th>{{ header }}</th>
+              {% endfor %}
+            {% endif %}
+          </tr>
+        </thead>
+        <!-- Dados da tabela -->
+        <tbody>
+          {% for item in table %}
+            <tr>
+              {% for value in item.values() %}
+                <td>{{ value }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </span>
+  {% endmacro %}
+
+
+  {% macro create_image_element(img) %}
+    <div class="image-container">
+      <p class="image-label">
+        <italic>{{ img.label }}</italic>
+      </p>
+      <img src="data:image/png;base64,{{ img.file }}" alt="{{ img.label }}" />
+    </div>
+  {% endmacro %}
+
+
+  <section id="overview-section" class="fullpage">
+   <h1>Visão Geral</h1>
+    {{ create_table_from_dict(data.general_data) }}
+    {{ create_image_element(data.daily_graph) }}
+  </section>
+
+  <section id="user-profile" class="fullpage">
+    <h1>Dados de Acesso</h1>
+    <h2>Visão Geral</h2>
+    {{ create_table_from_list_of_dicts(data.data_access) }}
+    {{ create_image_element(data.map_graph) }}
+    {{ create_image_element(data.device_graph) }}
+  </section>
+
+  <section id="programs-ranking" class="fullpage">
+    <h1>Ranking dos Programas</h1>
+    {{ create_table_from_list_of_dicts(data.rank_temas) }}
+  </section>
+
+  <section id="proposals-ranking" class="fullpage">
+    <h1>TOP 20 Propostas Mais Votadas no Geral</h1>
+    {{ create_table_from_list_of_dicts(data.top_proposals_filtered) }}
+  </section>
+</html>

@@ -35,12 +35,51 @@ class ReportGenerator:
         return df_bp
 
     def calculate_totals(self, df_bp):
+        if not isinstance(df_bp, pd.DataFrame):
+            try:
+                df_bp = pd.DataFrame(df_bp)
+            except ValueError:
+                raise ValueError("df_bp deve ser um pandas DataFrame") from None
+
         num_proposals = len(df_bp)
         num_votes = df_bp["proposal_total_votes"].sum()
         num_comments = df_bp["proposal_total_comments"].sum()
-        return num_proposals, num_votes, num_comments
+
+        results_dict = {"Propostas": num_proposals, "Votos": num_votes, "Comentários": num_comments}
+
+        return results_dict
+
+    def generate_acess_data(self, visits_summary, visits_frequency):
+        df_frequency = pd.read_csv(StringIO(visits_frequency))
+        df_summary = pd.read_csv(StringIO(visits_summary))
+
+        df_acess = pd.concat(
+            [
+                df_summary[["nb_visits", "bounce_count"]],
+                df_frequency[["nb_visits_new", "nb_visits_returning"]],
+            ],
+            axis=1,
+        )
+
+        df_acess = df_acess.rename(
+            columns={
+                "nb_visits": "Visitas",
+                "bounce_count": "Taxa de Rejeição",
+                "nb_visits_new": "Visitas Novas",
+                "nb_visits_returning": "Visitas de Retorno",
+            }
+        )
+
+        access_data_list = df_acess.to_dict("records")
+        return access_data_list
 
     def generate_daily_plot(self, df_bp):
+        if not isinstance(df_bp, pd.DataFrame):
+            try:
+                df_bp = pd.DataFrame(df_bp)
+            except ValueError:
+                raise ValueError("df_bp deve ser um pandas DataFrame") from None
+
         df_bp["proposal_published_at"] = pd.to_datetime(df_bp["proposal_published_at"])
         df_bp["Data"] = df_bp["proposal_published_at"].dt.date
 
@@ -63,8 +102,7 @@ class ReportGenerator:
 
         buffer = BytesIO()
         plt.savefig(buffer, format="png")
-        with open("/opt/airflow/airflow-tmp/device_graph.png", "wb") as file:
-            plt.savefig(file, format="png")
+
         buffer.seek(0)
 
         daily_graph = base64.b64encode(buffer.getvalue()).decode("utf-8")
@@ -84,8 +122,7 @@ class ReportGenerator:
 
         buffer = BytesIO()
         plt.savefig(buffer, format="png")
-        with open("/opt/airflow/airflow-tmp/device_graph.png", "wb") as file:
-            plt.savefig(file, format="png")
+
         buffer.seek(0)
 
         device_graph = base64.b64encode(buffer.getvalue()).decode("utf-8")
@@ -95,38 +132,47 @@ class ReportGenerator:
         return device_graph
 
     def generate_theme_ranking(self, df_bp):
-        df_bp["nome_tema"] = df_bp["proposal_category_title"].apply(
+        if not isinstance(df_bp, pd.DataFrame):
+            try:
+                df_bp = pd.DataFrame(df_bp)
+            except ValueError:
+                raise ValueError("df_bp deve ser um pandas DataFrame") from None
+
+        df_bp["Tema"] = df_bp["proposal_category_title"].apply(
             lambda x: (
                 x["name"]["translation"]
                 if isinstance(x, dict) and "name" in x and "translation" in x["name"]
-                else None
+                else x
             )
         )
 
-        df_filtered = df_bp.dropna(subset=["nome_tema"])
-
-        rank_category = (
-            df_filtered.groupby("nome_tema")
-            .agg(
-                Quantidade_de_Propostas=pd.NamedAgg(column="proposal_id", aggfunc="count"),
-                Quantidade_de_Votos=pd.NamedAgg(column="proposal_total_votes", aggfunc="sum"),
-                Quantidade_de_Comentários=pd.NamedAgg(column="proposal_total_comments", aggfunc="sum"),
-            )
-            .reset_index()
+        grouped = df_bp.groupby("Tema").agg(
+            total_proposals=pd.NamedAgg(column="proposal_id", aggfunc="count"),
+            total_votes=pd.NamedAgg(column="proposal_total_votes", aggfunc="sum"),
+            total_comments=pd.NamedAgg(column="proposal_total_comments", aggfunc="sum"),
         )
 
-        rank_category.columns = [
-            "Tema",
-            "Quantidade de Propostas",
-            "Quantidade de Votos",
-            "Quantidade de Comentários",
-        ]
+        ranked_themes = grouped.sort_values("total_proposals", ascending=False)
 
-        rank_temas = rank_category.sort_values(by="Quantidade de Propostas", ascending=False)
+        ranked_themes = ranked_themes.rename(
+            columns={
+                "Tema": "Tema",
+                "total_proposals": "Total de Propostas",
+                "total_votes": "Total de Votos",
+                "total_comments": "Total de Comentários",
+            }
+        )
+        ranking_list = ranked_themes.reset_index().to_dict("records")
 
-        return rank_temas
+        return ranking_list
 
     def generate_top_proposals(self, df_bp):
+        if not isinstance(df_bp, pd.DataFrame):
+            try:
+                df_bp = pd.DataFrame(df_bp)
+            except ValueError:
+                raise ValueError("df_bp deve ser um pandas DataFrame") from None
+
         df_ranking = df_bp.sort_values(by="proposal_total_votes", ascending=False)
 
         top_proposals = df_ranking.head(20)
@@ -141,7 +187,19 @@ class ReportGenerator:
 
         top_proposals_filtered = top_proposals[columns]
 
-        return top_proposals_filtered
+        top_proposals_filtered = top_proposals_filtered.rename(
+            columns={
+                "proposal_id": "ID",
+                "proposal_title": "Proposta",
+                "proposal_category_title": "Categoria",
+                "proposal_total_votes": "Votos",
+                "proposal_total_comments": "Comentários",
+            }
+        )
+
+        top_proposals_list = top_proposals_filtered.to_dict("records")
+
+        return top_proposals_list
 
     def load_data(self, shp_path, user_contry):
         brasil = gpd.read_file(shp_path)
@@ -167,8 +225,7 @@ class ReportGenerator:
 
         buffer = BytesIO()
         plt.savefig(buffer, format="png")
-        with open("/opt/airflow/airflow-tmp/map_visitas_por_estado.png", "wb") as file:
-            plt.savefig(file, format="png")
+
         buffer.seek(0)
 
         map_graph = base64.b64encode(buffer.getvalue()).decode("utf-8")
@@ -176,35 +233,3 @@ class ReportGenerator:
         buffer.close()
 
         return map_graph
-
-
-#     def render_html(template_path, output_path):
-#         env = Environment(loader=FileSystemLoader(searchpath="./"))
-
-#         tabela_dados = pd.read_csv("relatorio.csv")
-
-#         data = {
-#             "title": "Título Dinâmico",
-#             "header": "Visão Geral",
-#             "table_data": tabela_dados.to_html(index=False),
-#         }
-#         content = f"<h1> { header }</h1> <!-- Inclui a tabela dinâmica --> {{ table_data | safe }}"
-#         rendered_html = template_path.format(**data)
-
-#         with open(output_path, "w") as output_file:
-#             output_file.write(rendered_html)
-# # Exemplo de template
-# header = "<!DOCTYPE html>
-# <html xmlns:th='http://www.thymeleaf.org'>
-# <head><style th:replace='inc/bootstrap :: inc'></style><link rel='stylesheet' href='style.css'></head>
-# <body><div id='header'>Put your header content here...</div>
-# <div id='footer'>Put your footer content here... <br />Page <span class='pagenumber'>
-# </span> of <span class='pagecount'></span></div><div id='content'>"
-
-# content = "<h1>{header}</h1> <!-- Inclui a tabela dinâmica --> {table_data}"
-
-# footer_path = "</div></body></html>"
-# output_path = "output.html"
-
-# template_path = header + content + footer_path
-# render_html(template_path, output_path)
