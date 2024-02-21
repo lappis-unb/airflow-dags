@@ -1,14 +1,14 @@
-from datetime import datetime, timedelta  # noqa: I001
+import logging
+import smtplib
+from datetime import datetime, timedelta
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import logging
 from pathlib import Path
-import smtplib
 
+import requests
 from airflow.decorators import dag, task
 from airflow.hooks.base import BaseHook
-import requests
 
 from plugins.components.base_component.component import ComponentBaseHook
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
@@ -204,9 +204,9 @@ def generate_report_bp(email: str, start_date: str, end_date: str, component_id:
     ):
         send_email_with_pdf(
             email=email,
-            pdf_bytes=pdf_bytes,
-            email_body=email_body,
-            email_subject=email_subject,
+            pdf_bytes=generated_data["pdf_bytes"],
+            email_body="email_body",
+            email_subject="email_subject",
         )
 
     get_components_data_task = get_component_data(
@@ -227,5 +227,6 @@ def generate_report_bp(email: str, start_date: str, end_date: str, component_id:
         email_body="email_body",
         email_subject="email_subject",
     )
+
 
 generate_report_bp("test@gmail.com", "2023-01-01", "2024-01-01", 2)
