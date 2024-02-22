@@ -1,5 +1,9 @@
 # Documentação da DAG matomo generator
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## Introdução
 
 DAG responsável por buscar dados analíticos de uma instância do Matomo e salvá-lo como arquivos CSV em um bucket do MinIO. Esta DAG destina-se para executar diariamente e buscar os dados para o dia específico de execução.

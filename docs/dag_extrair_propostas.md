@@ -1,5 +1,9 @@
 # Documentação da DAG extrair proposta para o MinIO
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## Introdução
 
 Esta Dag faz uma busca na api do decidim para pegar dados referentes as propostas e os dados relacionados a elas. Gera CSV's com essas informações e envia para o MinIO, gerando dados Bronze.

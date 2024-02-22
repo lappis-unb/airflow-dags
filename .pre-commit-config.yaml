@@ -32,12 +32,12 @@ repos:
       - "--fix"
     types_or: [ python ]
 
-# - repo: https://github.com/thlorenz/doctoc
-#   rev: v2.2.0
-#   hooks:
-#   - id: doctoc
-#     args:
-#       - --gitlab
-#       - --title=**Índice**
-#       - --maxlevel=2
-#       - --all
+- repo: https://github.com/thlorenz/doctoc
+  rev: v2.2.0
+  hooks:
+  - id: doctoc
+    args:
+      - --gitlab
+      - --title=**Índice**
+      - --maxlevel=2
+      - --all
