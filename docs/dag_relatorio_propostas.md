@@ -1,8 +1,8 @@
-# Documentação da DAG para gerar o relatório
+# Documentação da DAG para gerar o relatório de propostas
 
 ## Introdução
 
-Essa DAG faz uma busca na api do Decidim e do Matomo para pegar dados sobre propostas e dados de acessos sobre a pagina da proposta. Trata os dados extraidos e gera gráficos e tabelas referentes aquela determinada proposta e finalmente gera um relatório em HTML e converte para PDF e envia para o email do gesto.
+Essa DAG faz uma busca na api do Decidim e do Matomo para extrair dados sobre propostas e acessos em suas respectivas páginas.Trata esses dados, gera gráficos, tabelas, insere tudo em um relatório HTML formatado, converte para PDF, e finalmente, envia para o email do gestor.
 
 ## Informações Gerais
 
@@ -16,7 +16,7 @@ Essa DAG faz uma busca na api do Decidim e do Matomo para pegar dados sobre prop
 ## Configuração da DAG
 
 - **Nome:** _get_components_url
-- **Descrição:** Gera a url dos componentes
+- **Descrição:** Gera a url dos componentes.
 - **Parâmetros:** ID do componente
 - **Retorno:** Url do componente
 - **Dependências:** ComponentBaseHook
@@ -63,7 +63,7 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task final:** Não
 
 - **Nome:** get_matomo_UserCountry_getRegion
-- **Descrição:** Extrai dados de geográficos de visitas dos componentes via api do Matomo.
+- **Descrição:** Extrai dados geográficos de visitas dos componentes via api do Matomo.
 - **Dependências:** get_components_url e BaseHook
 - **Task inicial:** Não
 - **Task final:** Não
@@ -75,48 +75,42 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task final:** Não
 
 - **Nome:** generate_data
-- **Descrição:** Trata os dados extraidos e gera o relatorio.
+- **Descrição:** Trata os dados extraídos e gera o relatório.
 - **Dependências:** get_matomo_VisitsSummary_get, get_matomo_VisitFrequency_get, get_matomo_UserCountry_getRegion e get_matomo_DevicesDetection_getType
 - **Task inicial:** Não
 - **Task final:** Não
 
 - **Nome:** send_report_email
-- **Descrição:**  Envia o relatório por email
+- **Descrição:**  Envia o relatório por email.
 - **Dependências:** MIMEApplication, MIMEMultipart, MIMEText e generate_data
 - **Task inicial:** Não
 - **Task final:** Sim
 
 ## Funções auxiliares
 
-_get_components_url
-_get_proposals_data
-_get_matomo_data
-_generate_report
-send_email_with_pdf
-
 - **Nome:** _get_components_url
-- **Descrição:** Gera a url dos componentes
+- **Descrição:** Gera a url dos componentes.
 - **Parâmetros:** ID do componente
 - **Retorno:** Url do componente
 - **Dependências:** ComponentBaseHook
 
 - **Nome:** _get_proposals_data
-- **Descrição:** Extrai os dados de propostas da api do Decidim
-- **Parâmetros:** ID do componente, data de inicio, data de fim
-- **Retorno:** Dados extraidos das propostas
+- **Descrição:** Extrai os dados de propostas da api do Decidim.
+- **Parâmetros:** ID do componente, data de início, data de fim
+- **Retorno:** Dados extraídos das propostas
 - **Dependências:** GraphQLHook
 
 - **Nome:** _get_matomo_data
-- **Descrição:** Extrai os dados de acessos da api do Matomo
-- **Parâmetros:**  URL, data de inicio, data de fim, modulo e metodo
-- **Retorno:** Dados de acesso extraidos
+- **Descrição:** Extrai os dados de acessos da api do Matomo.
+- **Parâmetros:**  URL, data de início, data de fim, módulo e método
+- **Retorno:** Dados de acesso extraídos
 - **Dependências:** BaseHook
 
 - **Nome:** _generate_report
-- **Descrição:** Gera o relatório do PDF
-- **Parâmetros:**  Dados extraidos do Decidim, Dados extraidos do Matomo
+- **Descrição:** Gera o relatório do PDF.
+- **Parâmetros:**  Dados extraídos do Decidim, Dados extraídos do Matomo
 - **Retorno:** PDF em Bytes
 
 - **Nome:** send_email_with_pdf
-- **Descrição:** Envia o relatorio por email
+- **Descrição:** Envia o relatório por email.
 - **Parâmetros:**  Email, pdf em bytes, assunto e corpo do email
