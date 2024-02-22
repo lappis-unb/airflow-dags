@@ -1,4 +1,4 @@
-query TextoParticipativo ($filter_date: String, $page:String){
+query TextoParticipativo ($id: ID!, $filter_date: String, $page:String){
   component(id: $id){
     name{
         translation(locale: "pt-BR")
