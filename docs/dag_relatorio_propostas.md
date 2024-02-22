@@ -1,5 +1,9 @@
 # Documentação da DAG para gerar o relatório de propostas
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## Introdução
 
 Essa DAG faz uma busca na api do Decidim e do Matomo para extrair dados sobre propostas e acessos em suas respectivas páginas.Trata esses dados, gera gráficos, tabelas, insere tudo em um relatório HTML formatado, converte para PDF, e finalmente, envia para o email do gestor.
