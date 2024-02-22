@@ -228,4 +228,4 @@ def generate_participatory_texts_reports(email: str, start_date: str, end_date: 
     )
 
 
-generate_participatory_texts_reports("test@gmail.com", "2023-01-01", "2024-01-01", 376)
+generate_participatory_texts_reports("test@gmail.com", "2023-01-01", "2024-01-01", 77)

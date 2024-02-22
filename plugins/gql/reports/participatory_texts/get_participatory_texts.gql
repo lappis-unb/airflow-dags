@@ -14,6 +14,12 @@ query TextoParticipativo ($id: ID!, $filter_date: String, $page:String){
         after: $page
         )
         {
+        pageInfo {
+          hasNextPage
+          startCursor
+          endCursor
+        }
+        {
         nodes{
         title {translation(locale: "pt-BR")}
           official
@@ -28,4 +34,5 @@ query TextoParticipativo ($id: ID!, $filter_date: String, $page:String){
         }
     }
     }
+}
 }
