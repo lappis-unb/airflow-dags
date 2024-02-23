@@ -1,4 +1,3 @@
-import logging
 import smtplib
 from datetime import datetime, timedelta
 from email.mime.application import MIMEApplication
@@ -6,21 +5,13 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
 
-import requests
 from airflow.decorators import dag, task
-from airflow.hooks.base import BaseHook
 
-from plugins.components.base_component.component import ComponentBaseHook
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
-from plugins.reports.main import create_report_pdf
+from plugins.reports.participatory_texts import DataFilter
+from plugins.reports.script import create_report_pdf
 
 BP_CONN_ID = "bp_conn"
-
-
-def _get_components_url(component_id: int):
-    component_hook = ComponentBaseHook(BP_CONN_ID, component_id)
-    return component_hook.get_component_link()
-
 
 def _get_participatory_texts_data(component_id: int, start_date: str, end_date: str):
     query = (
@@ -53,63 +44,43 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
             proposal_total_votes = proposal.get("voteCount")
             texts_comments = proposal.get("comments", [])
 
+            comments_with_authors = []
             for comment in texts_comments:
                 comment_body = comment.get("body")
                 comment_votes_up = comment.get("upVotes")
                 comment_votes_down = comment.get("downVotes")
+                author_name = comment.get("author", {}).get("name")
+                comment_date = comment.get("createdAt")
 
-                result_participatory_texts_data.append(
-                    {
-                        "page_component_id": page_component_id,
-                        "participatory_space_id": participatory_space_id,
-                        "participatory_space_type": participatory_space_type,
-                        "page_component_name": page_component_name,
-                        "proposal_title": proposal_title,
-                        "proposal_official": proposal_official,
-                        "proposal_total_comments": proposal_total_comments,
-                        "proposal_total_votes": proposal_total_votes,
-                        "comment_body": comment_body,
-                        "comment_votes_up": comment_votes_up,
-                        "comment_votes_down": comment_votes_down
-                    }
-                )
+                comments_with_authors.append({
+                    "body": comment_body,
+                    "upVotes": comment_votes_up,
+                    "downVotes": comment_votes_down,
+                    "author_name": author_name,
+                    "createdAt": comment_date
+                })
+
+            result_participatory_texts_data.append({
+                "page_component_id": page_component_id,
+                "participatory_space_id": participatory_space_id,
+                "participatory_space_type": participatory_space_type,
+                "page_component_name": page_component_name,
+                "proposal_title": proposal_title,
+                "proposal_official": proposal_official,
+                "proposal_total_comments": proposal_total_comments,
+                "proposal_total_votes": proposal_total_votes,
+                "comments": comments_with_authors
+            })
 
         return result_participatory_texts_data
 
+def apply_filter_data(raw_data):
+    data_filter = DataFilter(raw_data)
+    return data_filter.filter_data()
 
-def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, method: str):
-    matomo_connection = BaseHook.get_connection("matomo_conn")
-    matomo_url = matomo_connection.host
-    token_auth = matomo_connection.password
-    site_id = matomo_connection.login
-    date_filter = f"{start_date},{end_date}"
-    params = {
-        "module": "API",
-        "idSite": site_id,
-        "period": "range",
-        "date": date_filter,
-        "segment": f"pageUrl=^{url}",
-        "format": "csv",
-        "token_auth": token_auth,
-        "method": f"{module}.{method}",
-    }
-    logging.info("Params para a requisição do matomo \n%s.", params)
-
-    response = requests.get(matomo_url, params=params)
-    response.raise_for_status()
-
-    try:
-        return response.text
-    except requests.exceptions.JSONDecodeError as error:
-        logging.exception("Response text: %s", response.text)
-        raise error
-
-
-def _generate_report(bp_data, visits_summary, visits_frequency, user_country, devices_detection):
-    pdf_bytes = create_report_pdf(bp_data, visits_summary, visits_frequency, user_country, devices_detection)
-
+def _generate_report(filtered_data):
+    pdf_bytes = create_report_pdf(filtered_data)
     return {"pdf_bytes": pdf_bytes}
-
 
 def send_email_with_pdf(email: str, pdf_bytes: bytes, email_body: str, email_subject: str):
     smtp_server = "smtp.gmail.com"
@@ -160,71 +131,44 @@ def generate_participatory_texts_reports(email: str, start_date: str, end_date: 
     """
 
     @task
-    def get_components_url(component_id: int):
-        return _get_components_url(component_id)
-
-    @task
     def get_component_data(component_id: int, filter_start_date: str, filter_end_date: str):
         return _get_participatory_texts_data(component_id, filter_start_date, filter_end_date)
 
-    get_components_url_task = get_components_url(component_id)
 
-    def _get_matomo_extractor(url: str, matomo_module: str, matomo_method: str):
-        @task(task_id=f"get_matomo_{matomo_module}_{matomo_method}")
-        def matomo_extractor(
-            url: str, filter_start_date: str, filter_end_date: str, module: str, method: str
-        ):
-            return _get_matomo_data(
-                url=url, start_date=filter_start_date, end_date=filter_end_date, module=module, method=method
-            )
+    @task
+    def filter_component_data(raw_data):
+        return apply_filter_data(raw_data)
 
-        return matomo_extractor(
-            url,
-            start_date,
-            end_date,
-            matomo_module,
-            matomo_method,
-        )
-
-    matomo_visits_summary_task = _get_matomo_extractor(get_components_url_task, "VisitsSummary", "get")
-    matomo_visits_frequency_task = _get_matomo_extractor(get_components_url_task, "VisitFrequency", "get")
-    matomo_user_contry_task = _get_matomo_extractor(get_components_url_task, "UserCountry", "getRegion")
-    matomo_devices_detection_task = _get_matomo_extractor(
-        get_components_url_task, "DevicesDetection", "getType"
-    )
-
-    @task(multiple_outputs=True)
-    def generate_data(bp_data, visits_summary, visits_frequency, user_contry, devices_detection):
-        return _generate_report(bp_data, visits_summary, visits_frequency, user_contry, devices_detection)
+    @task
+    def generate_data(filtered_data):
+        return _generate_report(filtered_data)
 
     @task
     def send_report_email(
-        email: str, pdf_bytes: bytes, email_body: str, email_subject: str = "Seu Relatório"
+        email: str, report_data: dict, email_body: str, email_subject: str = "Seu Relatório"
     ):
+        pdf_bytes = report_data["pdf_bytes"]
         send_email_with_pdf(
             email=email,
-            pdf_bytes=generated_data["pdf_bytes"],
-            email_body="email_body",
-            email_subject="email_subject",
+            pdf_bytes=pdf_bytes,
+            email_body=email_body,
+            email_subject=email_subject,
         )
 
-    get_components_data_task = get_component_data(
+    component_data = get_component_data(
         component_id, filter_start_date=start_date, filter_end_date=end_date
     )
 
-    generated_data = generate_data(
-        get_components_data_task,
-        visits_summary=matomo_visits_summary_task,
-        visits_frequency=matomo_visits_frequency_task,
-        user_contry=matomo_user_contry_task,
-        devices_detection=matomo_devices_detection_task,
-    )
+
+    filtered_data = filter_component_data(component_data)
+
+    report_data = generate_data(filtered_data)
 
     send_report_email(
         email=email,
-        pdf_bytes=generated_data["pdf_bytes"],
-        email_body="email_body",
-        email_subject="email_subject",
+        report_data=report_data,
+        email_body="Aqui vai o corpo do seu e-mail",
+        email_subject="Relatório Participativo",
     )
 
 
