@@ -1,3 +1,7 @@
+# Testing
+
+coverage_report*
+
 # Project specific
 logs
 mnt
