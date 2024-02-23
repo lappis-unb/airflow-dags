@@ -1,4 +1,4 @@
-query TextoParticipativo ($filter_date: String, $page:String){
+query TextoParticipativo ($id: ID!, $filter_date: String, $page:String){
   component(id: $id){
     name{
         translation(locale: "pt-BR")
@@ -6,6 +6,7 @@ query TextoParticipativo ($filter_date: String, $page:String){
     participatorySpace{
       id
       title{translation(locale: "pt-BR")}
+
     }
     ... on Proposals{
         proposals(
@@ -13,19 +14,28 @@ query TextoParticipativo ($filter_date: String, $page:String){
         order: {publishedAt: "asc"}
         after: $page
         )
-        {
+      	{
+        pageInfo {
+          hasNextPage
+          startCursor
+          endCursor
+        }
         nodes{
-        title {translation(locale: "pt-BR")}
+        	title {translation(locale: "pt-BR")}
           official
           totalCommentsCount
           voteCount
           comments{
+            author {
+            name
+          	}
+            createdAt
             body
             upVotes
             downVotes
           }
         }
-        }
+      }
     }
-    }
+  }
 }

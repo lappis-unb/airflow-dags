@@ -15,6 +15,8 @@ from urllib.parse import urljoin
 import requests
 from airflow.hooks.base import BaseHook
 
+from plugins.utils.dict_utils import key_lookup
+
 
 class GraphQLHook(BaseHook):
     """Uma classe para autenticação com uma API GraphQL usando o Apache Airflow.
@@ -140,7 +142,6 @@ class GraphQLHook(BaseHook):
     def run_graphql_paginated_query(
         self,
         paginated_query: str,
-        component_type: Optional[str] = None,
         variables: Optional[Dict[str, Any]] = None,
     ) -> Generator[Dict[str, Any], None, None]:
         """
@@ -163,21 +164,14 @@ class GraphQLHook(BaseHook):
 
         response = self.run_graphql_query(paginated_query, variables)
 
-        print(response["data"]["component"])
+        page_info = key_lookup(response, "pageInfo")
 
-        component_type_lower = component_type.lower() if component_type else ""
-
-        variables["page"] = (
-            response["data"]["component"].get(component_type_lower, {}).get("pageInfo", {}).get("endCursor")
-        )
-        has_next_page = (
-            response["data"]["component"].get(component_type_lower, {}).get("pageInfo", {}).get("hasNextPage")
-        )
+        variables["page"] = page_info["endCursor"]
+        has_next_page = page_info["hasNextPage"]
 
         if has_next_page:
             yield from self.run_graphql_paginated_query(
                 paginated_query,
-                component_type=component_type,
                 variables=variables,
             )
 
@@ -204,7 +198,6 @@ class GraphQLHook(BaseHook):
                 component = self.run_graphql_query(query)
                 space_type = next(iter(component["data"].keys()))
 
-                # print(component["data"][space_type])
                 for components in component["data"][space_type]:
                     space_components = components["components"]
                     result.extend([x["id"] for x in space_components if x["__typename"] == component_type])
