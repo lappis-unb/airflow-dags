@@ -3,6 +3,7 @@ query ComponentsInAssembly($date: String) {
     ... on Assembly {
       id
       __typename
+      groupChatId
       creationDate
       closingDate
       title {

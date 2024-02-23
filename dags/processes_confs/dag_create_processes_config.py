@@ -106,7 +106,7 @@ def _configure_base_yaml_in_participatory_spaces(participatory_space):
     )
 
     participatory_space_slug = participatory_space["slug"]
-    participatory_space_chat_id = -1001990530900  # TODO: Change to the id it will come with the queries.
+    participatory_space_chat_id = participatory_space["groupChatId"]
 
     for component in participatory_space["components"]:
         if component["__typename"] in accepeted_component_types:
