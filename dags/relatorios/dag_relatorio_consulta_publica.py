@@ -13,6 +13,7 @@ from plugins.reports.script import create_report_pdf
 
 BP_CONN_ID = "bp_conn"
 
+
 def _get_participatory_texts_data(component_id: int, start_date: str, end_date: str):
     query = (
         Path(__file__)
@@ -52,35 +53,42 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
                 author_name = comment.get("author", {}).get("name")
                 comment_date = comment.get("createdAt")
 
-                comments_with_authors.append({
-                    "body": comment_body,
-                    "upVotes": comment_votes_up,
-                    "downVotes": comment_votes_down,
-                    "author_name": author_name,
-                    "createdAt": comment_date
-                })
+                comments_with_authors.append(
+                    {
+                        "body": comment_body,
+                        "upVotes": comment_votes_up,
+                        "downVotes": comment_votes_down,
+                        "author_name": author_name,
+                        "createdAt": comment_date,
+                    }
+                )
 
-            result_participatory_texts_data.append({
-                "page_component_id": page_component_id,
-                "participatory_space_id": participatory_space_id,
-                "participatory_space_type": participatory_space_type,
-                "page_component_name": page_component_name,
-                "proposal_title": proposal_title,
-                "proposal_official": proposal_official,
-                "proposal_total_comments": proposal_total_comments,
-                "proposal_total_votes": proposal_total_votes,
-                "comments": comments_with_authors
-            })
+            result_participatory_texts_data.append(
+                {
+                    "page_component_id": page_component_id,
+                    "participatory_space_id": participatory_space_id,
+                    "participatory_space_type": participatory_space_type,
+                    "page_component_name": page_component_name,
+                    "proposal_title": proposal_title,
+                    "proposal_official": proposal_official,
+                    "proposal_total_comments": proposal_total_comments,
+                    "proposal_total_votes": proposal_total_votes,
+                    "comments": comments_with_authors,
+                }
+            )
 
         return result_participatory_texts_data
+
 
 def apply_filter_data(raw_data):
     data_filter = DataFilter(raw_data)
     return data_filter.filter_data()
 
+
 def _generate_report(filtered_data):
     pdf_bytes = create_report_pdf(filtered_data)
     return {"pdf_bytes": pdf_bytes}
+
 
 def send_email_with_pdf(email: str, pdf_bytes: bytes, email_body: str, email_subject: str):
     smtp_server = "smtp.gmail.com"
@@ -134,7 +142,6 @@ def generate_participatory_texts_reports(email: str, start_date: str, end_date: 
     def get_component_data(component_id: int, filter_start_date: str, filter_end_date: str):
         return _get_participatory_texts_data(component_id, filter_start_date, filter_end_date)
 
-
     @task
     def filter_component_data(raw_data):
         return apply_filter_data(raw_data)
@@ -155,10 +162,7 @@ def generate_participatory_texts_reports(email: str, start_date: str, end_date: 
             email_subject=email_subject,
         )
 
-    component_data = get_component_data(
-        component_id, filter_start_date=start_date, filter_end_date=end_date
-    )
-
+    component_data = get_component_data(component_id, filter_start_date=start_date, filter_end_date=end_date)
 
     filtered_data = filter_component_data(component_data)
 

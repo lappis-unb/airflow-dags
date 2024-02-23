@@ -11,6 +11,7 @@ def ensure_iterable(data):
         return [data]
     return data
 
+
 def create_report_pdf(filtered_data):
 
     template_dir = Path(__file__).parent

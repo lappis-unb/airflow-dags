@@ -17,6 +17,7 @@ from airflow.hooks.base import BaseHook
 
 from plugins.utils.dict_utils import key_lookup
 
+
 class GraphQLHook(BaseHook):
     """Uma classe para autenticação com uma API GraphQL usando o Apache Airflow.
 
