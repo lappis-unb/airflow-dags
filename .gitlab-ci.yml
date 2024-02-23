@@ -97,10 +97,10 @@ lint-markdown:
     - echo "---------- Stage 2 - Run markdownlint (v0.32.2) ----------"
     - bash -c "$(curl -fsSL https://raw.githubusercontent.com/CICDToolbox/markdown-lint/master/pipeline.sh)"
 
-pytest-3.8:
-  stage: tests
-  image: python:3.8-slim
-  <<: *default_pytest
+# pytest-3.8:
+#   stage: tests
+#   image: python:3.8-slim
+#   <<: *default_pytest
 
 pytest-3.9:
   stage: tests
