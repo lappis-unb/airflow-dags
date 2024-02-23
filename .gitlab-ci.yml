@@ -9,7 +9,7 @@ push-image-to-registry:
     - docker
   services:
     - docker:dind
-  image: docker
+  image: docker 
   inherit:
     default: false
   rules:
