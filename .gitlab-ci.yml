@@ -9,18 +9,18 @@ push-image-to-registry:
     - docker
   services:
     - docker:dind
-  image: docker
+  image: docker 
   inherit:
     default: false
   rules:
-    - if: $CI_COMMIT_REF_PROTECTED == "true"
+  - if: $CI_COMMIT_REF_PROTECTED == "true"
   script:
     - echo "---------- install git ----------"
     - apk update
     - apk add git
 
     - echo "---------- Cloning the repository ----------"
-    - git clone https://airflow-docker:$ACCESS_DOCKER_DAGS@gitlab.com/lappis-unb/decidimbr/airflow-docker.git
+    - git clone https://airflow-docker:$ACCESS_DOCKER_DAGS@gitlab.com/lappis-unb/decidimbr/servicos-de-dados/airflow-docker.git
 
     - echo "---------- Copying files to build the image ----------"
     - mv airflow-docker/requirements.txt .
@@ -43,6 +43,7 @@ default:
   before_script:
     - pip install -r requirements.txt  # Install dependencies
     - pip install -r requirements.testing.txt  # Install testing dependencies
+
 
 .default_rule_python: &default_rule_python
   rules:
@@ -116,3 +117,6 @@ pytest-3.11:
   stage: tests
   image: python:3.11-slim
   <<: *default_pytest
+
+
+
