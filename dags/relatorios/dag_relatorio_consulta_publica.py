@@ -16,7 +16,7 @@ BP_CONN_ID = "bp_conn"
 def _get_participatory_texts_data(component_id: int, start_date: str, end_date: str):
     query = (
         Path(__file__)
-        .parent.parent.parent.joinpath("./plugins/gql/reports/participatory_texts/get_participatory_texts.gql")
+        .parent.parent.joinpath("./plugins/gql/reports/participatory_texts/get_participatory_texts.gql")
         .open()
         .read()
     )
@@ -163,7 +163,7 @@ def generate_participatory_texts_reports(email: str, start_date: str, end_date: 
     filtered_data = filter_component_data(component_data)
 
     report_data = generate_data(filtered_data)
-
+    # print(report_data)
     send_report_email(
         email=email,
         report_data=report_data,
