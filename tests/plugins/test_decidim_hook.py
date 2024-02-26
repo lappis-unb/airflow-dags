@@ -1,13 +1,14 @@
 import pytest
 from airflow.models.connection import Connection
 
-from plugins.decidim_hook import ComponentNotSupportedError, DecidimHook
 from plugins.components.proposals import ProposalsHook
+from plugins.decidim_hook import ComponentNotSupportedError, DecidimHook
 
 
 @pytest.fixture
 def mock_get_component_type(mocker):
-    return mocker.patch('plugins.components.base_component.component.ComponentBaseHook.get_component_type')
+    return mocker.patch("plugins.components.base_component.component.ComponentBaseHook.get_component_type")
+
 
 @pytest.fixture
 def mock_connection(mocker):
@@ -23,12 +24,11 @@ def mock_connection(mocker):
     mocker.patch.dict("os.environ", AIRFLOW_CONN_DECIDIM_API=mock_connection_uri)
 
 
-
 def test_create_proposals_hook(mock_get_component_type, mocker, mock_connection):
     # Arrange
     mock_get_component_type.return_value = "Proposals"
 
-    conn_id = 'decidim_api'
+    conn_id = "decidim_api"
     component_id = 123
     # Act
 
@@ -38,11 +38,12 @@ def test_create_proposals_hook(mock_get_component_type, mocker, mock_connection)
     assert isinstance(hook_instance, ProposalsHook)
     assert mock_get_component_type.call_count == 3
 
+
 def test_create_unsupported_hook(mock_get_component_type, mocker, mock_connection):
     # Arrange
     mock_get_component_type.return_value = "UnsupportedComponentType"
 
-    conn_id = 'decidim_api'
+    conn_id = "decidim_api"
     component_id = 456
 
     # Act and Assert
