@@ -1,7 +1,7 @@
 stages:
+  - build
   - lint
   - tests
-  - build
 
 push-image-to-registry:
   stage: build
@@ -9,11 +9,12 @@ push-image-to-registry:
     - docker
   services:
     - docker:dind
-  image: docker 
+  image: docker
   inherit:
     default: false
   rules:
   - if: $CI_COMMIT_REF_PROTECTED == "true"
+  - if: $CI_COMMIT_BRANCH == "main"
   script:
     - echo "---------- install git ----------"
     - apk update
@@ -23,27 +24,25 @@ push-image-to-registry:
     - git clone https://airflow-docker:$ACCESS_DOCKER_DAGS@gitlab.com/lappis-unb/decidimbr/servicos-de-dados/airflow-docker.git
 
     - echo "---------- Copying files to build the image ----------"
-    - mv airflow-docker/requirements.txt .
-    - mv airflow-docker/requirements-uninstall.txt .
     - mv airflow-docker/Dockerfile .
+    - mkdir airflow-dags
+    - mv requirements.txt ./airflow-dags/.
 
     - echo "---------- Updating the Dockerfile ----------"
     - echo "COPY ./dags ./dags" >> Dockerfile
     - echo "COPY ./plugins ./dags" >> Dockerfile
-    - rm -rf airflow-docker
 
     - echo "--------- Building the image ----------"
     - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
-    - docker build -t $CI_REGISTRY_IMAGE .
-    - docker push $CI_REGISTRY_IMAGE
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
 
 default:
   image: python:3.10-slim
   retry: 0
   before_script:
-    - pip install -r requirements.txt  # Install dependencies
-    - pip install -r requirements.testing.txt  # Install testing dependencies
-
+    - pip install -r requirements.txt # Install dependencies
+    - pip install -r requirements.testing.txt # Install testing dependencies
 
 .default_rule_python: &default_rule_python
   rules:
@@ -117,6 +116,3 @@ pytest-3.11:
   stage: tests
   image: python:3.11-slim
   <<: *default_pytest
-
-
-
