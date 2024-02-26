@@ -1,7 +1,7 @@
 stages:
+  - build
   - lint
   - tests
-  - build
 
 push-image-to-registry:
   stage: build
@@ -26,7 +26,7 @@ push-image-to-registry:
     - echo "---------- Copying files to build the image ----------"
     - mv airflow-docker/Dockerfile .
     - mkdir airflow-dags
-    - mv airflow-docker/requirements.txt ./airflow-dags/.
+    - mv requirements.txt ./airflow-dags/.
 
     - echo "---------- Updating the Dockerfile ----------"
     - echo "COPY ./dags ./dags" >> Dockerfile
