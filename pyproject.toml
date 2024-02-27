@@ -70,7 +70,7 @@ docstring-code-format = true
 # * Disable `flaky` plugin for pytest. This plugin conflicts with `rerunfailures` because provide same marker.
 # * Disable `nose` builtin plugin for pytest. This feature deprecated in 7.2 and will be removed in pytest>=8
 # * And we focus on use native pytest capabilities rather than adopt another frameworks.
-addopts = "--cov-report term-missing --cov-report html:tests/reports/coverage_report_html --cov-report json:tests/reports/coverage_report.json --cov=dags --cov=plugins -rasl --verbosity=3 -p no:flaky -p no:nose"
+addopts = "--cov-report term-missing --cov-report html:tests/reports/coverage_report_html --cov=dags --cov=plugins -rasl --verbosity=3 -p no:flaky -p no:nose"
 log_level = "INFO"
 filterwarnings = []
 python_files = [

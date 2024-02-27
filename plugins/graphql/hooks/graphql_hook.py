@@ -14,6 +14,7 @@ from urllib.parse import urljoin
 
 import requests
 from airflow.hooks.base import BaseHook
+from airflow.models.connection import Connection
 
 from plugins.utils.dict_utils import key_lookup
 
@@ -66,7 +67,11 @@ class GraphQLHook(BaseHook):
         ----
             conn_id (str): The connection ID used for authentication.
         """
+        assert isinstance(conn_id, str), "Param type of conn_id has to be str"
+
         conn_values = self.get_connection(conn_id)
+        assert isinstance(conn_values, Connection), "conn_values was not created correctly."
+
         self.conn_id = conn_id
         self.api_url = conn_values.host
         self.auth_url = urljoin(self.api_url, "api/sign_in")
@@ -74,21 +79,6 @@ class GraphQLHook(BaseHook):
             "user[email]": conn_values.login,
             "user[password]": conn_values.password,
         }
-
-    def get_graphql_query_from_file(self, path_para_arquivo_query: Union[Path, str]) -> str:
-        """
-        Reads and returns the contents of a GraphQL query file.
-
-        Args:
-        ----
-            path_para_arquivo_query (Union[Path, str]): The path to the GraphQL query file.
-
-        Returns:
-        -------
-            str: The contents of the GraphQL query file.
-        """
-        with closing(open(path_para_arquivo_query)) as file:
-            return file.read()
 
     def get_session(self) -> requests.Session:
         """
@@ -108,15 +98,35 @@ class GraphQLHook(BaseHook):
             raise e
         return session
 
+    @classmethod
+    def get_graphql_query_from_file(cls, path_para_arquivo_query: Union[Path, str]) -> str:
+        """
+        Reads and returns the contents of a GraphQL query file.
+
+        Args:
+        ----
+            path_para_arquivo_query (Union[Path, str]): The path to the GraphQL query file.
+
+        Returns:
+        -------
+            str: The contents of the GraphQL query file.
+        """
+        assert isinstance(
+            path_para_arquivo_query, (Path, str)
+        ), "Param path_para_arquivo_query has to be one of [str, Path]"
+        assert Path(path_para_arquivo_query).exists(), f"Query file: {path_para_arquivo_query}, not found"
+        with closing(open(path_para_arquivo_query)) as file:
+            return file.read()
+
     def run_graphql_query(
-        self, graphql_query: str, variables: Optional[Dict[str, Any]] = None
+        self, graphql_query: Union[str, Path], variables: Optional[Dict[str, Any]] = None
     ) -> Dict[str, str]:
         """
         Executes a GraphQL query and returns the JSON response.
 
         Args:
         ----
-            graphql_query (str): The GraphQL query to execute.
+            graphql_query (str): The GraphQL query to execute or the path to the graphql query.
             variables (Optional[Dict[str, Any]]): Optional variables to include in the query.
 
         Returns:
@@ -129,12 +139,7 @@ class GraphQLHook(BaseHook):
             )
             response.raise_for_status()
         except requests.HTTPError as exp:
-            logging.error(
-                """Query:\n\n\t %s \n\nhas returned status code: %s, with %s""",
-                graphql_query,
-                response.status_code,
-                response,
-            )
+            logging.error("""Query:\n\n\t %s""", graphql_query)
             raise exp
 
         return response.json()
