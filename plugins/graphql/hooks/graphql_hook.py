@@ -125,8 +125,7 @@ class GraphQLHook(BaseHook):
         """
         try:
             response = self.get_session().post(
-                self.api_url, json={
-                    "query": graphql_query, "variables": variables}
+                self.api_url, json={"query": graphql_query, "variables": variables}
             )
             response.raise_for_status()
         except requests.HTTPError as exp:
@@ -205,6 +204,5 @@ class GraphQLHook(BaseHook):
 
                 for components in component["data"][space_type]:
                     space_components = components["components"]
-                    result.extend(
-                        [x["id"] for x in space_components if x["__typename"] == component_type])
+                    result.extend([x["id"] for x in space_components if x["__typename"] == component_type])
         return result

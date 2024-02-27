@@ -1,8 +1,9 @@
 import logging
 from time import sleep
 
-from telegram.error import RetryAfter, TimedOut
 from tenacity import RetryError
+
+from telegram.error import RetryAfter, TimedOut
 
 
 class TelegramMaxRetriesError(Exception):
