@@ -170,9 +170,13 @@ class GraphQLHook(BaseHook):
         response = self.run_graphql_query(paginated_query, variables)
 
         page_info = key_lookup(response, "pageInfo")
+        has_next_page = None
 
-        variables["page"] = page_info["endCursor"]
-        has_next_page = page_info["hasNextPage"]
+        if page_info is not None:
+            variables["page"] = page_info["endCursor"]
+            has_next_page = page_info["hasNextPage"]
+        else:
+            logging.warning("Não achou a chave page_info.")
 
         if has_next_page:
             yield from self.run_graphql_paginated_query(

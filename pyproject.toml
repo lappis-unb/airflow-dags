@@ -8,10 +8,10 @@ target-version = ['py38', 'py39', 'py310', 'py311']
 
 [tool.ruff]
 target-version = "py38"
-typing-modules = ["airflow.typing_compat"]
+lint.typing-modules = ["airflow.typing_compat"]
 line-length = 110
 
-extend-select = [
+lint.extend-select = [
     "I", # Missing required import (auto-fixable)
     "UP", # Pyupgrade
     "RUF100", # Unused noqa (auto-fixable)
@@ -52,7 +52,7 @@ extend-select = [
     "ISC",  # Checks for implicit literal string concatenation (auto-fixable)
     "B006", # Checks for uses of mutable objects as function argument defaults.
 ]
-ignore = [
+lint.ignore = [
     "D203",
     "D212",
     "D213",
