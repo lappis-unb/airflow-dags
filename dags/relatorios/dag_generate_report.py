@@ -25,7 +25,7 @@ def _get_components_url(component_id: int):
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     query = (
         Path(__file__)
-        .parent.parent.parent.joinpath("./plugins/gql/reports/components/get_proposals_by_component_id.gql")
+        .parent.parent.joinpath("./plugins/gql/reports/components/get_proposals_by_component_id.gql")
         .open()
         .read()
     )
