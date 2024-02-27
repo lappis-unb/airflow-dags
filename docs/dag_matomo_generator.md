@@ -53,9 +53,9 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 
     - **Passo 3.1:** Replicar a conexão para o Matomo no Airflow, com um nome diferente
         - **Nome:** matomo_conn
-        - **host:** Mesmas configurações que anterior.
-        - **login:** Mesmas configurações que anterior.
-        - **password:** Mesmas configurações que anterior.  
+        - **host:** Mesmas configurações que o anterior.
+        - **login:** Mesmas configurações que o anterior.
+        - **password:** Mesmas configurações que o anterior.  
 
     - **Passo 4:** Abrir o MinIO e criar um bucket com o mesmo nome do schema (matomo-daily-csv)
 
