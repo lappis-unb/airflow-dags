@@ -125,7 +125,8 @@ class GraphQLHook(BaseHook):
         """
         try:
             response = self.get_session().post(
-                self.api_url, json={"query": graphql_query, "variables": variables}
+                self.api_url, json={
+                    "query": graphql_query, "variables": variables}
             )
             response.raise_for_status()
         except requests.HTTPError as exp:
@@ -165,9 +166,13 @@ class GraphQLHook(BaseHook):
         response = self.run_graphql_query(paginated_query, variables)
 
         page_info = key_lookup(response, "pageInfo")
+        has_next_page = None
 
-        variables["page"] = page_info["endCursor"]
-        has_next_page = page_info["hasNextPage"]
+        if page_info is not None:
+            variables["page"] = page_info["endCursor"]
+            has_next_page = page_info["hasNextPage"]
+        else:
+            logging.warning("Não achou a chave page_info.")
 
         if has_next_page:
             yield from self.run_graphql_paginated_query(
@@ -200,5 +205,6 @@ class GraphQLHook(BaseHook):
 
                 for components in component["data"][space_type]:
                     space_components = components["components"]
-                    result.extend([x["id"] for x in space_components if x["__typename"] == component_type])
+                    result.extend(
+                        [x["id"] for x in space_components if x["__typename"] == component_type])
         return result
