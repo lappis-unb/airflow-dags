@@ -150,7 +150,7 @@ def send_email_with_pdf(email: str, pdf_bytes: bytes, email_body: str, email_sub
     description=__doc__,
     tags=["decidim", "reports", "participacao", "bp"],
 )
-def dag_generate_report_proposals(email: str, start_date: str, end_date: str, component_id: int):
+def generate_report_proposals(email: str, start_date: str, end_date: str, component_id: int):
     """
     Gera um relatorio para o BP.
 
@@ -229,4 +229,4 @@ def dag_generate_report_proposals(email: str, start_date: str, end_date: str, co
     )
 
 
-dag_generate_report_proposals("test@gmail.com", "2023-01-01", "2024-01-01", 2)
+generate_report_proposals("test@gmail.com", "2023-01-01", "2024-01-01", 2)

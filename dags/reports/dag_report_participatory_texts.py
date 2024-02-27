@@ -128,7 +128,7 @@ def send_email_with_pdf(email: str, pdf_bytes: bytes, email_body: str, email_sub
     description=__doc__,
     tags=["decidim", "reports", "participatory-texts", "bp"],
 )
-def generate_participatory_texts_reports(email: str, start_date: str, end_date: str, component_id: int):
+def generate_report_participatory_texts(email: str, start_date: str, end_date: str, component_id: int):
     """
     Gera um relatorio para o BP.
 
@@ -176,4 +176,4 @@ def generate_participatory_texts_reports(email: str, start_date: str, end_date: 
     )
 
 
-generate_participatory_texts_reports("test@gmail.com", "2023-01-01", "2024-01-01", 77)
+generate_report_participatory_texts("test@gmail.com", "2023-01-01", "2024-01-01", 77)
