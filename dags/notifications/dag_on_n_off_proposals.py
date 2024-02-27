@@ -80,7 +80,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
             tags=["decidim"],
             is_paused_upon_creation=False,
         )
-        def decidim_on_n_off_proposals(
+        def notify_on_n_off_proposals(
             proposals_status: bool,
         ):  # pylint: disable=missing-function-docstring
             # due to Airflow DAG __doc__
@@ -198,20 +198,20 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
 
             set_proposals_availability(proposals_status) >> send_telegram(proposals_status)
 
-        return decidim_on_n_off_proposals
+        return notify_on_n_off_proposals
 
 
 def yaml_to_dag(process_config: dict):
     """Recive the path to configuration file and generate an airflow dag."""
     DecidimNotifierDAGGenerator().generate_dag(
         **process_config,
-        dag_id="decidim_set_on_proposals",
+        dag_id="notify_set_on_proposals",
         schedule="0 8 * * *",
     )(True)
 
     DecidimNotifierDAGGenerator().generate_dag(
         **process_config,
-        dag_id="decidim_set_off_proposals",
+        dag_id="notify_set_off_proposals",
         schedule="0 22 * * *",
     )(False)
 

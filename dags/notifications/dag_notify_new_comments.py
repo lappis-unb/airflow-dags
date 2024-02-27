@@ -57,7 +57,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
         }
 
         @dag(
-            dag_id=f"dedicim_notify_new_comments_{self.process_id}",
+            dag_id=f"notify_new_comments_{self.process_id}",
             default_args=default_args,
             schedule="@hourly",  # every 1 hour
             catchup=False,
@@ -66,7 +66,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
             tags=["notificação", "decidim"],
             is_paused_upon_creation=False,
         )
-        def dedicim_notify_new_comments():
+        def notify_new_comments():
             @task
             def get_update_date(dag_start_date: datetime) -> datetime:
                 """Airflow task that retrieve last comment update date from airflow variables.
@@ -227,7 +227,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                 >> save_update_date(selected_comments["max_datetime"])
             )
 
-        return dedicim_notify_new_comments()
+        return notify_new_comments()
 
 
 config_directory = Path(__file__).parent.parent.joinpath("./processes_confs")

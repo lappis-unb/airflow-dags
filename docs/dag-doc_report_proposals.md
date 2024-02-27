@@ -10,7 +10,7 @@ Essa DAG faz uma busca na api do Decidim e do Matomo para extrair dados sobre pr
 
 ## Informações Gerais
 
-- **Nome da DAG:** dag_generate_report
+- **Nome da DAG:** dag_generate_report_proposals
 - **Descrição:** DAG que gera relatório de propostas e envia por email.
 - **Agendamento:** A DAG não tem agendamento
 - **Autor:** Joyce e Paulo
