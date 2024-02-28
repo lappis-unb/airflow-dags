@@ -1,4 +1,4 @@
-# Documentação da DAG notify new proposals
+# Documentação da DAG notify new comments
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -6,15 +6,15 @@
 
 ## Introdução
 
-DAG que envia uma mensagem via telegram para avisar que novas propostas foram adicionados no Brasil Participativo.
+DAG que envia uma mensagem via telegram para avisar que novos comentários foram adicionados nas propostas do Brasil Participativo.
 
 ## Informações Gerais
 
-- **Nome da DAG:** dedicim_notify_new_proposals
-- **Agendamento:** A cada 3 minutos
-- **Autor:** Paulo e Thaís
+- **Nome da DAG:** notify_new_comments
+- **Agendamento:** A cada 1h
+- **Autor:** Paulo
 - **Versão:** 1.0
-- **Data de Criação:** 27/08/2023
+- **Data de Criação:** 03/10/2023
 
 ## Configuração da DAG
 
@@ -53,37 +53,37 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 ## Descrição das Tarefas
 
 - **Nome:** get_update_date
-- **Descrição:** Recupera data de atualização da última proposta
+- **Descrição:** Recupera data de atualização do último comentário
 - **Dependências:** Nenhuma
 - **Task inicial:** Sim
 - **Task final:** Não
 
-- **Nome:** get_proposals
-- **Descrição:** Faz requisição de propostas na API do decidim
+- **Nome:** get_comments
+- **Descrição:** Faz requisição de comentários na API do decidim
 - **Dependências:** update_date
 - **Task inicial:** Não
 - **Task final:** Não
 
 - **Nome:** mount_telegram_messages
-- **Descrição:** Seleciona propostas novas e cria uma mensagem para ser enviada via telegram
-- **Dependências:** get_proposals
+- **Descrição:** Seleciona comentários novos e cria uma mensagem para ser enviada via telegram
+- **Dependências:** get_comments
 - **Task inicial:** Não
 - **Task final:** Não
 
-- **Nome:** check_if_new_proposals
-- **Descrição:** Escolhe o fluxo de tarefas caso tenha ou não novas propostas
+- **Nome:** check_if_new_comments
+- **Descrição:** Escolhe o fluxo de tarefas caso tenha ou não novas mensagens
 - **Dependências:** mount_telegram_messages
 - **Task inicial:** Não
 - **Task final:** Não
 
 - **Nome:** send_telegram_messages
 - **Descrição:** Envia a mensagem para o telegram
-- **Dependências:** mount_telegram_messages, check_if_new_proposals
+- **Dependências:** mount_telegram_messages, check_if_new_comments
 - **Task inicial:** Não
 - **Task final:** Não
 
 - **Nome:** save_update_date
-- **Descrição:** Adiciona a data de atualização da última proposta na variável geral
+- **Descrição:** Adiciona a data de atualização do último comentário na variável geral
 - **Dependências:** send_telegram_messages, mount_telegram_messages
 - **Task inicial:** Não
 - **Task final:** Sim

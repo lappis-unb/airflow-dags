@@ -77,7 +77,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
         }
 
         @dag(
-            dag_id=f"dedicim_notify_new_proposals_{self.process_id}",
+            dag_id=f"notify_new_proposals_{self.process_id}",
             default_args=default_args,
             schedule="*/3 * * * *",  # every 3 minutes
             catchup=False,
@@ -86,7 +86,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
             tags=["notificação", "decidim"],
             is_paused_upon_creation=False,
         )
-        def dedicim_notify_new_proposals():
+        def notify_new_proposals():
             @task
             def get_update_date(dag_start_date: datetime) -> datetime:
                 """Airflow task that retrieve last proposal update date from airflow variables.
@@ -262,7 +262,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                 >> save_update_date(selected_proposals["max_datetime"])
             )
 
-        return dedicim_notify_new_proposals()
+        return notify_new_proposals()
 
 
 config_directory = Path(__file__).parent.parent.joinpath("./processes_confs")
