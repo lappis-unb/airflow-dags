@@ -24,6 +24,11 @@ VARIABLE_FOR_LAST_DATE_EXECUTED = "last_config_creation_date"
 ACCEPTED_COMPONENTS_TYPES = ["Proposals"]
 TELEGRAM_MAX_RETRIES = 10
 
+TOPICS_TO_CREATE = [
+    ("telegram_moderation_proposals_topic_id", lambda name: f"{name}/Propostas"),
+    ("telegram_moderation_comments_topic_id", lambda name: f"{name}/Comentarios Em Propostas"),
+]
+
 
 def _get_participatory_space_mapped_to_query_file(participatory_spaces: List[str]):
     queries_folder = Path(__file__).parent.joinpath("./queries")
@@ -38,10 +43,10 @@ def _get_participatory_space_mapped_to_query_file(participatory_spaces: List[str
 
 PARTICIPATORY_SPACES = [
     "participatory_processes",
-    "initiatives",
-    "consultations",
-    "conferences",
-    "assemblies",
+    # "initiatives",
+    # "consultations",
+    # "conferences",
+    # "assemblies",
 ]
 QUERIES = _get_participatory_space_mapped_to_query_file(PARTICIPATORY_SPACES)
 
@@ -79,14 +84,10 @@ def _configure_telegram_topics(component_config):
     if component_config["__typename"] == "Proposals":
         name = " ".join(str(component_config["process_id"]).split("_")).title().strip()
         telegram_topics = {
-            "telegram_moderation_proposals_topic_id": _create_telegram_topic(
-                component_config["telegram_config"]["telegram_group_id"],
-                f"{name}/Propostas",
-            ),
-            "telegram_moderation_comments_topic_id": _create_telegram_topic(
-                component_config["telegram_config"]["telegram_group_id"],
-                f"{name}/Comentarios Em Propostas",
-            ),
+            topic: _create_telegram_topic(
+                component_config["telegram_config"]["telegram_group_id"], get_chat_name(name)
+            )
+            for topic, get_chat_name in TOPICS_TO_CREATE
         }
     return telegram_topics
 
