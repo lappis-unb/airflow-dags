@@ -106,7 +106,9 @@ def _configure_base_yaml_in_participatory_spaces(participatory_space):
     )
 
     participatory_space_slug = participatory_space["slug"]
-    participatory_space_chat_id = participatory_space["groupChatId"]
+    participatory_space_chat_id = (
+        int(participatory_space["groupChatId"]) if participatory_space["groupChatId"] else None
+    )
 
     for component in participatory_space["components"]:
         if component["__typename"] in accepeted_component_types:
@@ -232,7 +234,7 @@ def create_processes_configs():
             pasta_do_tipo_de_componente = Path(__file__).parent.joinpath(f"./{_component['__typename']}")
             pasta_do_tipo_de_componente.mkdir(parents=True, exist_ok=True)
 
-            if _component["__typename"] == "Proposals":
+            if _component["telegram_config"]["telegram_group_id"]:
                 telegram_topics = _configure_telegram_topics(_component)
                 _component["telegram_config"] = {**_component["telegram_config"], **telegram_topics}
             _component.pop("__typename")
@@ -262,6 +264,13 @@ def create_processes_configs():
 
             with closing(open(component_yaml_file)) as configured_component_file:
                 old_config = yaml.safe_load(configured_component_file)
+
+            if (
+                _component["telegram_config"]["telegram_group_id"]
+                and not old_config["telegram_config"]["telegram_group_id"]
+            ):
+                telegram_topics = _configure_telegram_topics(_component)
+                old_config["telegram_config"] = {**_component["telegram_config"], **telegram_topics}
 
             _component.pop("__typename")
 
