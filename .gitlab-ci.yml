@@ -57,6 +57,7 @@ lint-markdown:
     default: false
   rules:
     - if: $CI_COMMIT_REF_PROTECTED == "true"
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - changes:
         - ./**/*.md
   variables:
