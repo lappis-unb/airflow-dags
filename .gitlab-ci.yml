@@ -1,41 +1,10 @@
 stages:
-  - build
   - lint
   - tests
+  - build
+  - deploy
 
-push-image-to-registry:
-  stage: build
-  tags:
-    - docker
-  services:
-    - docker:dind
-  image: docker
-  inherit:
-    default: false
-  rules:
-  - if: $CI_COMMIT_REF_PROTECTED == "true"
-  - if: $CI_COMMIT_BRANCH == "main"
-  script:
-    - echo "---------- install git ----------"
-    - apk update
-    - apk add git
-
-    - echo "---------- Cloning the repository ----------"
-    - git clone https://airflow-docker:$ACCESS_DOCKER_DAGS@gitlab.com/lappis-unb/decidimbr/servicos-de-dados/airflow-docker.git
-
-    - echo "---------- Copying files to build the image ----------"
-    - mv airflow-docker/Dockerfile .
-    - mkdir airflow-dags
-    - mv requirements.txt ./airflow-dags/.
-
-    - echo "---------- Updating the Dockerfile ----------"
-    - echo "COPY ./dags ./dags" >> Dockerfile
-    - echo "COPY ./plugins ./dags" >> Dockerfile
-
-    - echo "--------- Building the image ----------"
-    - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
-    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+# <------------- Definicao de Anchors ------------->
 
 default:
   image: python:3.10-slim
@@ -47,6 +16,7 @@ default:
 .default_rule_python: &default_rule_python
   rules:
     - if: $CI_COMMIT_REF_PROTECTED == "true"
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - changes:
         - ./**/*.py
         - ./requirements.*
@@ -62,6 +32,9 @@ default:
       - pytest_report.xml
     reports:
       junit: pytest_report.xml
+
+
+# <------------- Linters ------------->
 
 lint-ruff:
   stage: lint
@@ -97,6 +70,8 @@ lint-markdown:
     - echo "---------- Stage 2 - Run markdownlint (v0.32.2) ----------"
     - bash -c "$(curl -fsSL https://raw.githubusercontent.com/CICDToolbox/markdown-lint/master/pipeline.sh)"
 
+# <------------- Testing ------------->
+
 # pytest-3.8:
 #   stage: tests
 #   image: python:3.8-slim
@@ -116,3 +91,57 @@ pytest-3.11:
   stage: tests
   image: python:3.11-slim
   <<: *default_pytest
+
+# <------------- Continuous Deploy ------------->
+
+build-image:
+  stage: build
+  tags:
+    - docker
+  services:
+    - docker:dind
+  artifacts:
+    paths:
+      - docker-image/build.img
+    expire_in: 1 week
+  image: docker
+  inherit:
+    default: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  script:
+    - echo "---------- install git ----------"
+    - apk update
+    - apk add git
+
+    - echo "---------- Cloning the repository ----------"
+    - git clone https://airflow-docker:$ACCESS_DOCKER_DAGS@gitlab.com/lappis-unb/decidimbr/servicos-de-dados/airflow-docker.git
+
+    - echo "---------- Copying files to build the image ----------"
+    - mv airflow-docker/Dockerfile .
+    - mkdir airflow-dags
+    - mv requirements.txt ./airflow-dags/.
+
+    - echo "---------- Updating the Dockerfile ----------"
+    - echo "COPY ./dags ./dags" >> Dockerfile
+    - echo "COPY ./plugins ./dags" >> Dockerfile
+
+    - echo "--------- Building the image ----------"
+    - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
+    - docker save -o docker-image/build.img $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+
+push-image-to-registry:
+  stage: deploy
+  tags:
+    - docker
+  services:
+    - docker:dind
+  image: docker
+  inherit:
+    default: false
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  script:
+    - docker load -i docker-image/build.img
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
