@@ -1,20 +1,20 @@
 import logging
-import smtplib
+from contextlib import closing
 from datetime import datetime, timedelta
-from email.mime.application import MIMEApplication
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import requests
 from airflow.decorators import dag, task
 from airflow.hooks.base import BaseHook
+from airflow.providers.smtp.hooks.smtp import SmtpHook
 
 from plugins.components.base_component.component import ComponentBaseHook
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 from plugins.reports.main import create_report_pdf
 
-BP_CONN_ID = "bp_conn"
+BP_CONN_ID = "bp_conn_prod"
+SMPT_CONN_ID = "gmail_smtp"
 
 
 def _get_components_url(component_id: int):
@@ -112,29 +112,36 @@ def _generate_report(bp_data, visits_summary, visits_frequency, user_country, de
     return {"pdf_bytes": pdf_bytes}
 
 
-def send_email_with_pdf(email: str, pdf_bytes: bytes, email_body: str, email_subject: str):
-    smtp_server = "smtp_server"
-    smtp_port = "port"
-    smtp_user = "email"
-    smtp_password = "password"
+def send_email_with_pdf(
+    email: str,
+    pdf_bytes: bytes,
+    email_body: str,
+    email_subject: str,
+    date_start: str,
+    date_end: str,
+    url: str,
+):
+    hook = SmtpHook(SMPT_CONN_ID)
+    hook = hook.get_conn()
+    body = f"""<p>{email_body}</p>
+        <br>
+        <p>Data de inicio: {date_start}</p>
+        <p>Data final: {date_end}</p>
+        <br>
+        <p>Relatorio gerado apartir da pagina: {url}</p>"""
 
-    message = MIMEMultipart()
-    message["From"] = smtp_user
-    message["To"] = email
-    message["Subject"] = email_subject
+    with TemporaryDirectory("wb") as tmpdir:
+        tmp_file = Path(tmpdir).joinpath(f"./relatorio_propostas_{date_start}-{date_end}.pdf")
+        with closing(open(tmp_file, "wb")) as file:
+            file.write(pdf_bytes)
+        hook.send_email_smtp(
+            to=email,
+            subject=email_subject,
+            html_content=body,
+            files=[tmp_file],
+        )
 
-    message.attach(MIMEText(email_body, "plain"))
-
-    pdf_attachment = MIMEApplication(pdf_bytes, _subtype="pdf")
-    pdf_attachment.add_header("Content-Disposition", "attachment", filename="report.pdf")
-    message.attach(pdf_attachment)
-
-    with smtplib.SMTP(smtp_server, smtp_port) as server:
-        server.starttls()
-        server.login(smtp_user, smtp_password)
-        server.send_message(message)
-
-    print("E-mail enviado com sucesso!")
+    logging.info("E-mail enviado com sucesso!")
 
 
 @dag(
@@ -200,13 +207,22 @@ def generate_report_proposals(email: str, start_date: str, end_date: str, compon
 
     @task
     def send_report_email(
-        email: str, pdf_bytes: bytes, email_body: str, email_subject: str = "Seu Relatório"
+        email: str,
+        pdf_bytes: bytes,
+        email_body: str,
+        email_subject: str,
+        date_start: str,
+        date_end: str,
+        url: str,
     ):
         send_email_with_pdf(
             email=email,
-            pdf_bytes=generated_data["pdf_bytes"],
-            email_body="email_body",
-            email_subject="email_subject",
+            pdf_bytes=pdf_bytes,
+            email_body=email_body,
+            email_subject=email_subject,
+            date_start=date_start,
+            date_end=date_end,
+            url=url,
         )
 
     get_components_data_task = get_component_data(
@@ -224,8 +240,11 @@ def generate_report_proposals(email: str, start_date: str, end_date: str, compon
     send_report_email(
         email=email,
         pdf_bytes=generated_data["pdf_bytes"],
-        email_body="email_body",
-        email_subject="email_subject",
+        email_body="Olá, segue em anexo o relatorio gerado.",
+        email_subject="Relatorio De Propostas",
+        date_start=start_date,
+        date_end=end_date,
+        url=get_components_url_task,
     )
 
 
