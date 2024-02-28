@@ -34,7 +34,7 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
     - **Passo 1:** Rodar o docker do repositório [airflow-docker](https://gitlab.com/lappis-unb/decidimbr/airflow-docker)
         - **airflow** O airflow se encontra no: <http://localhost:8080>
 
-    - **Passo 2:** Para rodar via terminal entre no container docker: ´docker exec -ti airflow-envs-airflow-webserver-1 bash´
+    - **Passo 2:** Para rodar via terminal entre no container docker: ´docker exec -ti airflow-docker-airflow-webserver-1 bash´
 
     - **Passo 3:** Para rodar a Dag: ´airflow dags test dag_generate_report´
 
