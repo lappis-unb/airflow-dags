@@ -49,10 +49,10 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
         - **Connection ID:** gmail_smtp
         - **Connection Type:** SMTP
         - **Host:** smtp.gmail.com
-        - **Login:** servicosdados@gmail.com
+        - **Login:** <servicosdados@gmail.com>
         - **Password:** xpgu bvpl zxdr cnki
         - **Port:** 587
-        - **From Email:** servicosdados@gmail.com
+        - **From Email:** <servicosdados@gmail.com>
         - **Disable SSL:** True
 
     - **Passo 4:** Abrir o MinIO e criar um bucket com o mesmo nome do schema (daily-csv)
