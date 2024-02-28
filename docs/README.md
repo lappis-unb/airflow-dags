@@ -45,7 +45,17 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
         - **login:** lappis
         - **password:** lappisrocks
 
-    - **Passo 3:** Abrir o MinIO e criar um bucket com o mesmo nome do schema (daily-csv)
+    - **Passo 3:** Criar uma conexão no Airflow para o serviço de e-mail
+        - **Connection ID:** gmail_smtp
+        - **Connection Type:** SMTP
+        - **Host:** smtp.gmail.com
+        - **Login:** servicosdados@gmail.com
+        - **Password:** xpgu bvpl zxdr cnki
+        - **Port:** 587
+        - **From Email:** servicosdados@gmail.com
+        - **Disable SSL:** True
+
+    - **Passo 4:** Abrir o MinIO e criar um bucket com o mesmo nome do schema (daily-csv)
 
 3. **Rodar as tarefas:** Testando a dag.
     - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
