@@ -267,4 +267,6 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
 
 config_directory = Path(__file__).parent.parent.joinpath("./processes_confs")
 for config in read_yaml_files_from_directory(config_directory):
+    if not config["telegram_config"]["telegram_group_id"]:
+        continue
     DecidimNotifierDAGGenerator().generate_dag(**config)

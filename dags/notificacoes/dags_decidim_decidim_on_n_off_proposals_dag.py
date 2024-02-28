@@ -218,4 +218,6 @@ def yaml_to_dag(process_config: dict):
 
 # config_directory = Path(__file__).parent.parent.joinpath("./processes_confs")
 # for config in read_yaml_files_from_directory(config_directory):
-#     yaml_to_dag(config)
+#   if not config["telegram_config"]["telegram_group_id"]:
+#       continue
+#   yaml_to_dag(config)
