@@ -21,6 +21,7 @@ from plugins.yaml.config_reader import read_yaml_files_from_directory
 DECIDIM_CONN_ID = "api_decidim"
 TELEGRAM_CONN_ID = "telegram_decidim"
 VARIABLE_FOR_LAST_DATE_EXECUTED = "last_config_creation_date"
+ACCEPTED_COMPONENTS_TYPES = ["Proposals"]
 TELEGRAM_MAX_RETRIES = 10
 
 
@@ -62,6 +63,7 @@ def _str_to_datetime(date_to_change: str):
 @telegram_retry(max_retries=TELEGRAM_MAX_RETRIES)
 def _create_telegram_topic(chat_id: int, name: str):
     if not isinstance(chat_id, int) or not isinstance(name, str):
+        logging.error("Chat id: %s\nName: %s", chat_id, name)
         raise TypeError
 
     telegram_hook = TelegramHook(telegram_conn_id=TELEGRAM_CONN_ID, chat_id=chat_id)
@@ -145,6 +147,9 @@ def _split_components_between_configure_and_update(participatory_space):
     configured_processes = {x["component_id"]: x for x in read_yaml_files_from_directory(config_folder)}
 
     for config in _configure_base_yaml_in_participatory_spaces(participatory_space):
+        if config["__typename"] not in ACCEPTED_COMPONENTS_TYPES:
+            continue
+
         if config["component_id"] in configured_processes:
             components_to_update.append(config)
         else:
