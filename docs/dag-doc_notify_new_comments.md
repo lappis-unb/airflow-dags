@@ -21,7 +21,7 @@ DAG que envia uma mensagem via telegram para avisar que novos comentários foram
 Antes de executar a DAG, certifique-se de configurar corretamente os seguintes parâmetros:
 
 1. **Configuração de ambiente:** Subir o projeto.
-    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-docker)
         - **airflow** O airflow se encontra no: <http://localhost:8080>
 
 2. **Configuração do Airflow:**
@@ -41,7 +41,7 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
         - **configurações do chatbot:** para encontrar as configurações do chatbot acesse: ´<https://api.telegram.org/bot(TOKEN)/getUpdates´>
 
 3. **Rodar as tarefas:** Testando a dag.
-    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+    - **Passo 1:** Rodar o docker do repositório [airflow-docker](https://gitlab.com/lappis-unb/decidimbr/airflow-docker)
         - **airflow** O airflow se encontra no: <http://localhost:8080>
 
     - **Passo 2:** Para rodar via terminal entre no container docker: ´docker exec -ti airflow-envs-airflow-webserver-1 bash´

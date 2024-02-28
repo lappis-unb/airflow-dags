@@ -22,7 +22,7 @@ Esta Dag faz uma busca na api do decidim para pegar dados referentes as proposta
 Antes de executar a DAG, certifique-se de configurar corretamente os seguintes parâmetros:
 
 1. **Configuração de ambiente:** Subir o airflow e minIO.
-    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-docker)
         - **airflow** O airflow se encontra no: <http://localhost:8080>
         - **MinIO** O MinIO se encontra no: <http://localhost:9001>
 
@@ -41,7 +41,7 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
     - **Passo 3:** Abrir o MinIO e criar um bucket com o mesmo nome do schema (daily-csv)
 
 3. **Rodar as tarefas:** Testando a dag.
-    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+    - **Passo 1:** Rodar o docker do repositório [airflow-docker](https://gitlab.com/lappis-unb/decidimbr/airflow-docker)
         - **airflow** O airflow se encontra no: <http://localhost:8080>
         - **MinIO** O MinIO se encontra no: <http://localhost:9001>
 

@@ -27,11 +27,11 @@ Essa DAG faz uma busca na api do Decidim e do Matomo para extrair dados sobre pr
 Antes de executar a DAG, certifique-se de configurar corretamente os seguintes parâmetros:
 
 1. **Configuração de ambiente:** Subir o airflow.
-    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+    - **Passo 1:** Rodar o docker do repositório [airflow-docker](https://gitlab.com/lappis-unb/decidimbr/airflow-docker)
         - **airflow** O airflow se encontra no: <http://localhost:8080>
 
 2. **Rodar as tarefas:** Testando a dag.
-    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+    - **Passo 1:** Rodar o docker do repositório [airflow-docker](https://gitlab.com/lappis-unb/decidimbr/airflow-docker)
         - **airflow** O airflow se encontra no: <http://localhost:8080>
 
     - **Passo 2:** Para rodar via terminal entre no container docker: ´docker exec -ti airflow-envs-airflow-webserver-1 bash´
