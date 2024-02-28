@@ -130,8 +130,11 @@ def send_email_with_pdf(email: str, pdf_bytes: bytes, email_body: str, email_sub
 )
 def generate_report_participatory_texts(email: str, start_date: str, end_date: str, component_id: int):
     """
+
     Generates a report.
+
     Parameters:
+    ----------
         email(str): email to send a report
         start_date(str): initial date
         end_date(str): final date
