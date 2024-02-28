@@ -103,7 +103,7 @@ build-image:
     - docker:dind
   artifacts:
     paths:
-      - docker-image/build.img
+      - build.img
     expire_in: 1 week
   image: docker
   inherit:
@@ -130,7 +130,7 @@ build-image:
     - echo "--------- Building the image ----------"
     - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
     - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
-    - docker save -o docker-image/build.img $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker save -o build.img $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
 
 push-image-to-registry:
   stage: deploy
@@ -144,5 +144,5 @@ push-image-to-registry:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
   script:
-    - docker load -i docker-image/build.img
+    - docker load -i build.img
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
