@@ -183,7 +183,7 @@ class GraphQLHook(BaseHook):
                 paginated_query,
                 variables=variables,
             )
-
+        logging.info("Page processed: %s.", variables["page"])
         yield response
 
     def get_components_ids_by_type(self, component_type: str):
