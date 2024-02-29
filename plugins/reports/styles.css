@@ -14,6 +14,7 @@
   /* Assegura que as tabelas não sejam cortadas ao quebrar entre páginas */
   tr, td, th {
     page-break-inside: avoid;
+    
   }
 
   table {
@@ -24,6 +25,7 @@
     margin-top: 0; /* Remove a margem superior para a primeira tabela da seção/documento */
   }
 }
+.mb{margin-bottom: 1%;}
 
 @font-face {
   font-family: Rawline;
@@ -52,7 +54,9 @@
   margin: 0;
   padding: 0;
   size: a4;
+  line-height: 150%;
   content: "Page " counter(page) " of " counter(pages);
+  
 }
 
 @page :left {
@@ -163,8 +167,8 @@ p, ul, li, a, section, div, span {
   background-repeat: no-repeat;
   background-size: contain;
 }
-.fullpage:last-child {
-  break-before: left;
+.fullpage:nth-child(20) {
+  break-before: always;
 }
 
 .cover-content {
@@ -257,5 +261,20 @@ img {
 }
 
 .image-container {
-  margin: 4mm 0 2mm 0;
+  margin: 4mm 0;
+  width: 140mm;
+  height: 400px;
+}
+
+p{text-align: justify;}
+
+.flex{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.table-element{
+  width:140mm;
+  align-items: center;
+  justify-content: center;
 }
