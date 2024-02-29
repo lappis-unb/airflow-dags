@@ -2,17 +2,14 @@ import logging
 from contextlib import closing
 from datetime import datetime, timedelta
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import requests
 from airflow.decorators import dag, task
 from airflow.hooks.base import BaseHook
-from airflow.providers.smtp.hooks.smtp import SmtpHook
 
 from plugins.components.base_component.component import ComponentBaseHook
-from plugins.graphql.hooks.graphql_hook import GraphQLHook
 from plugins.reports.main import create_report_pdf
-import json
+
 BP_CONN_ID = "bp_conn_prod"
 SMPT_CONN_ID = "gmail_smtp"
 
@@ -29,6 +26,7 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
         .open()
         .read()
     )
+    logging.info(query)
 
     # <---------- REMOVER ---------->
 
@@ -131,7 +129,7 @@ def send_email_with_pdf(
 ):
     pdf_file = Path(__file__).parent.joinpath("./pdf/pdf_template.pdf")
     with closing(open(pdf_file, "wb")) as file:
-            file.write(pdf_bytes)
+        file.write(pdf_bytes)
 
     # hook = SmtpHook(SMPT_CONN_ID)
     # hook = hook.get_conn()
