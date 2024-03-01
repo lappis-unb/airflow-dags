@@ -99,7 +99,7 @@
     </div>
   {% endmacro %}
 
-  {% macro create_table_from_list_of_dicts_with_breaking(table) %}
+  {% macro create_large_table(table) %}
     <div class="large-table-element">
       <span>
           <table>
@@ -128,9 +128,9 @@
     </div>
   {% endmacro %}
 
-  {% macro print_table(tables) %}
+  {% macro print_large_table(tables) %}
     {% for table in tables %}
-        {{ create_table_from_list_of_dicts_with_breaking(table) }}
+        {{ create_large_table(table) }}
     {% endfor %}
   {% endmacro %}
 
@@ -173,7 +173,7 @@
     <h1>Ranking dos Programas</h1>
     <p class="mb">Os temas com o maior número de propostas são:</p>
    <div class="tables">
-     {{ print_table(data.rank_temas) }}
+     {{ print_large_table(data.rank_temas) }}
    </div>
   </section>
 
