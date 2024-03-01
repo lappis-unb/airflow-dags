@@ -99,8 +99,8 @@
     </div>
   {% endmacro %}
 
-  {% macro create_large_table(table) %}
-    <div class="large-table-element">
+  {% macro create_large_table(table, div_class='') %}
+    <div class="{{ div_class }}">
       <span>
           <table>
         <!-- Cabeçalhos da tabela -->
@@ -128,9 +128,9 @@
     </div>
   {% endmacro %}
 
-  {% macro print_large_table(tables) %}
+  {% macro print_large_table(tables, div_class='') %}
     {% for table in tables %}
-        {{ create_large_table(table) }}
+        {{ create_large_table(table, div_class) }}
     {% endfor %}
   {% endmacro %}
 
@@ -173,7 +173,7 @@
     <h1>Ranking dos Programas</h1>
     <p class="mb">Os temas com o maior número de propostas são:</p>
    <div class="tables">
-     {{ print_large_table(data.rank_temas) }}
+     {{ print_large_table(data.rank_temas, 'large-table-element') }}
    </div>
   </section>
 
