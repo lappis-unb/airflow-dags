@@ -1,0 +1,10 @@
+query ComponentsInInitiatives {
+  initiatives {
+    ... on Initiative {
+      components {
+        id
+        __typename
+      }
+    }
+  }
+}
