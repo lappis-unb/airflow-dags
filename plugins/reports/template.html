@@ -22,8 +22,8 @@
     </ol>
   </section>
 
-  {% macro create_table_from_dict(table) %}
-  <div class="table-element">
+  {% macro create_table_from_dict(table) %}''
+  <div class="table-element"> 
     <span>
       <table>
         <!-- Cabeçalhos da tabela -->
@@ -70,7 +70,6 @@
   </div>
   {% endmacro %}
 
-
   {% macro create_table_from_list_of_dicts(table) %}
     <div class="table-element">
       <span>
@@ -100,10 +99,44 @@
     </div>
   {% endmacro %}
 
+  {% macro create_table_from_list_of_dicts_with_breaking(table) %}
+    <div class="large-table-element">
+      <span>
+          <table>
+        <!-- Cabeçalhos da tabela -->
+        <thead>
+          <tr>
+            {% if table %}
+              {% for header in table[0].keys() %}
+                <th>{{ header }}</th>
+              {% endfor %}
+            {% endif %}
+          </tr>
+        </thead>
+        <!-- Dados da tabela -->
+        <tbody>
+          {% for item in table %}
+            <tr>
+              {% for value in item.values() %}
+                <td>{{ value }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </span>
+    </div>
+  {% endmacro %}
+
+  {% macro print_table(tables) %}
+    {% for table in tables %}
+        {{ create_table_from_list_of_dicts_with_breaking(table) }}
+    {% endfor %}
+  {% endmacro %}
 
   {% macro create_image_element(img) %}
       <div class="image-container">
-        <p class="image-label">
+        <p class="image-label"> 
         <italic>{{ img.label }}</italic>
         </p>
         <div class="flex">
@@ -139,12 +172,14 @@
   <section id="programs-ranking" class="fullpage">
     <h1>Ranking dos Programas</h1>
     <p class="mb">Os temas com o maior número de propostas são:</p>
-    {{ create_table_from_list_of_dicts(data.rank_temas) }}
+   <div class="tables">
+     {{ print_table(data.rank_temas) }}
+   </div>
   </section>
 
   <section id="proposals-ranking" class="fullpage">
     <h1>TOP 20 Propostas Mais Votadas no Geral</h1>
-    <p>As top 20 propostas mais votadas evidenciam as propostas com maior mobilização e maior interesse do participante.
+    <p class="mb">As top 20 propostas mais votadas evidenciam as propostas com maior mobilização e maior interesse do participante.
     Vale observar também o número de comentários por propostas.</p>
     {{ create_table_from_list_of_dicts(data.top_proposals_filtered) }}
   </section>
