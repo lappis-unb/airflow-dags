@@ -51,7 +51,7 @@
 }
 
 @page {
-  margin: 0;
+  margin: 5% 0;
   padding: 0;
   size: a4;
   line-height: 150%;
@@ -180,10 +180,15 @@ p, ul, li, a, section, div, span {
   font-size: 40pt;
   font-weight: 800;
 }
-
+.center{
+  text-align: center;
+  width: 100%;
+  background-color: red;
+}
 .cover-content .bp-title {
   font-size: 36pt;
   font-weight: 400;
+  text-align: center;
   color: #636363;
   margin: 10mm 0;
   padding: 0;
@@ -195,6 +200,7 @@ p, ul, li, a, section, div, span {
   font-style: italic;
   color: #636363;
   margin: 0;
+  text-align: center;
   padding: 0;
 }
 
