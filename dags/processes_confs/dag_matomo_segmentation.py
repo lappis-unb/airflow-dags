@@ -72,3 +72,33 @@ def _filter_out_components(segmented_ids: set, *set_of_participatory_spaces):
     return set_all_components.difference(segmented_ids)
 
 
+def _create_matomo_segmentation(segmentation: str):
+    matomo_connection = BaseHook.get_connection(MATOMO_CONN_ID)
+    matomo_url = matomo_connection.host
+    token_auth = matomo_connection.password
+    site_id = matomo_connection.login
+    splited_segmentation = segmentation.split("/")
+
+    #! TODO: Tirar esse hardcoded quando tivermos um matomo de homolog, quando isso nunca saberemos :(.
+    assert segmentation.startswith("https://brasilparticipativo.presidencia.gov.br/")
+
+    params = {
+        "module": "API",
+        "method": "SegmentEditor.add",
+        "idSite": site_id,
+        "token_auth": token_auth,
+        "autoArchive": 1,
+        "format": "csv",
+        "name": f"{splited_segmentation[-5]}_{splited_segmentation[-4]}_{splited_segmentation[-2]}",
+        "definition": f"pageUrl=^{segmentation}",
+    }
+    logging.info("Params para a requisição do matomo \n%s.", params)
+    response = requests.post(matomo_url, params=params)
+    response.raise_for_status()
+
+    try:
+        return response.text
+    except requests.exceptions.JSONDecodeError as error:
+        logging.exception("Response text: %s", response.text)
+        raise error
+
