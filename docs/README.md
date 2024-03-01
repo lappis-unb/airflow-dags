@@ -50,7 +50,7 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
         - **Connection Type:** SMTP
         - **Host:** smtp.gmail.com
         - **Login:** <servicosdados@gmail.com>
-        - **Password:** xpgu bvpl zxdr cnki
+        - **Password:** <senha do e-mail>
         - **Port:** 587
         - **From Email:** <servicosdados@gmail.com>
         - **Disable SSL:** True
