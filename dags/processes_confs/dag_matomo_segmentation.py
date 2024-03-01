@@ -67,3 +67,8 @@ def _get_components(query_path):
     return result
 
 
+def _filter_out_components(segmented_ids: set, *set_of_participatory_spaces):
+    set_all_components = set(chain.from_iterable(set_of_participatory_spaces))
+    return set_all_components.difference(segmented_ids)
+
+
