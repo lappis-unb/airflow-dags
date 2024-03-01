@@ -125,8 +125,7 @@ build-image:
 
     - echo "---------- Updating the Dockerfile ----------"
     - echo "COPY ./dags ./dags" >> Dockerfile
-    - echo "RUN mkdir -p ./dags/plugins" >> Dockerfile
-    - echo "COPY ./plugins ./dags/plugins" >> Dockerfile
+    - echo "COPY ./plugins ./plugins" >> Dockerfile
 
     - echo "--------- Building the image ----------"
     - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
