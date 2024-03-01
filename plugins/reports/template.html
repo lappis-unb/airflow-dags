@@ -179,8 +179,8 @@
 
   <section id="proposals-ranking" class="fullpage">
     <h1>TOP 20 Propostas Mais Votadas no Geral</h1>
-    <p class="mb">As top 20 propostas mais votadas evidenciam as propostas com maior mobilização e maior interesse do participante.
+    <p class="mb mbn">As top 20 propostas mais votadas evidenciam as propostas com maior mobilização e maior interesse do participante.
     Vale observar também o número de comentários por propostas.</p>
-    {{ create_table_from_list_of_dicts(data.top_proposals_filtered) }}
+    {{ print_large_table(data.top_proposals_filtered, 'second-large-table-element') }}
   </section>
 </html>

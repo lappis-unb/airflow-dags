@@ -292,3 +292,22 @@ p{text-align: justify;}
   page-break-after: always;
 
 }
+.second-large-table-element:first-child{
+  width:140mm;
+  margin-top: 0;
+  align-items: center;
+  justify-content: center;
+  page-break-after: always;
+
+}
+.second-large-table-element{
+  width:140mm;
+  margin-top: 20%;
+  align-items: center;
+  justify-content: center;
+  page-break-after: always;
+
+}
+.mbn{
+  margin-bottom: -19%;
+}

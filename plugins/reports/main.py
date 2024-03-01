@@ -5,7 +5,6 @@ from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 
 from .report import ReportGenerator
-import logging
 
 
 def ensure_iterable(data):
@@ -13,6 +12,7 @@ def ensure_iterable(data):
     if isinstance(data, dict) or not isinstance(data, list):
         return [data]
     return data
+
 
 def split_tables(table: list, max_elements: int) -> list:
     ret = []
@@ -33,6 +33,7 @@ def split_tables(table: list, max_elements: int) -> list:
         ret.append(table[-last_elements:])
     return ret
 
+
 def create_report_pdf(bp_data, visits_summary, visits_frequency, user_country, devices_detection):
     report_generator = ReportGenerator()
     general_data = report_generator.calculate_totals(bp_data)
@@ -40,10 +41,10 @@ def create_report_pdf(bp_data, visits_summary, visits_frequency, user_country, d
     data_access = report_generator.generate_acess_data(visits_summary, visits_frequency)
     device_graph = report_generator.generate_device_graph(devices_detection)
     max_elements = 20
-    rank_temas = split_tables(report_generator.generate_theme_ranking(bp_data),max_elements)
-    # logging.info('rank_temas')
-    # logging.info(rank_temas)
-    top_proposals_filtered = report_generator.generate_top_proposals(bp_data)
+    rank_temas = split_tables(report_generator.generate_theme_ranking(bp_data), max_elements)
+    top_proposals_filtered = split_tables(
+        report_generator.generate_top_proposals(bp_data), int(max_elements / 2)
+    )
     shp_path = Path(__file__).parent.joinpath("./shapefile/estados_2010.shp").resolve()
     brasil, dados = report_generator.load_data(shp_path, user_country)
     dados_brasil = report_generator.filter_and_rename(dados, "br", "UF")
@@ -75,7 +76,6 @@ def create_report_pdf(bp_data, visits_summary, visits_frequency, user_country, d
             },
         }
     )
-
     pdf_bytes = BytesIO()
     css_file = Path(__file__).parent / "styles.css"
 
