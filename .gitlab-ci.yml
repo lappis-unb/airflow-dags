@@ -143,7 +143,7 @@ push-image-to-registry:
   inherit:
     default: false
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "development"
   script:
     - docker load -i build.img
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
