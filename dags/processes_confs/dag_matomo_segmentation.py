@@ -47,3 +47,23 @@ DEFAULT_ARGS = {
     "retry_delay": timedelta(minutes=5),
 }
 
+
+def _get_components(query_path):
+    hook = GraphQLHook(DECIDIM_CONN_ID)
+
+    query_result: dict[str] = hook.run_graphql_query(hook.get_graphql_query_from_file(query_path))["data"]
+
+    # Todas as queries feitas devem ter apenas uma chave.
+    assert len(query_result.keys()) == 1
+    mid_key = next(iter(query_result.keys()))
+
+    result = []
+    for space in query_result[mid_key]:
+        for component in space["components"]:
+            if component["__typename"] in ACCEPTED_TYPES:
+                result.append(component["id"])
+            else:
+                logging.info("Component id not accepted: %s", component["id"])
+    return result
+
+
