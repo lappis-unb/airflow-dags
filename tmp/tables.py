@@ -171,10 +171,12 @@ def split_tables(table: list, max_elements: int) -> list:
         ret.append(table[-last_elements:])
     return ret
 
-def print_tables(table : list):
+
+def print_tables(table: list):
     for elem in table:
         print(elem)
-        print("=========================", end='\n')
+        print("=========================", end="\n")
+
 
 max_elements = 10
 
