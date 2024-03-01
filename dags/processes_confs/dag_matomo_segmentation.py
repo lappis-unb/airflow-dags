@@ -102,3 +102,64 @@ def _create_matomo_segmentation(segmentation: str):
         logging.exception("Response text: %s", response.text)
         raise error
 
+
+@dag(
+    default_args=DEFAULT_ARGS,
+    schedule_interval="10 * * * *",  # Toda hora, mas com um offset de 10min
+    start_date=datetime(2024, 3, 1),
+    catchup=False,
+    doc_md=__doc__,
+    tags=["creation", "dag", "automation", "segmentation", "matomo"],
+)
+def matomo_segmentation():
+    @task
+    def get_segmented_ids():
+        segmented_ids = eval(Variable.get(SEGMENTED_IDS_VAR, "{'',}"))
+        assert isinstance(segmented_ids, set)
+        return segmented_ids
+
+    tasks_to_get_all_components = []
+    for query_type, query in QUERIES.items():
+
+        @task(task_id=f"get_componets_in_{query_type}")
+        def get_componets(query_to_execute):
+            return _get_components(query_to_execute)
+
+        tasks_to_get_all_components.append(get_componets(query))
+
+    @task
+    def filter_components(segmented_ids: set, *set_of_participatory_spaces):
+        return _filter_out_components(segmented_ids, *set_of_participatory_spaces)
+
+    @task
+    def get_components_urls(component_ids: list[str]):
+        return [
+            ComponentBaseHook(DECIDIM_CONN_ID, int(component_id)).get_component_link()
+            for component_id in component_ids
+        ]
+
+    @task
+    def create_matomo_segmentation(components_urls: list[str]):
+        # TODO: Adicionar forma de salvar as segmentações ja feitas.
+
+        return [_create_matomo_segmentation(component_url) for component_url in components_urls]
+
+    @task
+    def save_segmented_ids(new_ids_segmented: list):
+        set_segmented_ids: set = eval(Variable.get(SEGMENTED_IDS_VAR, "{'',}"))
+        set_new_ids = set(new_ids_segmented)
+        set_segmented_ids = set_segmented_ids.union(set_new_ids)
+        try:
+            set_segmented_ids.remove("")
+        except KeyError:
+            logging.info("Key '' does not exists.")
+        Variable.set(SEGMENTED_IDS_VAR, set_segmented_ids)
+
+    filter_components_task = filter_components(get_segmented_ids(), *tasks_to_get_all_components)
+    get_urls_task = get_components_urls(filter_components_task)
+    save_sagmente_ids_task = save_segmented_ids(filter_components_task)
+
+    create_matomo_segmentation(get_urls_task) >> save_sagmente_ids_task
+
+
+matomo_segmentation()
