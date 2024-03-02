@@ -23,7 +23,10 @@ def _get_components_url(component_id: int):
 
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     query = (
-        Path(__file__).parent.joinpath("./queries/proposals/get_proposals_by_component_id.gql").open().read()
+        Path(__file__)
+        .parent.joinpath("./queries/proposals/get_proposals_by_component_id.gql")
+        .open()
+        .read()
     )
     logging.info(query)
 
@@ -34,7 +37,6 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     with open(return_file) as file:
         return eval(file.read())
     # <---------- REMOVER ---------->
-
 
 # <---------- descomentar essa parte ---------->
 # query_result = GraphQLHook(BP_CONN_ID).run_graphql_paginated_query(
