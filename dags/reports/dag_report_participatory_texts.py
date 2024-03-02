@@ -1,7 +1,10 @@
+import logging
 from contextlib import closing
 from datetime import datetime, timedelta
+from itertools import chain
 from pathlib import Path
 
+import numpy as np
 from airflow.decorators import dag, task
 
 from plugins.components.proposals import ProposalsHook
@@ -55,6 +58,7 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
         "participatory_space_name": participatory_space_name,
         "start_date": start_date,
         "end_date": end_date,
+        "total_coments": 0,
         "proposals": [],
     }
     for page in query_result:
@@ -62,18 +66,19 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
         proposals = component["proposals"]["nodes"]
 
         for proposal in proposals:
-
             comments_df = proposals_hook.get_comments_df(
                 proposal["comments"],
                 proposal["id"],
                 start_date_filter=start_date,
                 end_date_filter=end_date,
             )
+            total_comments_in_proposal = comments_df.shape[0] if not comments_df.empty else 0
 
+            result["total_coments"] += total_comments_in_proposal
             result["proposals"].append(
                 {
                     "vote_count": proposal["voteCount"],
-                    "total_comments_per_porposal": comments_df.shape[0] if not comments_df.empty else 0,
+                    "total_comments": total_comments_in_proposal,
                     "title": proposal["title"]["translation"],
                     "id": proposal["id"],
                     "comments": (
@@ -81,11 +86,21 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
                         if not comments_df.empty
                         else []
                     ),
-                    "total_unique_authors": (
-                        len(comments_df["author_id"].unique()) if not comments_df.empty else 0
+                    "unique_authors": (
+                        comments_df["author_id"].unique() if not comments_df.empty else np.array([])
                     ),
                 }
             )
+
+    result["total_unique_participants"] = len(
+        set(
+            chain.from_iterable(
+                [current_proposal["unique_authors"] for current_proposal in result["proposals"]]
+            )
+        )
+    )
+
+    logging.info("Total participants: %s", result["total_unique_participants"])
 
     return result
 
