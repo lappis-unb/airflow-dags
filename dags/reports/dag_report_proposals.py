@@ -9,6 +9,7 @@ from airflow.hooks.base import BaseHook
 
 from plugins.components.base_component.component import ComponentBaseHook
 from plugins.reports.main import create_report_pdf
+from plugins.faker.matomo_faker import MatomoFaker
 
 BP_CONN_ID = "bp_conn_prod"
 SMPT_CONN_ID = "gmail_smtp"
@@ -22,19 +23,20 @@ def _get_components_url(component_id: int):
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     query = (
         Path(__file__)
-        .parent.parent.joinpath("./plugins/gql/reports/components/get_proposals_by_component_id.gql")
+        .parent.joinpath("./queries/proposals/get_proposals_by_component_id.gql")
         .open()
         .read()
     )
     logging.info(query)
 
     # <---------- REMOVER ---------->
+    # precisa ser removido e substituido pela chamada do hook comentado logo a baixo
 
     return_file = Path(__file__).parent.joinpath("./mock/return_bp_data.txt")
     with open(return_file) as file:
         return eval(file.read())
     # <---------- REMOVER ---------->
-
+ # <---------- descomentar essa parte ---------->
     # query_result = GraphQLHook(BP_CONN_ID).run_graphql_paginated_query(
     #     query, variables={"id": component_id, "start_date": start_date, "end_date": end_date}
     # )
@@ -82,6 +84,16 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     #             }
     #         )
     # return result_proposals_data
+# _____________________________________________________________
+
+def _get_matomo_data_faker(url: list, start_date: str, end_date: str, module: str, method: str):
+    lookup_table = {
+        "VisitsSummary.get": MatomoFaker.VisitsSummary.get,
+        "VisitFrequency.get": MatomoFaker.VisitFrequency.get,
+        "UserCountry.getRegion": MatomoFaker.UserCountry.get_region,
+        "DevicesDetection.getType": MatomoFaker.DeviceDetection.get_type,
+    }
+    return lookup_table[f"{module}.{method}"]()
 
 
 def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, method: str):
@@ -127,10 +139,13 @@ def send_email_with_pdf(
     date_end: str,
     url: str,
 ):
+    # OBS: fizemos alterações nesse código para facilitar o desenvolvimento. 
+    #  essa parte precisa ser comentada e alterada para o hook de email do airflow.
     pdf_file = Path(__file__).parent.joinpath("./pdf/pdf_template.pdf")
     with closing(open(pdf_file, "wb")) as file:
         file.write(pdf_bytes)
-
+# essa parte precisa ser descomentada para funcionar corretamente
+        
     # hook = SmtpHook(SMPT_CONN_ID)
     # hook = hook.get_conn()
     # body = f"""<p>{email_body}</p>
@@ -151,6 +166,7 @@ def send_email_with_pdf(
     #         files=[tmp_file],
     #     )
 
+# _____________________________________________________________
     logging.info("E-mail enviado com sucesso!")
 
 
@@ -192,7 +208,7 @@ def generate_report_proposals(email: str, start_date: str, end_date: str, compon
         def matomo_extractor(
             url: str, filter_start_date: str, filter_end_date: str, module: str, method: str
         ):
-            return _get_matomo_data(
+            return _get_matomo_data_faker(
                 url=url, start_date=filter_start_date, end_date=filter_end_date, module=module, method=method
             )
 
