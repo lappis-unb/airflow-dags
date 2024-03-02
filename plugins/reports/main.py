@@ -7,13 +7,6 @@ from weasyprint import HTML
 from .report import ReportGenerator
 
 
-def ensure_iterable(data):
-    """Assegura que o dado seja um iterável (lista, neste caso)."""
-    if isinstance(data, dict) or not isinstance(data, list):
-        return [data]
-    return data
-
-
 def split_tables(table: list, max_elements: int) -> list:
     ret = []
     size = len(table)
