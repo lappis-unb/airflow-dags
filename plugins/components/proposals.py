@@ -6,7 +6,7 @@ import re
 from datetime import datetime
 from json import loads
 from pathlib import Path
-
+from typing import Union
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -71,7 +71,7 @@ class ProposalsHook(ComponentBaseHook):
         )
         return result["data"]["component"]
 
-    def get_comments(self, **kwargs):
+    def get_all_comments_from_all_proposals(self, **kwargs):
         """
         Retrieves comments associated with the Decidim component's proposals.
 
@@ -83,31 +83,37 @@ class ProposalsHook(ComponentBaseHook):
         -------
             dict: Parsed comments in JSON format.
         """
-        update_date_filter = kwargs.get("update_date_filter")
-        if update_date_filter is None:
-            logging.error("update_date_filter-(datetime) is needed.")
+        start_date_filter = kwargs.get("start_date")
+        end_date_filter = kwargs.get("end_date")
+        if start_date_filter is None or end_date_filter is None:
+            logging.error("start_date_filter end end_date_filter is needed.")
             raise AttributeError
         component = self.get_component()  # Get all the proposals.
         proposals = component[self.component_type.lower()]["nodes"]
 
-        comments = []
+        comments_df: Union[pd.DataFrame, None] = None
         for proposal in proposals:
-            comments.extend(self.get_comments_threads(proposal["comments"], root_component_id=proposal["id"]))
+            if isinstance(comments_df, pd.DataFrame):
+                comments_df = pd.concat(
+                    [
+                        comments_df,
+                        self.get_comments_df(
+                            proposal["comments"],
+                            root_component_id=proposal["id"],
+                            start_date_filter=start_date_filter,
+                            end_date_filter=end_date_filter,
+                        ),
+                    ]
+                ).reset_index(drop=True)
+            else:
+                comments_df = self.get_comments_df(
+                    proposal["comments"],
+                    root_component_id=proposal["id"],
+                    start_date_filter=start_date_filter,
+                    end_date_filter=end_date_filter,
+                )
 
-        df = pd.DataFrame(comments)
-
-        if df.empty:
-            return None
-
-        df["mask_date"] = pd.to_datetime(df["creation_date"], utc=True, format="ISO8601")
-        df_mask = df["mask_date"] > update_date_filter
-
-        link_base = self.get_component_link()
-        logging.info("Dataframe columns: %s", df.columns)
-        ids = np.char.array(df["root_component_id"].values, unicode=True)
-        df = df.assign(link=(link_base + "/" + ids).astype(str))
-
-        comments_as_json = loads(df.loc[df_mask, ::].to_json(orient="records"))
+        comments_as_json = loads(comments_df.to_json(orient="records"))
         return comments_as_json
 
     def component_json_to_dataframe(self, json_component) -> pd.DataFrame:

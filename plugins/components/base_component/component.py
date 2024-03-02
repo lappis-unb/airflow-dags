@@ -16,12 +16,15 @@ Métodos:
 """  # noqa: E501
 
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urljoin
-
+import pandas as pd
+import numpy as np
 import inflect
 from inflection import underscore
+from typing import Optional
 
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 
@@ -197,6 +200,7 @@ class ComponentBaseHook:
             "author_name": comment["author"]["name"],
             "comment_id": comment["id"],
             "creation_date": comment["createdAt"],
+            "update_date": comment["updatedAt"],
         }
 
     def _build_comment_thread(self, parent_comment: dict[str], root_component_id: int, thread_level: int = 1):
@@ -244,6 +248,46 @@ class ComponentBaseHook:
         """
         for comment in root_comments:
             yield from self._build_comment_thread(comment, root_component_id=root_component_id)
+
+    def get_comments_df(
+        self,
+        root_comments: list[dict[str]],
+        root_component_id,
+        start_date_filter: Optional[datetime],
+        end_date_filter: Optional[datetime],
+    ):
+
+        comments = self.get_comments_threads(root_comments=root_comments, root_component_id=root_component_id)
+        df = pd.DataFrame(comments)
+        logging.info("Dataframe shape of comments: %s", df.shape)
+        if df.empty:
+            logging.warning(
+                "Dataframe empty. %s", [root_comments, root_component_id, start_date_filter, end_date_filter]
+            )
+            return df
+
+
+        df["creation_date"] = pd.to_datetime(df["creation_date"], utc=True, format="ISO8601")
+        df["update_date"] = pd.to_datetime(df["update_date"], utc=True, format="ISO8601")
+
+        df["date_filter"] = df[["creation_date", "update_date"]].max(axis=1)
+        df["date_filter"] = pd.to_datetime(df["date_filter"], utc=True, format="ISO8601")
+
+        if start_date_filter:
+            df = df[df["date_filter"] >= pd.to_datetime(start_date_filter, utc=True)]
+        if end_date_filter:
+            df = df[df["date_filter"] <= pd.to_datetime(end_date_filter, utc=True)]
+
+        #! TODO: Corrigir o time zone para GMT-3 ao invez de UTC
+        df["date_filter"] = df["date_filter"].apply(lambda date: date.strftime("%d/%m/%Y %H:%M"))
+        link_base = self.get_component_link()
+
+        # logging.info("Dataframe columns: %s", df.columns)
+        ids = np.char.array(df["root_component_id"].values, unicode=True)
+        df = df.assign(link=(link_base + "/" + ids).astype(str))
+        logging.info("New Dataframe shape of comments: %s", df.shape)
+
+        return df
 
     def get_component(self, **kwargs) -> dict[str, str]:
         """
