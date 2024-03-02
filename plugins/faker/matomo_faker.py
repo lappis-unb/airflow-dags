@@ -8,7 +8,7 @@ from faker import Faker
 
 
 class MatomoFaker:
-    """A class for generating fake Matomo (formerly Piwik) data for visits summary."""
+    """A class for generating fake Matomo data for various metrics."""
 
     class VisitsSummary:
         """A nested class for generating fake Matomo visits summary data."""
@@ -185,12 +185,3 @@ class MatomoFaker:
             ]
 
             return pd.DataFrame.from_records(data).to_csv(index=False)
-
-
-def main():
-    Faker("pt_BR")
-    print(MatomoFaker.DeviceDetection.get_type())
-
-
-if __name__ == "__main__":
-    main()
