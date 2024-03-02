@@ -7,6 +7,7 @@ from datetime import datetime
 from json import loads
 from pathlib import Path
 from typing import Union
+
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup

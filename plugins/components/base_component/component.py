@@ -20,11 +20,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urljoin
-import pandas as pd
-import numpy as np
+
 import inflect
+import numpy as np
+import pandas as pd
 from inflection import underscore
-from typing import Optional
 
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 
@@ -265,7 +265,6 @@ class ComponentBaseHook:
                 "Dataframe empty. %s", [root_comments, root_component_id, start_date_filter, end_date_filter]
             )
             return df
-
 
         df["creation_date"] = pd.to_datetime(df["creation_date"], utc=True, format="ISO8601")
         df["update_date"] = pd.to_datetime(df["update_date"], utc=True, format="ISO8601")
