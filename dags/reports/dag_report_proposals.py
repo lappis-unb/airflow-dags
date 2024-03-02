@@ -11,6 +11,7 @@ from airflow.hooks.base import BaseHook
 from plugins.components.base_component.component import ComponentBaseHook
 from plugins.faker.matomo_faker import MatomoFaker
 from plugins.reports.proposals_report import ProposalsReport
+from plugins.reports.main import create_report_pdf
 
 BP_CONN_ID = "bp_conn_prod"
 SMPT_CONN_ID = "gmail_smtp"
@@ -23,10 +24,7 @@ def _get_components_url(component_id: int):
 
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     query = (
-        Path(__file__)
-        .parent.joinpath("./queries/proposals/get_proposals_by_component_id.gql")
-        .open()
-        .read()
+        Path(__file__).parent.joinpath("./queries/proposals/get_proposals_by_component_id.gql").open().read()
     )
     logging.info(query)
 
