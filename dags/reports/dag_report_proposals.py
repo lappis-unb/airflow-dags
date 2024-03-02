@@ -8,8 +8,8 @@ from airflow.decorators import dag, task
 from airflow.hooks.base import BaseHook
 
 from plugins.components.base_component.component import ComponentBaseHook
-from plugins.reports.main import create_report_pdf
 from plugins.faker.matomo_faker import MatomoFaker
+from plugins.reports.main import create_report_pdf
 
 BP_CONN_ID = "bp_conn_prod"
 SMPT_CONN_ID = "gmail_smtp"
@@ -22,10 +22,7 @@ def _get_components_url(component_id: int):
 
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     query = (
-        Path(__file__)
-        .parent.joinpath("./queries/proposals/get_proposals_by_component_id.gql")
-        .open()
-        .read()
+        Path(__file__).parent.joinpath("./queries/proposals/get_proposals_by_component_id.gql").open().read()
     )
     logging.info(query)
 
@@ -36,55 +33,58 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     with open(return_file) as file:
         return eval(file.read())
     # <---------- REMOVER ---------->
- # <---------- descomentar essa parte ---------->
-    # query_result = GraphQLHook(BP_CONN_ID).run_graphql_paginated_query(
-    #     query, variables={"id": component_id, "start_date": start_date, "end_date": end_date}
-    # )
 
-    # result_proposals_data = []
-    # for page in query_result:
-    #     component = page.get("data", {}).get("component", {})
-    #     if not component:
-    #         continue
 
-    #     page_component_id = component.get("id")
-    #     participatory_space_id = component.get("participatorySpace", {}).get("id")
-    #     participatory_space_type = component.get("participatorySpace", {}).get("type", "").split("::")[-1]
-    #     page_component_name = component.get("name", {}).get("translation", "-")
-    #     page_proposals = component.get("proposals", {}).get("nodes", [])
+# <---------- descomentar essa parte ---------->
+# query_result = GraphQLHook(BP_CONN_ID).run_graphql_paginated_query(
+#     query, variables={"id": component_id, "start_date": start_date, "end_date": end_date}
+# )
 
-    #     for proposal in page_proposals:
-    #         proposal_id = proposal.get("id")
-    #         proposal_title = proposal.get("title", {}).get("translation", "-")
-    #         proposal_published_at = proposal.get("publishedAt")
-    #         proposal_updated_at = proposal.get("updatedAt")
-    #         proposal_state = proposal.get("state")
-    #         proposal_total_comments = proposal.get("totalCommentsCount")
-    #         proposal_total_votes = proposal.get("voteCount")
-    #         proposal_category_title = (
-    #             proposal.get("category", {}).get("name", {}).get("translation", "-")
-    #             if proposal.get("category")
-    #             else "-"
-    #         )
+# result_proposals_data = []
+# for page in query_result:
+#     component = page.get("data", {}).get("component", {})
+#     if not component:
+#         continue
 
-    #         result_proposals_data.append(
-    #             {
-    #                 "page_component_id": page_component_id,
-    #                 "participatory_space_id": participatory_space_id,
-    #                 "participatory_space_type": participatory_space_type,
-    #                 "page_component_name": page_component_name,
-    #                 "proposal_id": proposal_id,
-    #                 "proposal_title": proposal_title,
-    #                 "proposal_published_at": proposal_published_at,
-    #                 "proposal_updated_at": proposal_updated_at,
-    #                 "proposal_state": proposal_state,
-    #                 "proposal_total_comments": proposal_total_comments,
-    #                 "proposal_total_votes": proposal_total_votes,
-    #                 "proposal_category_title": proposal_category_title,
-    #             }
-    #         )
-    # return result_proposals_data
+#     page_component_id = component.get("id")
+#     participatory_space_id = component.get("participatorySpace", {}).get("id")
+#     participatory_space_type = component.get("participatorySpace", {}).get("type", "").split("::")[-1]
+#     page_component_name = component.get("name", {}).get("translation", "-")
+#     page_proposals = component.get("proposals", {}).get("nodes", [])
+
+#     for proposal in page_proposals:
+#         proposal_id = proposal.get("id")
+#         proposal_title = proposal.get("title", {}).get("translation", "-")
+#         proposal_published_at = proposal.get("publishedAt")
+#         proposal_updated_at = proposal.get("updatedAt")
+#         proposal_state = proposal.get("state")
+#         proposal_total_comments = proposal.get("totalCommentsCount")
+#         proposal_total_votes = proposal.get("voteCount")
+#         proposal_category_title = (
+#             proposal.get("category", {}).get("name", {}).get("translation", "-")
+#             if proposal.get("category")
+#             else "-"
+#         )
+
+#         result_proposals_data.append(
+#             {
+#                 "page_component_id": page_component_id,
+#                 "participatory_space_id": participatory_space_id,
+#                 "participatory_space_type": participatory_space_type,
+#                 "page_component_name": page_component_name,
+#                 "proposal_id": proposal_id,
+#                 "proposal_title": proposal_title,
+#                 "proposal_published_at": proposal_published_at,
+#                 "proposal_updated_at": proposal_updated_at,
+#                 "proposal_state": proposal_state,
+#                 "proposal_total_comments": proposal_total_comments,
+#                 "proposal_total_votes": proposal_total_votes,
+#                 "proposal_category_title": proposal_category_title,
+#             }
+#         )
+# return result_proposals_data
 # _____________________________________________________________
+
 
 def _get_matomo_data_faker(url: list, start_date: str, end_date: str, module: str, method: str):
     lookup_table = {
@@ -139,13 +139,13 @@ def send_email_with_pdf(
     date_end: str,
     url: str,
 ):
-    # OBS: fizemos alterações nesse código para facilitar o desenvolvimento. 
+    # OBS: fizemos alterações nesse código para facilitar o desenvolvimento.
     #  essa parte precisa ser comentada e alterada para o hook de email do airflow.
     pdf_file = Path(__file__).parent.joinpath("./pdf/pdf_template.pdf")
     with closing(open(pdf_file, "wb")) as file:
         file.write(pdf_bytes)
-# essa parte precisa ser descomentada para funcionar corretamente
-        
+    # essa parte precisa ser descomentada para funcionar corretamente
+
     # hook = SmtpHook(SMPT_CONN_ID)
     # hook = hook.get_conn()
     # body = f"""<p>{email_body}</p>
@@ -166,7 +166,7 @@ def send_email_with_pdf(
     #         files=[tmp_file],
     #     )
 
-# _____________________________________________________________
+    # _____________________________________________________________
     logging.info("E-mail enviado com sucesso!")
 
 

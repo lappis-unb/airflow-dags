@@ -1,18 +1,11 @@
-import smtplib
+from contextlib import closing
 from datetime import datetime, timedelta
-from email.mime.application import MIMEApplication
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from pathlib import Path
 
 from airflow.decorators import dag, task
 
 from plugins.components.proposals import ProposalsHook
-from plugins.reports.participatory_texts import DataFilter
 from plugins.reports.script import create_report_pdf
-import pandas as pd
-
-from contextlib import closing
 
 BP_CONN_ID = "bp_conn_prod"
 
