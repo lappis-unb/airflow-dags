@@ -8,6 +8,10 @@ from airflow.decorators import dag, task
 
 from plugins.components.proposals import ProposalsHook
 from plugins.reports.participatory_texts_report import ParticipatoryTextsReport
+from plugins.reports.script import create_report_pdf
+import pandas as pd
+
+from contextlib import closing
 
 BP_CONN_ID = "bp_conn_prod"
 
