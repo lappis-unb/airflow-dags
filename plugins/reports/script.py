@@ -58,6 +58,12 @@ def create_report_pdf(report_data):
                 "title": f"Relatório {report_data['participatory_space_name']}",
                 "date": f"{start_date} até {end_date}",
             },
+            "participation_graph": {
+                "label": "",
+                "file": generate_participation_graph(
+                    report_data["total_comments"], report_data["total_unique_participants"]
+                ),
+            },
         }
     )
 

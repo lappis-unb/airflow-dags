@@ -131,3 +131,16 @@
       </div>
     </div>
 {% endmacro %}
+
+{% macro create_svg_element(img) %}
+    <div class="svg-container">
+      {% if img.label %}
+      <p class="image-label">
+        <italic>{{ img.label }}</italic>
+      </p>
+      {% endif %}
+      <div class="flex">
+        <img src="data:image/svg;base64,{{ img.file }}" alt="{{ img.label }}" />
+      </div>
+    </div>
+{% endmacro %}

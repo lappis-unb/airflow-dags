@@ -9,7 +9,6 @@
 
   {% import "./jinja/macros.html" as macros %}
 
-
   <section class="fullpage">
     <div class="cover-content">
       <h1>{{ data.document.title }}</h1>
@@ -24,13 +23,10 @@
     <br>
     <h1>Visão Geral</h1>
     <p id="overview-section">Neste capítulo, serão analisados os dados referentes às contribuições recebidas durante o período selecionado. Serão apresentados dados gerais de quantidade de contribuições, seus votos e comentários, além de dados sobre a distribuição de participação no território e as devolutivas ao cidadão.</p>
+
+    {{ macros.create_svg_element(data.participation_graph) }}
+    
   </section>
 
 
-
-  <section id="custom-section" class="fullpage">
-    <h1>Decreto</h1>
-    <p>Abaixo estão cada proposta e seus respectivos comentários:</p>
-    {{ macros.create_dict_section(data.your_custom_dict) }}
-  </section>
 </html>
