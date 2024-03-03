@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from itertools import chain
 from pathlib import Path
 
-import numpy as np
 from airflow.decorators import dag, task
 
 from plugins.components.proposals import ProposalsHook
@@ -58,7 +57,7 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
         "participatory_space_name": participatory_space_name,
         "start_date": start_date,
         "end_date": end_date,
-        "total_coments": 0,
+        "total_comments": 0,
         "proposals": [],
     }
     for page in query_result:
@@ -74,20 +73,21 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
             )
             total_comments_in_proposal = comments_df.shape[0] if not comments_df.empty else 0
 
-            result["total_coments"] += total_comments_in_proposal
+            result["total_comments"] += total_comments_in_proposal
+            unique_authors = [*comments_df["author_id"].unique()] if not comments_df.empty else []
+
             result["proposals"].append(
                 {
                     "vote_count": proposal["voteCount"],
                     "total_comments": total_comments_in_proposal,
                     "title": proposal["title"]["translation"],
                     "id": proposal["id"],
+                    "qt_unique_authors": len(set(unique_authors)),
+                    "unique_authors": unique_authors,
                     "comments": (
                         comments_df[["body", "author_id", "author_name", "date_filter"]].to_dict("records")
                         if not comments_df.empty
                         else []
-                    ),
-                    "unique_authors": (
-                        comments_df["author_id"].unique() if not comments_df.empty else np.array([])
                     ),
                 }
             )
