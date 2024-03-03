@@ -18,6 +18,8 @@ import pandas as pd
 
 
 class BrasilParticipativoTables:
+    """Provides methods to generate specific tables for the brasil participativo report."""
+
     @classmethod
     def generate_table_proposals_overview(
         cls, votes_per_proposal: list[int], total_comments_per_proposal: list[int]

@@ -6,7 +6,37 @@ import plotly.io as pio
 
 
 class ReportGraphs:
+    """
+    Provides utility methods for handling and encoding Plotly graphs.
+
+    Methods:
+    -------
+        b64_encode_graph(graph, format='svg'):
+            Encodes a Plotly graph in base64 format.
+
+    Args:
+    ----
+        graph: The Plotly graph object to be encoded.
+        format (str): The format in which the graph should be encoded (default is 'svg').
+
+    Returns:
+    -------
+        str: The base64-encoded representation of the graph.
+    """
+
     def b64_encode_graph(self, graph, format: str = "svg"):
+        """
+        Encodes a Plotly graph in base64 format.
+
+        Args:
+        ----
+            graph: The Plotly graph object to be encoded.
+            format (str): The format in which the graph should be encoded (default is 'svg').
+
+        Returns:
+        -------
+            str: The base64-encoded representation of the graph.
+        """
         with closing(BytesIO()) as buffer:
             pio.write_image(graph, buffer, format=format)
             buffer.seek(0)

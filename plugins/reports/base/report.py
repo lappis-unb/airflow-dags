@@ -11,6 +11,44 @@ from plugins.reports.graphs.matomo.graphs import MatomoGraphs
 
 
 class Report:
+    """
+    Represents a report generator.
+
+    Args:
+    ----
+        report_name (str): The name of the report.
+        template_path (Union[str, Path]): The path to the template file or a `Path` object.
+        start_date (datetime): The start date for the report.
+        end_date (datetime): The end date for the report.
+
+    Attributes:
+    ----------
+        css_file (Path): The path to the CSS file for styling.
+        template (Template): The Jinja2 template used for rendering the report.
+        report_name (str): The name of the report.
+        start_date (str): The formatted start date for the report (dd/mm/YYYY).
+        end_date (str): The formatted end date for the report (dd/mm/YYYY).
+        bp_graphs (BrasilParticipativoGraphs): Instance of BrasilParticipativoGraphs class.
+        matomo_graphs (MatomoGraphs): Instance of MatomoGraphs class.
+
+    Methods:
+    -------
+        create_report_pdf(**kwargs):
+            Generates a PDF report and returns the byte data.
+
+        render_template(**kwargs):
+            Raises NotImplementedError.
+
+    Args:
+    ----
+        **kwargs: Additional keyword arguments to be passed to the template rendering.
+
+    Returns:
+    -------
+        bytes: The byte data of the generated PDF.
+
+    """
+
     def __init__(
         self, report_name: str, template_path: Union[str, Path], start_date: datetime, end_date: datetime
     ) -> None:
@@ -28,6 +66,17 @@ class Report:
         self.matomo_graphs = MatomoGraphs()
 
     def create_report_pdf(self, **kwargs):
+        """
+        Generates a PDF report and returns the byte data.
+
+        Args:
+        ----
+            **kwargs: Additional keyword arguments to be passed to the template rendering.
+
+        Returns:
+        -------
+            bytes: The byte data of the generated PDF.
+        """
         rendered_html = self.render_template(**kwargs)
 
         pdf_bytes = BytesIO()
@@ -37,4 +86,5 @@ class Report:
         return pdf_bytes.getvalue()
 
     def render_template(self, **kwargs):
+        """Raises NotImplementedError."""
         raise NotImplementedError

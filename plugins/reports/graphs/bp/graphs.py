@@ -7,6 +7,8 @@ from plugins.reports.graphs.base.graphs import ReportGraphs
 
 
 class BrasilParticipativoGraphs(ReportGraphs):
+    """Provides methods to generate specific graphs for the Brasil Participativo report."""
+
     def generate_participation_graph(
         self, total_comments: int, total_unique_participants: int, width: int = 704, height: int = 480
     ):
