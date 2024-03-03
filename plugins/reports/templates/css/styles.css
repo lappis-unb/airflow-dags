@@ -226,8 +226,6 @@ img {
   width: 140mm;
   height: 90mm;
   margin: 0 auto;
-  border: 1px solid #1351b4;
-  background-color: red;
 }
 
 .highlight-first-column td:first-child {

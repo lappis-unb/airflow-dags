@@ -48,18 +48,13 @@
   </section>
 
 
-  <section id="programs-ranking" class="fullpage">
-    <h1>Ranking dos Programas</h1>
-    <p class="mb">Os temas com o maior número de propostas são:</p>
-   <div class="tables">
-     {{ macros.print_large_table(data.rank_temas, 'large-table-element') }}
-   </div>
-  </section>
+  {{ macros.print_large_table(data.rank_temas, "Ranking dos Programas", 
+  "Os temas com o maior número de propostas são:",'large-table-element') }}
+   
 
-  <section id="proposals-ranking" class="fullpage">
-    <h1>TOP 20 Propostas Mais Votadas no Geral</h1>
-    <p class="mb mbn">As top 20 propostas mais votadas evidenciam as propostas com maior mobilização e maior interesse do participante.
-    Vale observar também o número de comentários por propostas.</p>
-    {{ macros.print_large_table(data.top_proposals_filtered, 'second-large-table-element') }}
-  </section>
+  {{ macros.print_large_table(data.top_proposals_filtered, 
+    "TOP 20 Propostas Mais Votadas no Geral", 
+    "As top 20 propostas mais votadas evidenciam as propostas com maior 
+    mobilização e maior interesse do participante. Vale observar também o 
+    número de comentários por propostas.",'second-large-table-element') }}
 </html>

@@ -86,7 +86,14 @@
   </div>
 {% endmacro %}
 
-{% macro create_large_table(table, div_class='') %}
+{% macro create_large_table(table, table_position, title, paragraph, div_class='') %}
+<section id="programs-ranking" class="fullpage">
+  {% if table_position == 0 %}
+    <h1>{{title}}</h1>
+    <p class="mb">{{paragraph}}</p>
+    <br>
+  {% endif %}
+ <div class="tables">
   <div class="{{ div_class }}">
     <span>
         <table>
@@ -113,11 +120,13 @@
     </table>
     </span>
   </div>
+</div>
+</section>
 {% endmacro %}
 
-{% macro print_large_table(tables, div_class='') %}
-  {% for table in tables %}
-      {{ create_large_table(table, div_class) }}
+{% macro print_large_table(tables, title, paragraph, div_class='') %}
+  {% for i in range(tables|length) %}
+      {{ create_large_table(tables[i], i, title, paragraph, div_class) }}
   {% endfor %}
 {% endmacro %}
 
