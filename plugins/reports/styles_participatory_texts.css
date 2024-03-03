@@ -218,11 +218,11 @@ td {
 }
 
 img {
-  width: 140mm;
-  height: 90mm;
-  margin: 0 auto;
-  border: 1px solid #1351b4;
-  background-color: red;
+  width: 180mm;
+  height: 120mm;
+  margin: 0 auto auto -15mm;
+  /* border: 1px solid #1351b4; */
+  /* background-color: red; */
 }
 
 .highlight-first-column td:first-child {
@@ -253,13 +253,20 @@ img {
   line-height: 10pt;
 }
 
+.flex{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
 .italic {
   font-weight: 400;
   font-style: italic;
 }
 
 .image-container {
-  margin: 4mm 0 2mm 0;
+  margin: 0mm 0 2mm 0;
 }
 .mb{
   margin-bottom: 1%;
