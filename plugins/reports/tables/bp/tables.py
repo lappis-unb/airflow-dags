@@ -118,4 +118,4 @@ class BrasilParticipativoTables:
             }
         )
         print(len(df_ranking.to_dict("records")))
-        return df_ranking.reset_index().to_dict("records")
+        return df_ranking.to_dict("records")

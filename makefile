@@ -14,3 +14,7 @@ run-linters:
 run-static-analyzer:
 	make build-testing-img
 	docker run airflow-testing-lappis:latest "mypy ."
+
+lint:
+	black .
+	ruff check --fix --unsafe-fixes .
