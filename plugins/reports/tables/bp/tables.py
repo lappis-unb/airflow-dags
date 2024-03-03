@@ -106,11 +106,9 @@ class BrasilParticipativoTables:
             },
             index=range(len(proposals_ids)),
         )
-        df_ranking = df.sort_values(by="votes_per_proposal", ascending=False)
+        df_ranking = df.sort_values(by="votes_per_proposal", ascending=False).head(20)
 
-        top_proposals = df_ranking.head(20)
-
-        top_proposals_filtered = top_proposals.rename(
+        df_ranking = df_ranking.rename(
             columns={
                 "proposals_ids": "ID",
                 "proposals_titles": "Proposta",
@@ -119,5 +117,5 @@ class BrasilParticipativoTables:
                 "total_comments_per_proposal": "Comentários",
             }
         )
-
-        return top_proposals_filtered.to_dict("records")
+        print(len(df_ranking.to_dict("records")))
+        return df_ranking.reset_index().to_dict("records")
