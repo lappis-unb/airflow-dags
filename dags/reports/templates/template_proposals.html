@@ -38,8 +38,13 @@
   </section>
 
 
-  {{ macros.create_table_from_list_of_dicts(data.rank_temas) }}
+  {{ macros.print_large_table(data.rank_temas, "Ranking dos Programas", 
+  "Os temas com o maior número de propostas são:",'large-table-element') }}
    
 
-  {{ macros.create_table_from_list_of_dicts(data.top_proposals_filtered) }}
+  {{ macros.print_large_table(data.top_proposals_filtered, 
+    "TOP 20 Propostas Mais Votadas no Geral", 
+    "As top 20 propostas mais votadas evidenciam as propostas com maior 
+    mobilização e maior interesse do participante. Vale observar também o 
+    número de comentários por propostas.",'second-large-table-element') }}
 </html>

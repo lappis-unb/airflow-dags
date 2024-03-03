@@ -1,8 +1,9 @@
+import pandas as pd
+
 from plugins.reports.base.report import Report
+from plugins.reports.tables.base.tables import Table
 from plugins.reports.tables.bp.tables import BrasilParticipativoTables
 from plugins.reports.tables.matomo.tables import MatotmoTables
-
-import pandas as pd
 
 
 class ProposalsReport(Report):
@@ -16,11 +17,12 @@ class ProposalsReport(Report):
         matomo_user_country_csv: str,
         matomo_devices_detection_csv: str,
     ):
+
         return self.template.render(
             data={
                 "document": {
                     "title": f"Relatório {self.report_name}",
-                    "date": f"{self.start_date} até {self.start_date}",
+                    "date": f"{self.start_date} até {self.end_date}",
                 },
                 "general_data": BrasilParticipativoTables.generate_table_proposals_overview(
                     votes_per_proposal=bp_df["proposal_total_votes"],
@@ -42,18 +44,22 @@ class ProposalsReport(Report):
                     "label": "Detecção de Dispositivos",
                     "file": self.matomo_graphs.generate_device_graph(matomo_devices_detection_csv),
                 },
-                "rank_temas": BrasilParticipativoTables.generate_table_theme_ranking(
-                    proposals_titles=bp_df["proposal_title"],
-                    proposals_ids=bp_df["proposal_id"],
-                    total_comments_per_proposal=bp_df["proposal_total_comments"],
-                    votes_per_proposal=bp_df["proposal_total_votes"],
+                "rank_temas": Table.split_tables(
+                    BrasilParticipativoTables.generate_table_theme_ranking(
+                        proposals_categories=bp_df["proposal_category_title"],
+                        proposals_ids=bp_df["proposal_id"],
+                        total_comments_per_proposal=bp_df["proposal_total_comments"],
+                        votes_per_proposal=bp_df["proposal_total_votes"],
+                    )
                 ),
-                "top_proposals_filtered": BrasilParticipativoTables.generate_top_proposals(
-                    proposals_ids=bp_df["proposal_id"],
-                    proposals_titles=bp_df["proposal_title"],
-                    proposals_category_titles=bp_df["proposal_category_title"],
-                    votes_per_proposal=bp_df["proposal_total_votes"],
-                    total_comments_per_proposal=bp_df["proposal_total_comments"],
+                "top_proposals_filtered": Table.split_tables(
+                    BrasilParticipativoTables.generate_top_proposals(
+                        proposals_ids=bp_df["proposal_id"],
+                        proposals_titles=bp_df["proposal_title"],
+                        proposals_category_titles=bp_df["proposal_category_title"],
+                        votes_per_proposal=bp_df["proposal_total_votes"],
+                        total_comments_per_proposal=bp_df["proposal_total_comments"],
+                    )
                 ),
                 "map_graph": {
                     "label": "Mapa de Acesso por Estado",

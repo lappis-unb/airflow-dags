@@ -28,7 +28,7 @@ class ParticipatoryTextsReport(Report):
             data={
                 "document": {
                     "title": f"Relatório {self.report_name}",
-                    "date": f"{self.start_date} até {self.start_date}",
+                    "date": f"{self.start_date} até {self.end_date}",
                 },
                 "participation_graph": {
                     "label": "",

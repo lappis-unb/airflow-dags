@@ -3,15 +3,15 @@ from contextlib import closing
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import pandas as pd
 import requests
 from airflow.decorators import dag, task
 from airflow.hooks.base import BaseHook
 
 from plugins.components.base_component.component import ComponentBaseHook
 from plugins.faker.matomo_faker import MatomoFaker
-
 from plugins.reports.proposals_report import ProposalsReport
-import pandas as pd
+
 BP_CONN_ID = "bp_conn_prod"
 SMPT_CONN_ID = "gmail_smtp"
 

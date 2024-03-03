@@ -37,19 +37,19 @@ class BrasilParticipativoTables:
     @classmethod
     def generate_table_theme_ranking(
         cls,
-        proposals_titles: list[str],
+        proposals_categories: list[str],
         proposals_ids: list,
         total_comments_per_proposal: list[int],
         votes_per_proposal: list[int],
     ):
         assert all(
-            len(lst) == len(proposals_titles)
+            len(lst) == len(proposals_categories)
             for lst in [proposals_ids, total_comments_per_proposal, votes_per_proposal]
         )
 
         df = pd.DataFrame(
             data={
-                "proposals_titles": proposals_titles,
+                "proposals_categories": proposals_categories,
                 "proposals_ids": proposals_ids,
                 "total_comments_per_proposal": total_comments_per_proposal,
                 "votes_per_proposal": votes_per_proposal,
@@ -57,7 +57,7 @@ class BrasilParticipativoTables:
             index=range(len(proposals_ids)),
         )
 
-        grouped = df.groupby("proposals_titles").agg(
+        grouped = df.groupby("proposals_categories").agg(
             total_proposals=pd.NamedAgg(column="proposals_ids", aggfunc="count"),
             total_comments=pd.NamedAgg(column="total_comments_per_proposal", aggfunc="sum"),
             total_votes=pd.NamedAgg(column="votes_per_proposal", aggfunc="sum"),
@@ -67,14 +67,14 @@ class BrasilParticipativoTables:
 
         ranked_themes = ranked_themes.rename(
             columns={
-                "proposals_titles": "Tema",
+                "proposals_categories": "Tema",
                 "total_proposals": "Total de Propostas",
                 "total_votes": "Total de Votos",
                 "total_comments": "Total de Comentários",
             }
         )
-        ranking_list = ranked_themes.reset_index().to_dict("records")
 
+        ranking_list = ranked_themes.reset_index().to_dict("records")
         return ranking_list
 
     @classmethod

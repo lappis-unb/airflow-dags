@@ -87,7 +87,7 @@
 {% endmacro %}
 
 {% macro create_large_table(table, table_position, title, paragraph, div_class='') %}
-<section id="programs-ranking" class="fullpage">
+<section id="programs-ranking-{{ table_position }}" class="fullpage">
   {% if table_position == 0 %}
     <h1>{{title}}</h1>
     <p class="mb">{{paragraph}}</p>
