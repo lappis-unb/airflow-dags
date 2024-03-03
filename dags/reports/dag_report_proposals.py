@@ -9,8 +9,9 @@ from airflow.hooks.base import BaseHook
 
 from plugins.components.base_component.component import ComponentBaseHook
 from plugins.faker.matomo_faker import MatomoFaker
-from plugins.reports.main import create_report_pdf
 
+from plugins.reports.proposals_report import ProposalsReport
+import pandas as pd
 BP_CONN_ID = "bp_conn_prod"
 SMPT_CONN_ID = "gmail_smtp"
 
@@ -125,7 +126,18 @@ def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, met
 
 
 def _generate_report(bp_data, visits_summary, visits_frequency, user_country, devices_detection):
-    pdf_bytes = create_report_pdf(bp_data, visits_summary, visits_frequency, user_country, devices_detection)
+    #! TODO: Recuperar as informacoes de nome, datas pela api do bp
+    template_path = Path(__file__).parent.joinpath("./templates/template_proposals.html")
+    report_generator = ProposalsReport(
+        "Test Report", template_path, datetime(2023, 1, 1), datetime(2024, 1, 1)
+    )
+    pdf_bytes = report_generator.create_report_pdf(
+        bp_df=pd.DataFrame(bp_data),
+        matomo_visits_summary_csv=visits_summary,
+        matomo_visits_frequency_csv=visits_frequency,
+        matomo_user_country_csv=user_country,
+        matomo_devices_detection_csv=devices_detection,
+    )
 
     return {"pdf_bytes": pdf_bytes}
 

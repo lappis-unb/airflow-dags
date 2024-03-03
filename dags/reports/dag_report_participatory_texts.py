@@ -7,7 +7,7 @@ from pathlib import Path
 from airflow.decorators import dag, task
 
 from plugins.components.proposals import ProposalsHook
-from plugins.reports.script import create_report_pdf
+from plugins.reports.participatory_texts_report import ParticipatoryTextsReport
 
 BP_CONN_ID = "bp_conn_prod"
 
@@ -16,26 +16,6 @@ def _get_participatory_texts_data_faker(component_id: int, start_date: str, end_
     return_file = Path(__file__).parent.joinpath("./mock/return_bp_data.txt")
     with open(return_file) as file:
         return eval(file.read())
-
-
-"""
-Titulo do Componente - OK
-Data Inicio
-Data Final
-
-Nome Do Espaço participativo - OK
-
-Total de comentarios
-Total de autores diferentes - OK
-
-Total de comentarios por texto participativo - OK
-Numrero de Votos - OK
-Id de cada proposta - OK
-
-comentario por proposta - OK
-    autor - OK
-    hora do comentario - OK
-"""
 
 
 def _get_participatory_texts_data(component_id: int, start_date: str, end_date: str):
@@ -106,8 +86,14 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
 
 
 def _generate_report(filtered_data):
-    pdf_bytes = create_report_pdf(filtered_data)
-    return {"pdf_bytes": pdf_bytes}
+    report_name = filtered_data["participatory_space_name"]
+    template_path = Path(__file__).parent.joinpath("./templates/template_participatory_texts.html")
+    start_date = datetime.strptime(filtered_data["start_date"], "%Y-%m-%d")
+    end_date = datetime.strptime(filtered_data["end_date"], "%Y-%m-%d")
+
+    report_generator = ParticipatoryTextsReport(report_name, template_path, start_date, end_date)
+
+    return {"pdf_bytes": report_generator.create_report_pdf(report_data=filtered_data)}
 
 
 def send_email_with_pdf(email: str, pdf_bytes: bytes, email_body: str, email_subject: str):
