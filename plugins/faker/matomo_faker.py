@@ -3,6 +3,8 @@
 # UserCountry.getRegion
 # DevicesDetection.getType
 
+import random
+
 import pandas as pd
 from faker import Faker
 
@@ -102,12 +104,42 @@ class MatomoFaker:
             total = 10000
             brasil_gen = 0
             data = []
+            br_states = [
+                "AC",
+                "AL",
+                "AM",
+                "AP",
+                "BA",
+                "CE",
+                "DF",
+                "ES",
+                "GO",
+                "MA",
+                "MG",
+                "MS",
+                "MT",
+                "PA",
+                "PB",
+                "PE",
+                "PI",
+                "PR",
+                "RJ",
+                "RN",
+                "RO",
+                "RR",
+                "RS",
+                "SC",
+                "SE",
+                "SP",
+                "TO",
+            ]
             for _ in range(total):
                 lat, long, city, contry_code, estate = faker.location_on_land()
 
                 if brasil_gen <= (total * 0.85):
                     while contry_code != "BR":
                         _, _, city, contry_code, estate = faker.location_on_land()
+                        estate = random.choice(br_states)
                     brasil_gen += 1
                 else:
                     while contry_code == "BR":
