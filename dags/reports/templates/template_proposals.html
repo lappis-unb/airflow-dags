@@ -15,16 +15,6 @@
     </div>
   </section>
 
-  <section class="fullpage">
-    <h1>Sumário</h1>
-    <ol>
-      <li><a href="#overview-section">Visão Geral</a></li>
-      <li><a href="#user-profile">Dados de Acesso</a></li>
-      <li><a href="#programs-ranking">Ranking dos Programas</a></li>
-      <li><a href="#proposals-ranking">TOP 20 Propostas Mais Votadas no Geral</a></li>
-    </ol>
-  </section>
-
   <section id="overview-section" class="fullpage">
    <h1>Visão Geral</h1>
    <p class="mb">Esses dados gerais são um panorama que abrange a quantidade total de propostas, votos e comentários durante o período requisitado do relatório.</p>
@@ -48,13 +38,8 @@
   </section>
 
 
-  {{ macros.print_large_table(data.rank_temas, "Ranking dos Programas", 
-  "Os temas com o maior número de propostas são:",'large-table-element') }}
+  {{ macros.create_table_from_list_of_dicts(data.rank_temas) }}
    
 
-  {{ macros.print_large_table(data.top_proposals_filtered, 
-    "TOP 20 Propostas Mais Votadas no Geral", 
-    "As top 20 propostas mais votadas evidenciam as propostas com maior 
-    mobilização e maior interesse do participante. Vale observar também o 
-    número de comentários por propostas.",'second-large-table-element') }}
+  {{ macros.create_table_from_list_of_dicts(data.top_proposals_filtered) }}
 </html>

@@ -223,9 +223,9 @@ td {
 }
 
 img {
-  width: 140mm;
-  height: 90mm;
-  margin: 0 auto;
+  width: 180mm;
+  height: 120mm;
+  margin: 0 auto auto -15mm;
 }
 
 .highlight-first-column td:first-child {

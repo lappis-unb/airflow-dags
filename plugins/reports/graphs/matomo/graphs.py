@@ -59,7 +59,7 @@ class MatomoGraphs(ReportGraphs):
 
         with open(Path(__file__).parent.joinpath("./mapa.png"), "wb") as file:
             fig.write_image(file, format="png")
-        # return self.b64_encode_graph(fig)
+        return self.b64_encode_graph(fig)
 
 
 def main():
