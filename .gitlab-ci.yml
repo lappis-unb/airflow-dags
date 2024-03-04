@@ -147,5 +147,5 @@ push-image-to-registry:
     - build-image
   script:
     - docker load -i build.img
-    - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY_PASSWORD"
+    - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
