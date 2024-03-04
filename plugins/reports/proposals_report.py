@@ -37,6 +37,10 @@ class ProposalsReport(Report):
                         votes_per_proposal=bp_df["proposal_total_votes"],
                     ),
                 },
+                "state_distribution_graph": {
+                    "label": "Distribuição de Estados das Propostas",
+                    "file": self.bp_graphs.generate_state_distribution_donut(bp_df),
+                },
                 "data_access": MatotmoTables.generate_table_access_data_overview(
                     matomo_visits_summary_csv, matomo_visits_frequency_csv
                 ),

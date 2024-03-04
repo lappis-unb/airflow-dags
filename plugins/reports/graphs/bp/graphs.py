@@ -94,3 +94,17 @@ class BrasilParticipativoGraphs(ReportGraphs):
         )
 
         return self.b64_encode_graph(fig)
+
+    def generate_state_distribution_donut(self, df: pd.DataFrame, width: int = 704, height: int = 480):
+        state_counts = df["proposal_state"].value_counts().reset_index()
+        state_counts.columns = ['Estado', 'Quantidade']
+
+        fig = px.pie(
+            state_counts,
+            names='Estado',
+            values='Quantidade',
+            hole=0.3,
+            title='Distribuição de Estados das Propostas'
+        )
+
+        return self.b64_encode_graph(fig)
