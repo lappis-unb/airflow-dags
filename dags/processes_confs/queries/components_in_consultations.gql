@@ -5,6 +5,7 @@ query ComponentsInConsultations($date: String) {
       __typename
       startVotingDate
       endVotingDate
+      groupChatId
       title {
         translation(locale: "pt-BR")
       }

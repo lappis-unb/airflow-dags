@@ -5,6 +5,7 @@ query ComponentsInInitiatives($date: String) {
       __typename
       signatureStartDate
       signatureEndDate
+      groupChatId
       title {
         translation(locale: "pt-BR")
       }
