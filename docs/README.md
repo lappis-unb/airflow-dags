@@ -29,23 +29,49 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 
 1. **Configuração de ambiente:** Subir o airflow e minIO.
     - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
-        - **airflow** O airflow se encontra no: <http://localhost:8080>
-        - **MinIO** O MinIO se encontra no: <http://localhost:9001>
+        - **airflow** O airflow se encontra no: <http://localHost:8080>
+        - **MinIO** O MinIO se encontra no: <http://localHost:9001>
 
 2. **Airflow:** Configuração do MinIO no Airflow.
     - **Passo 1:** Adicionar variáveis
         -ADMIN->VARIABLES
         - **Nome:** api_decidim
-        - **Valor:** <https://lab-decide.dataprev.gov.br/api>
+        - **Valor:** <https://lab-decide.dataprev.gov.br/api> ou <https://brasilparticipativo.presidencia.gov.br/api>
 
     - **Passo 2:** Criar uma conexão no Airflow para o MinIO
-        - **Nome:** minio_connection_id
-        - **host:** <http://minio:9000>
-        - **schema:** daily-csv
-        - **login:** lappis
-        - **password:** lappisrocks
+        - **Connection ID:** minio_connection_id
+        - **Host:** <http://minio:9000>
+        - **Schema:** daily-csv
+        - **Login:** lappis
+        - **Password:** lappisrocks
 
-    - **Passo 3:** Criar uma conexão no Airflow para o serviço de e-mail
+    - **Passo 3:** Criar uma conexão no Airflow para a API da plataforma Brasil Participativo
+        - **Connection ID:** api_decidim
+        - **Host:** <https://lab-decide.dataprev.gov.br/api> ou <https://brasilparticipativo.presidencia.gov.br/api>
+        - **Login:** Seu email cadastrado na plataforma Brasil Participativo
+        - **Password:** Sua senha cadastrada na plataforma Brasil Participativo
+
+    - **Passo 4:** Criar outra conexão no Airflow para a API da plataforma Brasil Participativo
+        - **Connection ID:** bp_conn
+        - **Host:** <https://lab-decide.dataprev.gov.br/api> ou <https://brasilparticipativo.presidencia.gov.br/api>
+        - **Login:** Seu email cadastrado na plataforma Brasil Participativo
+        - **Password:** Sua senha cadastrada na plataforma Brasil Participativo
+
+    - **Passo 5:** Criar outra conexão no Airflow para a API da plataforma Brasil Participativo
+        - **Connection ID:** bp_conn_prod
+        - **Host:** <https://lab-decide.dataprev.gov.br/api> ou <https://brasilparticipativo.presidencia.gov.br/api>
+        - **Login:** Seu email cadastrado na plataforma Brasil Participativo
+        - **Password:** Sua senha cadastrada na plataforma Brasil Participativo
+
+    - **Passo 6:** Criar outra conexão no Airflow para o Matomo
+        - **Connection ID:** matomo_conn
+        - **Host:** <https://ew.dataprev.gov.br/>
+        - **Login:** 18
+        - **Password:** Senha do Matomo
+
+        *OBS:  Você deve entrar em contato para solicitar a senha do Matomo*
+
+    - **Passo 7:** Criar uma conexão no Airflow para o serviço de e-mail
         - **Connection ID:** gmail_smtp
         - **Connection Type:** SMTP
         - **Host:** smtp.gmail.com
@@ -55,12 +81,12 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
         - **From Email:** <servicosdados@gmail.com>
         - **Disable SSL:** True
 
-    - **Passo 4:** Abrir o MinIO e criar um bucket com o mesmo nome do schema (daily-csv)
+    - **Passo 8:** Abrir o MinIO e criar um bucket com o mesmo nome do schema (daily-csv)
 
 3. **Rodar as tarefas:** Testando a dag.
     - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
-        - **airflow** O airflow se encontra no: <http://localhost:8080>
-        - **MinIO** O MinIO se encontra no: <http://localhost:9001>
+        - **airflow** O airflow se encontra no: <http://localHost:8080>
+        - **MinIO** O MinIO se encontra no: <http://localHost:9001>
          **Passo 2:** Para rodar via terminal entre no container docker:
    ```docker exec -ti airflow-envs-airflow-webserver-1 bash```
 
