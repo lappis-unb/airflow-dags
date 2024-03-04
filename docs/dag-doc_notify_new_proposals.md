@@ -58,11 +58,15 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task inicial:** Sim
 - **Task final:** Não
 
+---
+
 - **Nome:** get_proposals
 - **Descrição:** Faz requisição de propostas na API do decidim
 - **Dependências:** update_date
 - **Task inicial:** Não
 - **Task final:** Não
+
+---
 
 - **Nome:** mount_telegram_messages
 - **Descrição:** Seleciona propostas novas e cria uma mensagem para ser enviada via telegram
@@ -70,17 +74,23 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task inicial:** Não
 - **Task final:** Não
 
+---
+
 - **Nome:** check_if_new_proposals
 - **Descrição:** Escolhe o fluxo de tarefas caso tenha ou não novas propostas
 - **Dependências:** mount_telegram_messages
 - **Task inicial:** Não
 - **Task final:** Não
 
+---
+
 - **Nome:** send_telegram_messages
 - **Descrição:** Envia a mensagem para o telegram
 - **Dependências:** mount_telegram_messages, check_if_new_proposals
 - **Task inicial:** Não
 - **Task final:** Não
+
+---
 
 - **Nome:** save_update_date
 - **Descrição:** Adiciona a data de atualização da última proposta na variável geral

@@ -59,11 +59,15 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task inicial:** Sim
 - **Task final:** Não
 
+---
+
 - **Nome:** get_proposals
 - **Descrição:** Faz requisição de propostas na API do decidim, trata esses dados e salva no MinIO
 - **Dependências:** get_propolsas_components_ids e ProposalsHook
 - **Task inicial:** Não
 - **Task final:** Sim
+
+---
 
 - **Nome:** get_proposals_commments
 - **Descrição:** Faz requisição de comentários de propostas na API do decidim, trata esses dados e salva no MinIO

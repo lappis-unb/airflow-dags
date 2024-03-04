@@ -47,6 +47,8 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task inicial:** Sim ou Não
 - **Task final:** Sim ou Não
 
+---
+
 - **Nome:** task_b
 - **Descrição:** Descrição da tarefa.
 - **Dependências:** Nenhuma

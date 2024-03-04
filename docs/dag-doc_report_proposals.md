@@ -48,11 +48,15 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task inicial:** Sim
 - **Task final:** Não
 
+---
+
 - **Nome:** get_component_data
 - **Descrição:** Extrai dados dos componentes via api do Decidim.
 - **Dependências:** GraphQLHook
 - **Task inicial:** Sim
 - **Task final:** Não
+
+---
 
 - **Nome:** get_matomo_VisitsSummary_get
 - **Descrição:** Extrai um resumo dos dados de visitas dos componentes via api do Matomo.
@@ -60,11 +64,15 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task inicial:** Não
 - **Task final:** Não
 
+---
+
 - **Nome:** get_matomo_VisitFrequency_get
 - **Descrição:** Extrai dados de frequência de visitas dos componentes via api do Matomo.
 - **Dependências:** get_components_url e BaseHook
 - **Task inicial:** Não
 - **Task final:** Não
+
+---
 
 - **Nome:** get_matomo_UserCountry_getRegion
 - **Descrição:** Extrai dados geográficos de visitas dos componentes via api do Matomo.
@@ -72,17 +80,23 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task inicial:** Não
 - **Task final:** Não
 
+---
+
 - **Nome:** get_matomo_DevicesDetection_getType
 - **Descrição:** Extrai dados de dispositivos de visitas dos componentes via api do Matomo.
 - **Dependências:** get_components_url e BaseHook
 - **Task inicial:** Não
 - **Task final:** Não
 
+---
+
 - **Nome:** generate_data
 - **Descrição:** Trata os dados extraídos e gera o relatório.
 - **Dependências:** get_matomo_VisitsSummary_get, get_matomo_VisitFrequency_get, get_matomo_UserCountry_getRegion e get_matomo_DevicesDetection_getType
 - **Task inicial:** Não
 - **Task final:** Não
+
+---
 
 - **Nome:** send_report_email
 - **Descrição:**  Envia o relatório por email.
@@ -98,11 +112,15 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Retorno:** Url do componente
 - **Dependências:** ComponentBaseHook
 
+---
+
 - **Nome:** _get_proposals_data
 - **Descrição:** Extrai os dados de propostas da api do Decidim.
 - **Parâmetros:** ID do componente, data de início, data de fim
 - **Retorno:** Dados extraídos das propostas
 - **Dependências:** GraphQLHook
+
+---
 
 - **Nome:** _get_matomo_data
 - **Descrição:** Extrai os dados de acessos da api do Matomo.
@@ -110,10 +128,14 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Retorno:** Dados de acesso extraídos
 - **Dependências:** BaseHook
 
+---
+
 - **Nome:** _generate_report
 - **Descrição:** Gera o relatório do PDF.
 - **Parâmetros:**  Dados extraídos do Decidim, Dados extraídos do Matomo
 - **Retorno:** PDF em Bytes
+
+---
 
 - **Nome:** send_email_with_pdf
 - **Descrição:** Envia o relatório por email.

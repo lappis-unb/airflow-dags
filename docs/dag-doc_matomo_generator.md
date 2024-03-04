@@ -17,6 +17,8 @@ DAG responsável por buscar dados analíticos de uma instância do Matomo e salv
 - **Versão:** 1.0
 - **Data de Criação:** 04/08/2023
 
+---
+
 - **Nome da DAG:** matomo_data_ingestion
 - **Descrição:** DAG para ingerir dados do MinIO no banco de dados PostgreSQL
 - **Agendamento:** todos os dias às 07h
@@ -78,6 +80,8 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task inicial:** Não
 - **Task final:** Não
 
+---
+
 - **Nome:** ingest_data
 - **Descrição:** Faz ingestão dos dados do MinIO no PostgreSQL
 - **Dependências:** _ingest_into_postgres
@@ -90,10 +94,14 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Descrição:** Faz o login no MinIO
 - **Dependências:** BaseHook
 
+---
+
 - **Nome:** _generate_s3_filename
 - **Descrição:** Retorna o nome do CSV
 - **Parâmetros:** modulo, método, data de execução
 - **Dependências:** Nenhuma
+
+---
 
 - **Nome:** add_temporal_columns
 - **Descrição:** Adiciona colunas temporais ao DataFrame com base na data de execução

@@ -43,17 +43,23 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task inicial:** Sim.
 - **Task final:** Não.
 
+---
+
 - **Nome:** filter_component_data
 - **Descrição:** Aplica o filtro baseado na data.
 - **Dependências:** Nenhuma.
 - **Task inicial:** Não.
 - **Task final:** Não.
 
+---
+
 - **Nome:** generate_data
 - **Descrição:** Gera o relatório.
 - **Dependências:** Nenhuma.
 - **Task inicial:** Não.
 - **Task final:** Não.
+
+---
 
 - **Nome:** send_report_email
 - **Descrição:**  Envia o relatório por email.
@@ -69,17 +75,23 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Retorno:** Dicionário de dados.
 - **Dependências:** GraphQLHook
 
+---
+
 - **Nome:** apply_filter_data
 - **Descrição:** Aplica o filtro baseado na data.
 - **Parâmetros:** Data do componente.
 - **Retorno:** Dados filtrados.
 - **Dependências:** Nenhuma.
 
+---
+
 - **Nome:** _generate_report
 - **Descrição:** Gera relatório em pdf.
 - **Parâmetros:**  Dados já filtrados.
 - **Retorno:** PDF.
 - **Dependências:** plugins.
+
+---
 
 - **Nome:** send_email_with_pdf
 - **Descrição:** Envia o PDF por e-mail.
