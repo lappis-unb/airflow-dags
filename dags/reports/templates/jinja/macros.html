@@ -10,7 +10,7 @@
 {% endmacro %}
 
 {% macro create_table_from_dict(table) %}''
-<div class="table-element"> 
+<div class="table-element">
   <span>
     <table>
       <!-- Cabeçalhos da tabela -->
@@ -87,41 +87,39 @@
 {% endmacro %}
 
 {% macro create_large_table(table, table_position, title, paragraph, div_class='') %}
-<section id="programs-ranking-{{ table_position }}" class="fullpage">
   {% if table_position == 0 %}
     <h1>{{title}}</h1>
     <p class="mb">{{paragraph}}</p>
     <br>
   {% endif %}
- <div class="tables">
-  <div class="{{ div_class }}">
-    <span>
-        <table>
-      <!-- Cabeçalhos da tabela -->
-      <thead>
-        <tr>
-          {% if table %}
-            {% for header in table[0].keys() %}
-              <th>{{ header }}</th>
-            {% endfor %}
-          {% endif %}
-        </tr>
-      </thead>
-      <!-- Dados da tabela -->
-      <tbody>
-        {% for item in table %}
+  <div class="tables">
+    <div class="{{ div_class }}">
+      <span>
+          <table>
+        <!-- Cabeçalhos da tabela -->
+        <thead>
           <tr>
-            {% for value in item.values() %}
-              <td>{{ value }}</td>
-            {% endfor %}
+            {% if table %}
+              {% for header in table[0].keys() %}
+                <th>{{ header }}</th>
+              {% endfor %}
+            {% endif %}
           </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    </span>
+        </thead>
+        <!-- Dados da tabela -->
+        <tbody>
+          {% for item in table %}
+            <tr>
+              {% for value in item.values() %}
+                <td>{{ value }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </span>
+    </div>
   </div>
-</div>
-</section>
 {% endmacro %}
 
 {% macro print_large_table(tables, title, paragraph, div_class='') %}
@@ -132,7 +130,7 @@
 
 {% macro create_image_element(img) %}
     <div class="image-container">
-      <p class="image-label"> 
+      <p class="image-label">
       <italic>{{ img.label }}</italic>
       </p>
       <div class="flex">

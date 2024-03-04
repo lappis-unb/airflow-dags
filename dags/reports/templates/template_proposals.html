@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+ <head>
   <meta charset="utf-8" />
   <meta name="bp-report" content="Relatório de dados" />
   <title>Relatório de dados</title>
-
+ </head>
+ <body>
   {% import "./jinja/macros.html" as macros %}
 
   <section class="fullpage">
     <div class="cover-content">
       <h1>{{ data.document.title }}</h1>
-        <p class="bp-title">Brasil Participativo</p>
-        <p class="document-date">({{ data.document.date }})</p>
+      <p class="bp-title">Brasil Participativo</p>
+      <p class="document-date">({{ data.document.date }})</p>
     </div>
   </section>
 
@@ -97,6 +99,20 @@
     {{ macros.create_image_element(data.device_graph) }}
   </section>
 
+  <section class="fullpage">
+    {{ macros.print_large_table(data.rank_temas, "Ranking dos Programas",
+    "Os temas com o maior número de propostas são:",'large-table-element') }}
+  </section>
+
+  <section class="fullpage">
+    {{ macros.print_large_table(data.top_proposals_filtered,
+  "TOP 20 Propostas Mais Votadas no Geral",
+  "As top 20 propostas mais votadas evidenciam as propostas com maior
+  mobilização e maior interesse do participante. Vale observar também o
+  número de comentários por propostas.",'second-large-table-element') }}
+  </section>
+
+ </body>
 
 
 </html>
