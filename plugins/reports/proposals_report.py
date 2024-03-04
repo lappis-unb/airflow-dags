@@ -59,7 +59,8 @@ class ProposalsReport(Report):
                         proposals_category_titles=bp_df["proposal_category_title"],
                         votes_per_proposal=bp_df["proposal_total_votes"],
                         total_comments_per_proposal=bp_df["proposal_total_comments"],
-                    ), max_elements=10
+                    ),
+                    max_elements=10,
                 ),
                 "map_graph": {
                     "label": "Mapa de Acesso por Estado",
