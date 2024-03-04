@@ -127,9 +127,11 @@ def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, met
 
 def _generate_report(bp_data, visits_summary, visits_frequency, user_country, devices_detection):
     #! TODO: Recuperar as informacoes de nome, datas pela api do bp
+    report_title = bp_data[0]['page_component_name']
+
     template_path = Path(__file__).parent.joinpath("./templates/template_proposals.html")
     report_generator = ProposalsReport(
-        "Test Report", template_path, datetime(2023, 1, 1), datetime(2024, 1, 1)
+        report_title, template_path, datetime(2023, 1, 1), datetime(2024, 1, 1)
     )
     pdf_bytes = report_generator.create_report_pdf(
         bp_df=pd.DataFrame(bp_data),
