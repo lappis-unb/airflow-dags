@@ -1,8 +1,10 @@
 import logging
 from datetime import datetime, timedelta
+from io import StringIO
 from itertools import chain
 from pathlib import Path
 
+import pandas as pd
 import requests
 from airflow.decorators import dag, task
 from airflow.hooks.base_hook import BaseHook
@@ -67,9 +69,31 @@ def _get_components(query_path):
     return result
 
 
-def _filter_out_components(segmented_ids: set, *set_of_participatory_spaces):
-    set_all_components = set(chain.from_iterable(set_of_participatory_spaces))
-    return set_all_components.difference(segmented_ids)
+def _filter_out_components_urls(*participatory_spaces):
+    matomo_connection = BaseHook.get_connection(MATOMO_CONN_ID)
+    matomo_url = matomo_connection.host
+    token_auth = matomo_connection.password
+    site_id = matomo_connection.login
+
+    params = {
+        "module": "API",
+        "method": "SegmentEditor.getAll",
+        "idSite": site_id,
+        "token_auth": token_auth,
+        "format": "csv",
+    }
+    logging.info("Params para a requisição do matomo \n%s.", params)
+    response = requests.post(matomo_url, params=params)
+    response.raise_for_status()
+    matomo_segmentations = pd.read_csv(StringIO(response.text))
+
+    matomo_segmentations["bp_component_id"] = matomo_segmentations["definition"].apply(
+        lambda segmentation: segmentation.split("/")[-2] if len(segmentation.split("/")) > 1 else None
+    )
+
+    return set(chain.from_iterable(participatory_spaces)).difference(
+        set(matomo_segmentations["bp_component_id"])
+    )
 
 
 def _create_matomo_segmentation(segmentation: str):
@@ -79,7 +103,7 @@ def _create_matomo_segmentation(segmentation: str):
     site_id = matomo_connection.login
     splited_segmentation = segmentation.split("/")
 
-    #! TODO: Tirar esse hardcoded quando tivermos um matomo de homolog, quando isso nunca saberemos :(.
+    #! TODO: Tirar esse hardcoded quando tivermos um matomo de homolog, quando isso ? nunca saberemos :(.
     assert segmentation.startswith("https://brasilparticipativo.presidencia.gov.br/")
 
     params = {
@@ -128,8 +152,8 @@ def matomo_segmentation():
         tasks_to_get_all_components.append(get_componets(query))
 
     @task
-    def filter_components(segmented_ids: set, *set_of_participatory_spaces):
-        return _filter_out_components(segmented_ids, *set_of_participatory_spaces)
+    def filter_components(*participatory_spaces):
+        return _filter_out_components_urls(*participatory_spaces)
 
     @task
     def get_components_urls(component_ids: list[str]):
@@ -155,11 +179,10 @@ def matomo_segmentation():
             logging.info("Key '' does not exists.")
         Variable.set(SEGMENTED_IDS_VAR, set_segmented_ids)
 
-    filter_components_task = filter_components(get_segmented_ids(), *tasks_to_get_all_components)
+    filter_components_task = filter_components(*tasks_to_get_all_components)
     get_urls_task = get_components_urls(filter_components_task)
-    save_sagmente_ids_task = save_segmented_ids(filter_components_task)
 
-    create_matomo_segmentation(get_urls_task) >> save_sagmente_ids_task
+    create_matomo_segmentation(get_urls_task)
 
 
 matomo_segmentation()
