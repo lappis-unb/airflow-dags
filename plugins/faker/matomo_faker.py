@@ -1,8 +1,3 @@
-# VisitsSummary.get
-# VisitFrequency.get
-# UserCountry.getRegion
-# DevicesDetection.getType
-
 import random
 
 import pandas as pd

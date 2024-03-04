@@ -281,7 +281,6 @@ class ComponentBaseHook:
         df["date_filter"] = df["date_filter"].apply(lambda date: date.strftime("%d/%m/%Y %H:%M"))
         link_base = self.get_component_link()
 
-        # logging.info("Dataframe columns: %s", df.columns)
         ids = np.char.array(df["root_component_id"].values, unicode=True)
         df = df.assign(link=(link_base + "/" + ids).astype(str))
         logging.info("New Dataframe shape of comments: %s", df.shape)

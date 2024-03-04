@@ -17,17 +17,16 @@
 
   <section id="overview-section" class="fullpage">
    <h1>Visão Geral</h1>
-   <p class="mb">Esses dados gerais são um panorama que abrange a quantidade total de propostas, votos e comentários durante o período requisitado do relatório.</p>
+   <p class="mb">Esses dados gerais dão um panorama que abrange a quantidade total de propostas, votos e comentários durante o período requisitado do relatório.</p>
     {{ macros.create_table_from_dict(data.general_data) }}
     {{ macros.create_image_element(data.daily_graph) }}
   </section>
 
   <section id="user-profile" class="fullpage">
     <h1>Dados de Acesso</h1>
-    <p>Os dados de acessos são referentes à visitação da página. Um indicador da mobilização realizada,
-      mas principalmente sobre o comportamento do usuário padrão na plataforma.
+    <p>Os dados de acesso são referentes à visitação da página, servindo como indicadores da atividade gerada e, principalmente, do comportamento típico do usuário na plataforma.
       Vale observar a taxa de abandono. Isso significa que o usuário acessa a plataforma,
-      mas não realiza qualquer ação na mesma. </p>
+      mas não realiza qualquer ação. </p>
     <h2>Visão Geral</h2>
     {{ macros.create_table_from_list_of_dicts(data.data_access) }}
     {{ macros.create_image_element(data.map_graph) }}
