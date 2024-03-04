@@ -1,116 +1,124 @@
-import smtplib
+import logging
+from contextlib import closing
 from datetime import datetime, timedelta
-from email.mime.application import MIMEApplication
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+from itertools import chain
 from pathlib import Path
 
 from airflow.decorators import dag, task
 
-from plugins.graphql.hooks.graphql_hook import GraphQLHook
-from plugins.reports.participatory_texts import DataFilter
-from plugins.reports.script import create_report_pdf
+from plugins.components.proposals import ProposalsHook
+from plugins.reports.participatory_texts_report import ParticipatoryTextsReport
 
-BP_CONN_ID = "bp_conn"
+BP_CONN_ID = "bp_conn_prod"
+
+
+def _get_participatory_texts_data_faker(component_id: int, start_date: str, end_date: str):
+    return_file = Path(__file__).parent.joinpath("./mock/return_bp_data.txt")
+    with open(return_file) as file:
+        return eval(file.read())
 
 
 def _get_participatory_texts_data(component_id: int, start_date: str, end_date: str):
     query = (
         Path(__file__)
-        .parent.parent.joinpath("./plugins/gql/reports/participatory_texts/get_participatory_texts.gql")
+        .parent.joinpath("./queries/participatory_texts/get_participatory_texts.gql")
         .open()
         .read()
     )
-    query_result = GraphQLHook(BP_CONN_ID).run_graphql_paginated_query(
+    proposals_hook = ProposalsHook(BP_CONN_ID, component_id)
+    query_result = proposals_hook.graphql.run_graphql_paginated_query(
         query, variables={"id": component_id, "start_date": start_date, "end_date": end_date}
     )
 
-    result_participatory_texts_data = []
+    participatory_space = proposals_hook.get_participatory_space()
+    participatory_space_name = participatory_space["title"]["translation"]
 
+    result = {
+        "participatory_space_name": participatory_space_name,
+        "start_date": start_date,
+        "end_date": end_date,
+        "total_comments": 0,
+        "proposals": [],
+    }
     for page in query_result:
-        component = page.get("data", {}).get("component", {})
-        if not component:
-            continue
+        component = page["data"]["component"]
+        proposals = component["proposals"]["nodes"]
 
-        page_component_id = component.get("id")
-        participatory_space_id = component.get("participatorySpace", {}).get("id")
-        participatory_space_type = component.get("participatorySpace", {}).get("type", "").split("::")[-1]
-        page_component_name = component.get("name", {}).get("translation", "-")
-        page_participatory_texts = component.get("proposals", {}).get("nodes", [])
+        for proposal in proposals:
+            comments_df = proposals_hook.get_comments_df(
+                proposal["comments"],
+                proposal["id"],
+                start_date_filter=start_date,
+                end_date_filter=end_date,
+            )
+            total_comments_in_proposal = comments_df.shape[0] if not comments_df.empty else 0
 
-        for proposal in page_participatory_texts:
-            proposal_title = proposal.get("title", {}).get("translation", "-")
-            proposal_official = proposal.get("official")
-            proposal_total_comments = proposal.get("totalCommentsCount")
-            proposal_total_votes = proposal.get("voteCount")
-            texts_comments = proposal.get("comments", [])
+            result["total_comments"] += total_comments_in_proposal
+            unique_authors = [*comments_df["author_id"].unique()] if not comments_df.empty else []
 
-            comments_with_authors = []
-            for comment in texts_comments:
-                comment_body = comment.get("body")
-                comment_votes_up = comment.get("upVotes")
-                comment_votes_down = comment.get("downVotes")
-                author_name = comment.get("author", {}).get("name")
-                comment_date = comment.get("createdAt")
-
-                comments_with_authors.append(
-                    {
-                        "body": comment_body,
-                        "upVotes": comment_votes_up,
-                        "downVotes": comment_votes_down,
-                        "author_name": author_name,
-                        "createdAt": comment_date,
-                    }
-                )
-
-            result_participatory_texts_data.append(
+            result["proposals"].append(
                 {
-                    "page_component_id": page_component_id,
-                    "participatory_space_id": participatory_space_id,
-                    "participatory_space_type": participatory_space_type,
-                    "page_component_name": page_component_name,
-                    "proposal_title": proposal_title,
-                    "proposal_official": proposal_official,
-                    "proposal_total_comments": proposal_total_comments,
-                    "proposal_total_votes": proposal_total_votes,
-                    "comments": comments_with_authors,
+                    "vote_count": proposal["voteCount"],
+                    "total_comments": total_comments_in_proposal,
+                    "title": proposal["title"]["translation"],
+                    "id": proposal["id"],
+                    "qt_unique_authors": len(set(unique_authors)),
+                    "unique_authors": unique_authors,
+                    "comments": (
+                        comments_df[["body", "author_id", "author_name", "date_filter"]].to_dict("records")
+                        if not comments_df.empty
+                        else []
+                    ),
                 }
             )
 
-        return result_participatory_texts_data
+    result["total_unique_participants"] = len(
+        set(
+            chain.from_iterable(
+                [current_proposal["unique_authors"] for current_proposal in result["proposals"]]
+            )
+        )
+    )
 
+    logging.info("Total participants: %s", result["total_unique_participants"])
 
-def apply_filter_data(raw_data):
-    data_filter = DataFilter(raw_data)
-    return data_filter.filter_data()
+    return result
 
 
 def _generate_report(filtered_data):
-    pdf_bytes = create_report_pdf(filtered_data)
-    return {"pdf_bytes": pdf_bytes}
+    report_name = filtered_data["participatory_space_name"]
+    template_path = Path(__file__).parent.joinpath("./templates/template_participatory_texts.html")
+    start_date = datetime.strptime(filtered_data["start_date"], "%Y-%m-%d")
+    end_date = datetime.strptime(filtered_data["end_date"], "%Y-%m-%d")
+
+    report_generator = ParticipatoryTextsReport(report_name, template_path, start_date, end_date)
+
+    return {"pdf_bytes": report_generator.create_report_pdf(report_data=filtered_data)}
 
 
 def send_email_with_pdf(email: str, pdf_bytes: bytes, email_body: str, email_subject: str):
-    smtp_server = "smtp.gmail.com"
-    smtp_port = 587
-    smtp_user = "email"
-    smtp_password = "password"
+    pdf_file = Path(__file__).parent.joinpath("./pdf/pdf_template_participatory_text.pdf")
+    with closing(open(pdf_file, "wb")) as file:
+        file.write(pdf_bytes)
+    # hook = SmtpHook(SMPT_CONN_ID)
+    # hook = hook.get_conn()
+    # body = f"""<p>{email_body}</p>
+    #     <br>
+    #     <p>Data de inicio: {date_start}</p>
+    #     <p>Data final: {date_end}</p>
+    #     <br>
+    #     <p>Relatorio gerado apartir da pagina: {url}</p>"""
 
-    message = MIMEMultipart()
-    message["From"] = smtp_user
-    message["To"] = email
-    message["Subject"] = email_subject
-
-    message.attach(MIMEText(email_body, "plain"))
-
-    pdf_attachment = MIMEApplication(pdf_bytes, _subtype="pdf")
-    pdf_attachment.add_header("Content-Disposition", "attachment", filename="report.pdf")
-    message.attach(pdf_attachment)
-
-    with smtplib.SMTP(smtp_server, smtp_port) as server:
-        server.starttls()
-        server.login(smtp_user, smtp_password)
-        server.send_message(message)
+    # with TemporaryDirectory("wb") as tmpdir:
+    #     tmp_file = Path(tmpdir).joinpath(f"./relatorio_{}_{date_start}-{date_end}.pdf")
+    #     with closing(open(tmp_file, "wb")) as file:
+    #         file.write(pdf_bytes)
+    #     hook.send_email_smtp(
+    #         to=email,
+    #         subject=email_subject,
+    #         html_content=body,
+    #         files=[tmp_file],
+    #     )
 
     print("E-mail enviado com sucesso!")
 
@@ -143,10 +151,6 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
         return _get_participatory_texts_data(component_id, filter_start_date, filter_end_date)
 
     @task
-    def filter_component_data(raw_data):
-        return apply_filter_data(raw_data)
-
-    @task
     def generate_data(filtered_data):
         return _generate_report(filtered_data)
 
@@ -164,9 +168,7 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
 
     component_data = get_component_data(component_id, filter_start_date=start_date, filter_end_date=end_date)
 
-    filtered_data = filter_component_data(component_data)
-
-    report_data = generate_data(filtered_data)
+    report_data = generate_data(component_data)
     # print(report_data)
     send_report_email(
         email=email,

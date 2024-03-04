@@ -1,0 +1,311 @@
+@media print {
+  table {
+    font-size: 8pt; /* Tamanho da fonte reduzido para impressão */
+  }
+
+  th, td {
+    padding: 2px; /* Menor espaço interno para células */
+  }
+
+  .fullpage {
+    padding: 10mm; /* Margens internas reduzidas para impressão */
+  }
+
+  /* Assegura que as tabelas não sejam cortadas ao quebrar entre páginas */
+  tr, td, th {
+    page-break-inside: avoid;
+    
+  }
+
+  table {
+    margin-top: 20mm; /* Espaçamento superior para todas as tabelas */
+  }
+
+  table:first-of-type {
+    margin-top: 0; /* Remove a margem superior para a primeira tabela da seção/documento */
+  }
+}
+.mb{margin-bottom: 1%;}
+
+@font-face {
+  font-family: Rawline;
+  font-weight: bold;
+  src: url(fonts/rawline-800.ttf);
+}
+@font-face {
+  font-family: Rawline;
+  font-weight: normal;
+  src: url(fonts/rawline-400.ttf);
+}
+@font-face {
+  font-family: Rawline;
+  font-weight: bold;
+  font-style: italic;
+  src: url(fonts/rawline-800i.ttf);
+}
+@font-face {
+  font-family: Rawline;
+  font-weight: normal;
+  font-style: italic;
+  src: url(fonts/rawline-400i.ttf);
+}
+
+@page {
+  margin: 5% 0;
+  padding: 0;
+  size: a4;
+  line-height: 150%;
+  content: "Page " counter(page) " of " counter(pages);
+  
+}
+
+@page :left {
+  @bottom-left {
+    content: "Page " counter(page) " of " counter(pages);
+    position: absolute;
+    z-index: 40;
+    margin: 0;
+    padding: 0;
+    left: 0;
+    bottom: 10mm;
+    font-size: 60pt;
+    background-color: red;
+  }
+}
+
+@page :right {
+  @bottom-right {
+    content: "Page " counter(page) " of " counter(pages);
+    position: absolute;
+    z-index: 40;
+    margin: 0;
+    padding: 0;
+    bottom: 10mm;
+    font-size: 60pt;
+    background-color: blue;
+  }
+}
+
+@page full {
+  margin: 0;
+  padding: 0;
+
+  @bottom-right {
+    content: none;
+  }
+
+  @bottom-left {
+    content: none;
+  }
+
+  background: white;
+  margin: 0;
+}
+
+@page :blank {
+  @bottom-right {
+    content: none;
+  }
+
+  @bottom-left {
+    content: none;
+  }
+}
+
+@page clean {
+  @bottom-right {
+    content: none;
+  }
+
+  @bottom-left {
+    content: none;
+  }
+}
+
+html {
+  counter-reset: h2-counter;
+  font-family: Rawline;
+  font-size: 10pt;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  color: #ff580a;
+  margin: 0 0 8mm 0;
+  font-size: 26pt;
+}
+
+h2 {
+  color: #1351b4;
+  margin: 4mm 0 2mm 0;
+}
+
+p, ul, li, a, section, div, span {
+  margin: 0;
+  padding: 0;
+}
+
+.fullpage {
+  page: full;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  margin: 0;
+  padding: 30mm 30mm 26mm 30mm;
+  width: 150mm;
+  height: 241mm;
+  overflow: auto;
+  background-image: url("./imgs/bp-background.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.cover-content {
+  text-align: center;
+  margin-top: 80mm;
+  color: black;
+}
+.cover-content h1 {
+  font-size: 40pt;
+  font-weight: 800;
+}
+.center{
+  text-align: center;
+  width: 100%;
+  background-color: red;
+}
+.cover-content .bp-title {
+  font-size: 36pt;
+  font-weight: 400;
+  text-align: center;
+  color: #636363;
+  margin: 10mm 0;
+  padding: 0;
+}
+
+.cover-content .document-date {
+  font-size: 32pt;
+  font-weight: 400;
+  font-style: italic;
+  color: #636363;
+  margin: 0;
+  text-align: center;
+  padding: 0;
+}
+
+#contents {
+  page: clean;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+thead,
+th {
+  color: white;
+  font-weight: 800;
+  background-color: #1351b4;
+}
+th,
+td {
+  border: 1px solid black;
+  padding: 8px;
+  text-align: center;
+}
+
+img {
+  width: 180mm;
+  height: 120mm;
+  margin: 0 auto auto -15mm;
+}
+
+.highlight-first-column td:first-child {
+  color: white;
+  background-color: #1351b4;
+}
+
+.highlight-row {
+  font-weight: 800;
+  background-color: var(--blue-warm-vivid-70);
+}
+
+.centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.image-label {
+  text-align: center;
+  font-size: 8pt;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 10pt;
+}
+
+.italic {
+  font-weight: 400;
+  font-style: italic;
+}
+
+.image-container {
+  margin: 4mm 0;
+  width: 140mm;
+  height: 400px;
+}
+
+p{text-align: justify;}
+
+.flex{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.large-table-element:first-child{
+  width:140mm;
+  margin-top: 0;
+  align-items: center;
+  justify-content: center;
+  page-break-after: always;
+
+}
+.large-table-element{
+  width:140mm;
+  margin-top: 20%;
+  align-items: center;
+  justify-content: center;
+  page-break-after: always;
+
+}
+.second-large-table-element:first-child{
+  width:140mm;
+  margin-top: 0;
+  align-items: center;
+  justify-content: center;
+  page-break-after: always;
+
+}
+.second-large-table-element{
+  width:140mm;
+  margin-top: 20%;
+  align-items: center;
+  justify-content: center;
+  page-break-after: always;
+
+}
+.mbn{
+  margin-bottom: -19%;
+}

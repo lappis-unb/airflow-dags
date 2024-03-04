@@ -2,16 +2,15 @@ import logging
 from contextlib import closing
 from datetime import datetime, timedelta
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
+import pandas as pd
 import requests
 from airflow.decorators import dag, task
 from airflow.hooks.base import BaseHook
-from airflow.providers.smtp.hooks.smtp import SmtpHook
 
 from plugins.components.base_component.component import ComponentBaseHook
-from plugins.graphql.hooks.graphql_hook import GraphQLHook
-from plugins.reports.main import create_report_pdf
+from plugins.faker.matomo_faker import MatomoFaker
+from plugins.reports.proposals_report import ProposalsReport
 
 BP_CONN_ID = "bp_conn_prod"
 SMPT_CONN_ID = "gmail_smtp"
@@ -24,58 +23,78 @@ def _get_components_url(component_id: int):
 
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     query = (
-        Path(__file__)
-        .parent.parent.joinpath("./plugins/gql/reports/components/get_proposals_by_component_id.gql")
-        .open()
-        .read()
+        Path(__file__).parent.joinpath("./queries/proposals/get_proposals_by_component_id.gql").open().read()
     )
-    query_result = GraphQLHook(BP_CONN_ID).run_graphql_paginated_query(
-        query, variables={"id": component_id, "start_date": start_date, "end_date": end_date}
-    )
+    logging.info(query)
 
-    result_proposals_data = []
-    for page in query_result:
-        component = page.get("data", {}).get("component", {})
-        if not component:
-            continue
+    # <---------- REMOVER ---------->
+    # precisa ser removido e substituido pela chamada do hook comentado logo a baixo
 
-        page_component_id = component.get("id")
-        participatory_space_id = component.get("participatorySpace", {}).get("id")
-        participatory_space_type = component.get("participatorySpace", {}).get("type", "").split("::")[-1]
-        page_component_name = component.get("name", {}).get("translation", "-")
-        page_proposals = component.get("proposals", {}).get("nodes", [])
+    return_file = Path(__file__).parent.joinpath("./mock/return_bp_data.txt")
+    with open(return_file) as file:
+        return eval(file.read())
+    # <---------- REMOVER ---------->
 
-        for proposal in page_proposals:
-            proposal_id = proposal.get("id")
-            proposal_title = proposal.get("title", {}).get("translation", "-")
-            proposal_published_at = proposal.get("publishedAt")
-            proposal_updated_at = proposal.get("updatedAt")
-            proposal_state = proposal.get("state")
-            proposal_total_comments = proposal.get("totalCommentsCount")
-            proposal_total_votes = proposal.get("voteCount")
-            proposal_category_title = (
-                proposal.get("category", {}).get("name", {}).get("translation", "-")
-                if proposal.get("category")
-                else "-"
-            )
 
-            result_proposals_data.append(
-                {
-                    "page_component_id": page_component_id,
-                    "participatory_space_id": participatory_space_id,
-                    "participatory_space_type": participatory_space_type,
-                    "page_component_name": page_component_name,
-                    "proposal_id": proposal_id,
-                    "proposal_title": proposal_title,
-                    "proposal_published_at": proposal_published_at,
-                    "proposal_updated_at": proposal_updated_at,
-                    "proposal_state": proposal_state,
-                    "proposal_total_comments": proposal_total_comments,
-                    "proposal_total_votes": proposal_total_votes,
-                    "proposal_category_title": proposal_category_title,
-                }
-            )
-    return result_proposals_data
+# <---------- descomentar essa parte ---------->
+# query_result = GraphQLHook(BP_CONN_ID).run_graphql_paginated_query(
+#     query, variables={"id": component_id, "start_date": start_date, "end_date": end_date}
+# )
+
+# result_proposals_data = []
+# for page in query_result:
+#     component = page.get("data", {}).get("component", {})
+#     if not component:
+#         continue
+
+#     page_component_id = component.get("id")
+#     participatory_space_id = component.get("participatorySpace", {}).get("id")
+#     participatory_space_type = component.get("participatorySpace", {}).get("type", "").split("::")[-1]
+#     page_component_name = component.get("name", {}).get("translation", "-")
+#     page_proposals = component.get("proposals", {}).get("nodes", [])
+
+#     for proposal in page_proposals:
+#         proposal_id = proposal.get("id")
+#         proposal_title = proposal.get("title", {}).get("translation", "-")
+#         proposal_published_at = proposal.get("publishedAt")
+#         proposal_updated_at = proposal.get("updatedAt")
+#         proposal_state = proposal.get("state")
+#         proposal_total_comments = proposal.get("totalCommentsCount")
+#         proposal_total_votes = proposal.get("voteCount")
+#         proposal_category_title = (
+#             proposal.get("category", {}).get("name", {}).get("translation", "-")
+#             if proposal.get("category")
+#             else "-"
+#         )
+
+#         result_proposals_data.append(
+#             {
+#                 "page_component_id": page_component_id,
+#                 "participatory_space_id": participatory_space_id,
+#                 "participatory_space_type": participatory_space_type,
+#                 "page_component_name": page_component_name,
+#                 "proposal_id": proposal_id,
+#                 "proposal_title": proposal_title,
+#                 "proposal_published_at": proposal_published_at,
+#                 "proposal_updated_at": proposal_updated_at,
+#                 "proposal_state": proposal_state,
+#                 "proposal_total_comments": proposal_total_comments,
+#                 "proposal_total_votes": proposal_total_votes,
+#                 "proposal_category_title": proposal_category_title,
+#             }
+#         )
+# return result_proposals_data
+# _____________________________________________________________
+
+
+def _get_matomo_data_faker(url: list, start_date: str, end_date: str, module: str, method: str):
+    lookup_table = {
+        "VisitsSummary.get": MatomoFaker.VisitsSummary.get,
+        "VisitFrequency.get": MatomoFaker.VisitFrequency.get,
+        "UserCountry.getRegion": MatomoFaker.UserCountry.get_region,
+        "DevicesDetection.getType": MatomoFaker.DeviceDetection.get_type,
+    }
+    return lookup_table[f"{module}.{method}"]()
 
 
 def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, method: str):
@@ -107,7 +126,20 @@ def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, met
 
 
 def _generate_report(bp_data, visits_summary, visits_frequency, user_country, devices_detection):
-    pdf_bytes = create_report_pdf(bp_data, visits_summary, visits_frequency, user_country, devices_detection)
+    #! TODO: Recuperar as informacoes de nome, datas pela api do bp
+    report_title = bp_data[0]["page_component_name"]
+
+    template_path = Path(__file__).parent.joinpath("./templates/template_proposals.html")
+    report_generator = ProposalsReport(
+        report_title, template_path, datetime(2023, 1, 1), datetime(2024, 1, 1)
+    )
+    pdf_bytes = report_generator.create_report_pdf(
+        bp_df=pd.DataFrame(bp_data),
+        matomo_visits_summary_csv=visits_summary,
+        matomo_visits_frequency_csv=visits_frequency,
+        matomo_user_country_csv=user_country,
+        matomo_devices_detection_csv=devices_detection,
+    )
 
     return {"pdf_bytes": pdf_bytes}
 
@@ -121,26 +153,34 @@ def send_email_with_pdf(
     date_end: str,
     url: str,
 ):
-    hook = SmtpHook(SMPT_CONN_ID)
-    hook = hook.get_conn()
-    body = f"""<p>{email_body}</p>
-        <br>
-        <p>Data de inicio: {date_start}</p>
-        <p>Data final: {date_end}</p>
-        <br>
-        <p>Relatorio gerado apartir da pagina: {url}</p>"""
+    # OBS: fizemos alterações nesse código para facilitar o desenvolvimento.
+    #  essa parte precisa ser comentada e alterada para o hook de email do airflow.
+    pdf_file = Path(__file__).parent.joinpath("./pdf/pdf_template.pdf")
+    with closing(open(pdf_file, "wb")) as file:
+        file.write(pdf_bytes)
+    # essa parte precisa ser descomentada para funcionar corretamente
 
-    with TemporaryDirectory("wb") as tmpdir:
-        tmp_file = Path(tmpdir).joinpath(f"./relatorio_propostas_{date_start}-{date_end}.pdf")
-        with closing(open(tmp_file, "wb")) as file:
-            file.write(pdf_bytes)
-        hook.send_email_smtp(
-            to=email,
-            subject=email_subject,
-            html_content=body,
-            files=[tmp_file],
-        )
+    # hook = SmtpHook(SMPT_CONN_ID)
+    # hook = hook.get_conn()
+    # body = f"""<p>{email_body}</p>
+    #     <br>
+    #     <p>Data de inicio: {date_start}</p>
+    #     <p>Data final: {date_end}</p>
+    #     <br>
+    #     <p>Relatorio gerado apartir da pagina: {url}</p>"""
 
+    # with TemporaryDirectory("wb") as tmpdir:
+    #     tmp_file = Path(tmpdir).joinpath(f"./relatorio_propostas_{date_start}-{date_end}.pdf")
+    #     with closing(open(tmp_file, "wb")) as file:
+    #         file.write(pdf_bytes)
+    #     hook.send_email_smtp(
+    #         to=email,
+    #         subject=email_subject,
+    #         html_content=body,
+    #         files=[tmp_file],
+    #     )
+
+    # _____________________________________________________________
     logging.info("E-mail enviado com sucesso!")
 
 
@@ -182,7 +222,7 @@ def generate_report_proposals(email: str, start_date: str, end_date: str, compon
         def matomo_extractor(
             url: str, filter_start_date: str, filter_end_date: str, module: str, method: str
         ):
-            return _get_matomo_data(
+            return _get_matomo_data_faker(
                 url=url, start_date=filter_start_date, end_date=filter_end_date, module=module, method=method
             )
 

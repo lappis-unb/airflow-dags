@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <meta charset="utf-8" />
+  <meta name="bp-report" content="Relatório de dados" />
+  <title>Relatório de dados</title>
+
+  {% import "./jinja/macros.html" as macros %}
+
+
+  <section class="fullpage">
+    <div class="cover-content">
+      <h1>{{ data.document.title }}</h1>
+        <p class="bp-title">Brasil Participativo</p>
+        <p class="document-date">({{ data.document.date }})</p>
+    </div>
+  </section>
+
+  <section id="overview-section" class="fullpage">
+   <h1>Visão Geral</h1>
+   <p class="mb">Esses dados gerais dão um panorama que abrange a quantidade total de propostas, votos e comentários durante o período requisitado do relatório.</p>
+    {{ macros.create_table_from_dict(data.general_data) }}
+    {{ macros.create_image_element(data.daily_graph) }}
+  </section>
+
+  <section id="user-profile" class="fullpage">
+    <h1>Dados de Acesso</h1>
+    <p>Os dados de acesso são referentes à visitação da página, servindo como indicadores da atividade gerada e, principalmente, do comportamento típico do usuário na plataforma.
+      Vale observar a taxa de abandono. Isso significa que o usuário acessa a plataforma,
+      mas não realiza qualquer ação. </p>
+    <h2>Visão Geral</h2>
+    {{ macros.create_table_from_list_of_dicts(data.data_access) }}
+    {{ macros.create_image_element(data.map_graph) }}
+  </section>
+
+  <section id="user-profile" class="fullpage">
+    {{ macros.create_image_element(data.device_graph) }}
+  </section>
+
+
+  {{ macros.print_large_table(data.rank_temas, "Ranking dos Programas", 
+  "Os temas com o maior número de propostas são:",'large-table-element') }}
+   
+
+  {{ macros.print_large_table(data.top_proposals_filtered, 
+    "TOP 20 Propostas Mais Votadas no Geral", 
+    "As top 20 propostas mais votadas evidenciam as propostas com maior 
+    mobilização e maior interesse do participante. Vale observar também o 
+    número de comentários por propostas.",'second-large-table-element') }}
+</html>
