@@ -152,6 +152,10 @@ p, ul, li, a, section, div, span {
   padding: 0;
 }
 
+p, ul li {
+  text-indent: 25px; /* Aplica indentação apenas na primeira linha de parágrafos e itens de lista */
+}
+
 .fullpage {
   page: full;
   top: 0;

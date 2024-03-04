@@ -1,4 +1,3 @@
-
 import pandas as pd
 import plotly.express as px
 
@@ -60,7 +59,7 @@ class BrasilParticipativoGraphs(ReportGraphs):
             .agg(
                 proposals=("proposals_ids", "count"),
                 total_comments=("total_comments_per_proposal", "sum"),
-                total_votes=("votes_per_proposal", "sum")
+                total_votes=("votes_per_proposal", "sum"),
             )
             .reset_index()
         )
@@ -68,21 +67,27 @@ class BrasilParticipativoGraphs(ReportGraphs):
         fig = px.line()
 
         fig.add_scatter(
-            x=daily_data["date"], y=daily_data["proposals"],
-            mode="lines+markers", name="Propostas",
-            marker=dict(size=8)
+            x=daily_data["date"],
+            y=daily_data["proposals"],
+            mode="lines+markers",
+            name="Propostas",
+            marker=dict(size=8),
         )
 
         fig.add_scatter(
-            x=daily_data["date"], y=daily_data["total_comments"],
-            mode="lines+markers", name="Comentários por Propostas",
-            marker=dict(size=8)
+            x=daily_data["date"],
+            y=daily_data["total_comments"],
+            mode="lines+markers",
+            name="Comentários por Propostas",
+            marker=dict(size=8),
         )
 
         fig.add_scatter(
-            x=daily_data["date"], y=daily_data["total_votes"],
-            mode="lines+markers", name="Votos por Propostas",
-            marker=dict(size=8)
+            x=daily_data["date"],
+            y=daily_data["total_votes"],
+            mode="lines+markers",
+            name="Votos por Propostas",
+            marker=dict(size=8),
         )
 
         fig.update_layout(
@@ -97,14 +102,14 @@ class BrasilParticipativoGraphs(ReportGraphs):
 
     def generate_state_distribution_donut(self, df: pd.DataFrame, width: int = 704, height: int = 480):
         state_counts = df["proposal_state"].value_counts().reset_index()
-        state_counts.columns = ['Estado', 'Quantidade']
+        state_counts.columns = ["Estado", "Quantidade"]
+
+        state_rename = {"accepted": "Aceita", "withdrawn": "Retirada", "rejected": "Rejeitada"}
+
+        state_counts["Estado"] = state_counts["Estado"].map(state_rename)
 
         fig = px.pie(
-            state_counts,
-            names='Estado',
-            values='Quantidade',
-            hole=0.3,
-            title='Distribuição de Estados das Propostas'
+            state_counts, names="Estado", values="Quantidade", hole=0.3, title="Situação das Propostas"
         )
 
         return self.b64_encode_graph(fig)

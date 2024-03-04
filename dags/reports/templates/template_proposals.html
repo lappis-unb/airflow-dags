@@ -18,7 +18,7 @@
     <h1>Índice</h1>
     <ul>
       <li><a href="#introduction-section">Introdução</a></li>
-      <li><a href="#overview-section">Visão Geral</a></li>
+      <li><a href="#overview-section">Propostas</a></li>
       <li><a href="#programs-ranking">Temas</a></li>
       <li><a href="#proposals-ranking">Top 20 Propostas</a></li>
       <li><a href="#user-profile">Acessos</a></li>
@@ -31,7 +31,7 @@
       destacando os resultados da consulta e do perfil dos participantes.
       O objetivo é fornecer orientações para os organizadores do processo de consulta, auxiliando-os no desenvolvimento de estratégias de mobilização e
       na compreensão dos indicadores importantes para a sua condução.</p>
-    <p class="mb">Ao todo, foram recebidas xx propostas que somam xx comentários e xx votos e a região xx, até o momento, possui o maior número de acessos.
+    <p class="mb">Ao todo, foram recebidas {{ data.introduction.num_proposals }} propostas que somam {{ data.introduction.total_comments }} comentários e {{ data.introduction.total_votes }} votos.
     </p>
   </section>
 
@@ -41,7 +41,7 @@
      de contribuições, seus votos e comentários, além de dados sobre a distribuição de participação no território e as devolutivas ao cidadão.
     </p>
     {{ macros.create_table_from_dict(data.general_data) }}
-  <p>O gráfico abaixo mostra o comportamento da quantidade total de Propostas, Votos e comentários do dia 31/08 até 31/10. Aqui, o organizador
+  <p>O gráfico abaixo mostra o comportamento da quantidade total de Propostas, Votos e comentários no período de {{ data.document.date }}. Aqui, o organizador
     poderá analisar os dias em que mais houve recebimento de propostas, votos e comentários e verificar se algum evento específico motivou o aumento
     das variáveis (publicação de notícia no site, post nas redes sociais, por exemplo).
   </p>
@@ -73,15 +73,16 @@
       quantidade de acessos, a distribuição no território e os dispositivos mais utilizados
     </p>
     <p>Os dados de acesso são referentes à visitação da página da conferência. Um indicador da mobilização realizada, mas principalmente sobre o comportamento
-      do usuário padrão na plataforma (quanto tempo permanecem no contexto da conferência digital). Além disso, será possível analisar a taxa de abandono que
-      é quando o usuário acessa a plataforma, mas não realiza qualquer ação na mesma. Essas métricas auxiliam os organizadores da conferência a verificar se
+      do usuário padrão na plataforma. Além disso, será possível analisar a taxa de abandono que
+      é quando o usuário acessa a plataforma, mas não realiza qualquer ação na mesma. Essas métricas auxiliam os organizadores a verificar se
       a quantidade de acesso na plataforma está de acordo com o previsto. Essas métricas também guiam a revisita das estratégias de mobilização e de
       comunicação na plataforma.
     </p>
     <h2>Dados de Acesso</h2>
     {{ macros.create_table_from_list_of_dicts(data.data_access) }}
     <h2>Mapa com a Qtd de visitas por UF</h2>
-    <p>Esse mapa explica a quantidade de acessos por Unidade Federativa do Brasil, durante o período do dia 31/08 até 11/10. Com a análise do mapa, o organizador poderá pensar estratégias para aumentar a mobilização em determinado estado.
+    <p>Esse mapa explica a quantidade de acessos por Unidade Federativa do Brasil, no período de {{ data.document.date }}. Com a análise do mapa,
+      o organizador poderá pensar estratégias para aumentar a mobilização em determinado estado.
     </p>
     {{ macros.create_image_element(data.map_graph) }}
   </section>
@@ -89,7 +90,9 @@
   <section id="user-profile" class="fullpage">
     <h2>Dispositivos</h2>
     <p>
-      Neste capítulo, exploramos os dados relativos às visitas a um determinado site, analisando o tráfego por diferentes tipos de dispositivos. Ao investigar a distribuição de visitantes em relação aos dispositivos utilizados, podemos identificar tendências e preferências de acesso que podem ser valiosas para a tomada de decisões estratégicas.
+      Neste capítulo, exploramos os dados relativos às visitas a um determinado site, analisando o tráfego por diferentes tipos de dispositivos.
+      Ao investigar a distribuição de visitantes em relação aos dispositivos utilizados, podemos identificar tendências e preferências de acesso
+      que podem ser valiosas para a tomada de decisões estratégicas.
     </p>
     {{ macros.create_image_element(data.device_graph) }}
   </section>

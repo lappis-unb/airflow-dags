@@ -17,6 +17,10 @@ class ProposalsReport(Report):
         matomo_user_country_csv: str,
         matomo_devices_detection_csv: str,
     ):
+        general_data = BrasilParticipativoTables.generate_table_proposals_overview(
+            votes_per_proposal=bp_df["proposal_total_votes"],
+            total_comments_per_proposal=bp_df["proposal_total_comments"],
+        )
 
         return self.template.render(
             data={
@@ -24,6 +28,11 @@ class ProposalsReport(Report):
                     "component": self.report_name,
                     "title": f"Relatório {self.report_name}",
                     "date": f"{self.start_date} até {self.end_date}",
+                },
+                "introduction": {
+                    "num_proposals": general_data["Propostas"],
+                    "total_votes": general_data["Votos"],
+                    "total_comments": general_data["Comentários"],
                 },
                 "general_data": BrasilParticipativoTables.generate_table_proposals_overview(
                     votes_per_proposal=bp_df["proposal_total_votes"],
