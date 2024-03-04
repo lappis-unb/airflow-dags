@@ -24,9 +24,9 @@ class MatomoGraphs(ReportGraphs):
             matomo_data_sorted,
             names="label",
             values="nb_visits",
-            title="Top 3 Categories by Visits",
+            title="Top 3 Dispositivos mais Utilizados",
             hole=0.3,
-            labels={"label": "Category", "nb_visits": "Number of Visits"},
+            labels={"label": "Dispositivos", "nb_visits": "Numero de Visitas"},
             # template="plotly_dark",  # You can change the template as needed
         )
         return self.b64_encode_graph(fig)
