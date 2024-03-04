@@ -1,0 +1,10 @@
+query ComponentsInParticipatoryProcess {
+  participatoryProcesses {
+    ... on ParticipatoryProcess {
+      components {
+        id
+        __typename
+      }
+    }
+  }
+}

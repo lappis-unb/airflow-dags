@@ -1,0 +1,10 @@
+query ComponentsInAssembly {
+  assemblies {
+    ... on Assembly {
+      components {
+        id
+        __typename
+      }
+    }
+  }
+}

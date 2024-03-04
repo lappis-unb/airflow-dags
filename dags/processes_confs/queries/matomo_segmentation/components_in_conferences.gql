@@ -1,0 +1,10 @@
+query ComponentsInConferences {
+  conferences {
+    ... on Conference {
+      components {
+        id
+        __typename
+      }
+    }
+  }
+}
