@@ -15,12 +15,33 @@
     </div>
   </section>
 
+  <section class="fullpage">
+    <h1>Índice</h1>
+    <ul>
+      <li><a href="#overview-section">Visão Geral</a></li>
+      <li><a href="#programs-ranking">Ranking dos Programas</a></li>
+      <li><a href="#proposals-ranking">TOP 20 Propostas Mais Votadas no Geral</a></li>
+      <li><a href="#user-profile">Dados de Acesso</a></li>
+    </ul>
+  </section>
+
+
   <section id="overview-section" class="fullpage">
    <h1>Visão Geral</h1>
    <p class="mb">Esses dados gerais dão um panorama que abrange a quantidade total de propostas, votos e comentários durante o período requisitado do relatório.</p>
     {{ macros.create_table_from_dict(data.general_data) }}
     {{ macros.create_image_element(data.daily_graph) }}
   </section>
+
+  {{ macros.print_large_table(data.rank_temas, "Ranking dos Programas",
+  "Os temas com o maior número de propostas são:",'large-table-element') }}
+
+  {{ macros.print_large_table(data.top_proposals_filtered,
+    "TOP 20 Propostas Mais Votadas no Geral",
+    "As top 20 propostas mais votadas evidenciam as propostas com maior
+    mobilização e maior interesse do participante. Vale observar também o
+    número de comentários por propostas.",'second-large-table-element') }}
+
 
   <section id="user-profile" class="fullpage">
     <h1>Dados de Acesso</h1>
@@ -37,13 +58,5 @@
   </section>
 
 
-  {{ macros.print_large_table(data.rank_temas, "Ranking dos Programas", 
-  "Os temas com o maior número de propostas são:",'large-table-element') }}
-   
 
-  {{ macros.print_large_table(data.top_proposals_filtered, 
-    "TOP 20 Propostas Mais Votadas no Geral", 
-    "As top 20 propostas mais votadas evidenciam as propostas com maior 
-    mobilização e maior interesse do participante. Vale observar também o 
-    número de comentários por propostas.",'second-large-table-element') }}
 </html>
