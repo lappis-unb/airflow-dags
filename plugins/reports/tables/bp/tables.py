@@ -120,3 +120,40 @@ class BrasilParticipativoTables:
         )
         print(len(df_ranking.to_dict("records")))
         return df_ranking.to_dict("records")
+
+    @classmethod    
+    def generate_participatory_texts_proposals(
+        cls,
+        proposals_ids: list,
+        proposals_titles: list[str],
+        votes_per_proposal: list[int],
+        total_comments_per_proposal: list[int],
+    ):
+        assert all(
+            len(lst) == len(proposals_ids)
+            for lst in [
+                proposals_titles,
+                votes_per_proposal,
+                total_comments_per_proposal,
+            ]
+        )
+
+        df = pd.DataFrame(
+            data={
+                "proposals_ids": proposals_ids,
+                "proposals_titles": proposals_titles,
+                "votes_per_proposal": votes_per_proposal,
+                "total_comments_per_proposal": total_comments_per_proposal,
+            },
+            index=range(len(proposals_ids)),
+        )
+        df_ranking = df.sort_values(by="votes_per_proposal", ascending=False).head()
+
+        df_ranking = df_ranking.rename(
+            columns={
+                "proposals_titles": "Dispositivo",
+                "proposals_ids": "ID",                
+                "votes_per_proposal": "N de comentários",
+                "total_comments_per_proposal": "N de votos",
+            }
+        )
