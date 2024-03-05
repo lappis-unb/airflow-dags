@@ -146,12 +146,15 @@ def send_email_with_pdf(
 )
 def generate_report_participatory_texts(email: str, start_date: str, end_date: str, component_id: int):
     """
-    Gera um relatorio para o BP.
 
-    1. Pegar todos os componentes do espaço participativo.
-        1. Fazer a query para o BP com as datas passadas.
-    2. Fazer a requisição para o matomo com as datas passadas.
-    3. Gerar o relatorio.
+    Generates a report.
+
+    Parameters:
+    ----------
+        email(str): email to send a report
+        start_date(str): initial date
+        end_date(str): final date
+        component_id(int): number of component id
     """
 
     @task

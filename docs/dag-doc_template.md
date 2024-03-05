@@ -22,14 +22,14 @@ Descrição da DAG, seus objetivos e escopo.
 Antes de executar a DAG, certifique-se de configurar corretamente os seguintes parâmetros:
 
 1. **Configuração de ambiente:** Subir o airflow e minIO.
-    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+    - **Passo 1:** Rodar o docker do repositório [airflow-docker](https://gitlab.com/lappis-unb/decidimbr/airflow-docker)
         - **airflow** O airflow se encontra no: <http://localhost:8080>
 
 2. **Rodar as tarefas:** Testando a dag.
-    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+    - **Passo 1:** Rodar o docker do repositório [airflow-docker](https://gitlab.com/lappis-unb/decidimbr/airflow-docker)
         - **airflow** O airflow se encontra no: <http://localhost:8080>
 
-    - **Passo 2:** Para rodar via terminal entre no container docker: ´docker exec -ti airflow-envs-airflow-webserver-1 bash´
+    - **Passo 2:** Para rodar via terminal entre no container docker: ´docker exec -ti airflow-docker-airflow-webserver-1 bash´
 
     - **Passo 3:** Para rodar a Dag: ´airflow dags test <nome_da_dag>´
 
@@ -46,6 +46,8 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Dependências:** Nenhuma.
 - **Task inicial:** Sim ou Não
 - **Task final:** Sim ou Não
+
+---
 
 - **Nome:** task_b
 - **Descrição:** Descrição da tarefa.

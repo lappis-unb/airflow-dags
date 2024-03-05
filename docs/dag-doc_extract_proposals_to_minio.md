@@ -22,7 +22,7 @@ Esta Dag faz uma busca na api do decidim para pegar dados referentes as proposta
 Antes de executar a DAG, certifique-se de configurar corretamente os seguintes parâmetros:
 
 1. **Configuração de ambiente:** Subir o airflow e minIO.
-    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-docker)
         - **airflow** O airflow se encontra no: <http://localhost:8080>
         - **MinIO** O MinIO se encontra no: <http://localhost:9001>
 
@@ -41,11 +41,11 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
     - **Passo 3:** Abrir o MinIO e criar um bucket com o mesmo nome do schema (daily-csv)
 
 3. **Rodar as tarefas:** Testando a dag.
-    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+    - **Passo 1:** Rodar o docker do repositório [airflow-docker](https://gitlab.com/lappis-unb/decidimbr/airflow-docker)
         - **airflow** O airflow se encontra no: <http://localhost:8080>
         - **MinIO** O MinIO se encontra no: <http://localhost:9001>
 
-    - **Passo 2:** Para rodar via terminal entre no container docker: ´docker exec -ti airflow-envs-airflow-webserver-1 bash´
+    - **Passo 2:** Para rodar via terminal entre no container docker: ´docker exec -ti airflow-docker-airflow-webserver-1 bash´
 
     - **Passo 3:** Para rodar a Dag: ´airflow dags test decidim_data_extraction´
 
@@ -59,11 +59,15 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task inicial:** Sim
 - **Task final:** Não
 
+---
+
 - **Nome:** get_proposals
 - **Descrição:** Faz requisição de propostas na API do decidim, trata esses dados e salva no MinIO
 - **Dependências:** get_propolsas_components_ids e ProposalsHook
 - **Task inicial:** Não
 - **Task final:** Sim
+
+---
 
 - **Nome:** get_proposals_commments
 - **Descrição:** Faz requisição de comentários de propostas na API do decidim, trata esses dados e salva no MinIO

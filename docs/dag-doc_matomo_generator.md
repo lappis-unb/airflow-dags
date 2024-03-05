@@ -17,6 +17,8 @@ DAG responsável por buscar dados analíticos de uma instância do Matomo e salv
 - **Versão:** 1.0
 - **Data de Criação:** 04/08/2023
 
+---
+
 - **Nome da DAG:** matomo_data_ingestion
 - **Descrição:** DAG para ingerir dados do MinIO no banco de dados PostgreSQL
 - **Agendamento:** todos os dias às 07h
@@ -29,7 +31,7 @@ DAG responsável por buscar dados analíticos de uma instância do Matomo e salv
 Antes de executar a DAG, certifique-se de configurar corretamente os seguintes parâmetros:
 
 1. **Configuração de ambiente:** Subir o airflow e minIO.
-    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-docker)
         - **airflow** O airflow se encontra no: <http://localhost:8080>
         - **MinIO** O MinIO se encontra no: <http://localhost:9001>
 
@@ -60,11 +62,11 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
     - **Passo 4:** Abrir o MinIO e criar um bucket com o mesmo nome do schema (matomo-daily-csv)
 
 3. **Rodar as tarefas:** Testando a dag.
-    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+    - **Passo 1:** Rodar o docker do repositório [airflow-docker](https://gitlab.com/lappis-unb/decidimbr/airflow-docker)
         - **airflow** O airflow se encontra no: <http://localhost:8080>
         - **MinIO** O MinIO se encontra no: <http://localhost:9001>
 
-    - **Passo 2:** Para rodar via terminal entre no container docker: ´docker exec -ti airflow-envs-airflow-webserver-1 bash´
+    - **Passo 2:** Para rodar via terminal entre no container docker: ´docker exec -ti airflow-docker-airflow-webserver-1 bash´
 
     - **Passo 3:** Para rodar a Dag: ´airflow dags test generate_extraction_dag´
 
@@ -78,6 +80,8 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task inicial:** Não
 - **Task final:** Não
 
+---
+
 - **Nome:** ingest_data
 - **Descrição:** Faz ingestão dos dados do MinIO no PostgreSQL
 - **Dependências:** _ingest_into_postgres
@@ -90,10 +94,14 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Descrição:** Faz o login no MinIO
 - **Dependências:** BaseHook
 
+---
+
 - **Nome:** _generate_s3_filename
 - **Descrição:** Retorna o nome do CSV
 - **Parâmetros:** modulo, método, data de execução
 - **Dependências:** Nenhuma
+
+---
 
 - **Nome:** add_temporal_columns
 - **Descrição:** Adiciona colunas temporais ao DataFrame com base na data de execução

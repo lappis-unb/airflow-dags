@@ -21,7 +21,7 @@ DAG que envia uma mensagem via telegram para avisar que novos comentários foram
 Antes de executar a DAG, certifique-se de configurar corretamente os seguintes parâmetros:
 
 1. **Configuração de ambiente:** Subir o projeto.
-    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-docker)
         - **airflow** O airflow se encontra no: <http://localhost:8080>
 
 2. **Configuração do Airflow:**
@@ -41,10 +41,10 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
         - **configurações do chatbot:** para encontrar as configurações do chatbot acesse: ´<https://api.telegram.org/bot(TOKEN)/getUpdates´>
 
 3. **Rodar as tarefas:** Testando a dag.
-    - **Passo 1:** Rodar o docker do repositório [airflow-environments](https://gitlab.com/lappis-unb/decidimbr/airflow-envs)
+    - **Passo 1:** Rodar o docker do repositório [airflow-docker](https://gitlab.com/lappis-unb/decidimbr/airflow-docker)
         - **airflow** O airflow se encontra no: <http://localhost:8080>
 
-    - **Passo 2:** Para rodar via terminal entre no container docker: ´docker exec -ti airflow-envs-airflow-webserver-1 bash´
+    - **Passo 2:** Para rodar via terminal entre no container docker: ´docker exec -ti airflow-docker-airflow-webserver-1 bash´
 
     - **Passo 3:** Para rodar a Dag: ´airflow dags test <nome_da_dag>´
 
@@ -58,11 +58,15 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task inicial:** Sim
 - **Task final:** Não
 
+---
+
 - **Nome:** get_comments
 - **Descrição:** Faz requisição de comentários na API do decidim
 - **Dependências:** update_date
 - **Task inicial:** Não
 - **Task final:** Não
+
+---
 
 - **Nome:** mount_telegram_messages
 - **Descrição:** Seleciona comentários novos e cria uma mensagem para ser enviada via telegram
@@ -70,17 +74,23 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
 - **Task inicial:** Não
 - **Task final:** Não
 
+---
+
 - **Nome:** check_if_new_comments
 - **Descrição:** Escolhe o fluxo de tarefas caso tenha ou não novas mensagens
 - **Dependências:** mount_telegram_messages
 - **Task inicial:** Não
 - **Task final:** Não
 
+---
+
 - **Nome:** send_telegram_messages
 - **Descrição:** Envia a mensagem para o telegram
 - **Dependências:** mount_telegram_messages, check_if_new_comments
 - **Task inicial:** Não
 - **Task final:** Não
+
+---
 
 - **Nome:** save_update_date
 - **Descrição:** Adiciona a data de atualização do último comentário na variável geral
