@@ -162,6 +162,7 @@ class GraphQLHook(BaseHook):
         ------
             dict: The JSON response of each paginated query.
         """
+        logging.info("Page going to process: %s.", variables.get("page", "null"))
         if variables is None:
             variables = {}
         if "page" not in variables:
@@ -170,9 +171,9 @@ class GraphQLHook(BaseHook):
         response = self.run_graphql_query(paginated_query, variables)
 
         page_info = key_lookup(response, "pageInfo")
-        has_next_page = None
+        has_next_page = False
 
-        if page_info is not None:
+        if page_info:
             variables["page"] = page_info["endCursor"]
             has_next_page = page_info["hasNextPage"]
         else:
@@ -183,7 +184,6 @@ class GraphQLHook(BaseHook):
                 paginated_query,
                 variables=variables,
             )
-        logging.info("Page processed: %s.", variables["page"])
         yield response
 
     def get_components_ids_by_type(self, component_type: str):
