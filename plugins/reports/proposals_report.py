@@ -1,7 +1,6 @@
 import pandas as pd
 
 from plugins.reports.base.report import Report
-from plugins.reports.tables.base.tables import Table
 from plugins.reports.tables.bp.tables import BrasilParticipativoTables
 from plugins.reports.tables.matomo.tables import MatotmoTables
 
