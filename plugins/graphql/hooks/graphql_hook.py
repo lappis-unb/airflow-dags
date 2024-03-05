@@ -162,11 +162,12 @@ class GraphQLHook(BaseHook):
         ------
             dict: The JSON response of each paginated query.
         """
-        logging.info("Page going to process: %s.", variables.get("page", "null"))
         if variables is None:
             variables = {}
         if "page" not in variables:
             variables = {**variables, "page": "null"}
+
+        logging.info("Page going to process: %s.", variables.get("page", "null"))
 
         response = self.run_graphql_query(paginated_query, variables)
 
