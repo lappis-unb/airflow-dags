@@ -57,8 +57,6 @@ class MatomoGraphs(ReportGraphs):
             title=dict(x=0.5, y=0.95, xanchor="center", yanchor="top"), margin=dict(l=0, r=0, b=0, t=0)
         )
 
-        with open(Path(__file__).parent.joinpath("./mapa.png"), "wb") as file:
-            fig.write_image(file, format="png")
         return self.b64_encode_graph(fig)
 
 
