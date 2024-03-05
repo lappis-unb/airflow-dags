@@ -1,0 +1,268 @@
+@font-face {
+  font-family: Rawline;
+  font-weight: bold;
+  src: url(fonts/rawline-800.ttf);
+}
+@font-face {
+  font-family: Rawline;
+  font-weight: normal;
+  src: url(fonts/rawline-400.ttf);
+}
+@font-face {
+  font-family: Rawline;
+  font-weight: bold;
+  font-style: italic;
+  src: url(fonts/rawline-800i.ttf);
+}
+@font-face {
+  font-family: Rawline;
+  font-weight: normal;
+  font-style: italic;
+  src: url(fonts/rawline-400i.ttf);
+}
+
+@page {
+  margin: 0;
+  padding: 0;
+  size: a4;
+  line-height: 150%;
+  padding: 30mm 30mm 26mm 30mm;
+  background-image: url("./imgs/bp-background-top-bar.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+@page :left {
+  @bottom-left {
+    position: absolute;
+    z-index: 40;
+    margin: 0;
+    padding: 0;
+    left: 0;
+    bottom: 10mm;
+    font-size: 60pt;
+    background-color: red;
+  }
+}
+
+@page :right {
+  @bottom-right {
+    position: absolute;
+    z-index: 40;
+    margin: 0;
+    padding: 0;
+    bottom: 10mm;
+    font-size: 60pt;
+    background-color: blue;
+  }
+}
+
+@page full {
+  margin: 0;
+  padding: 0;
+
+  @bottom-right {
+    content: none;
+  }
+
+  @bottom-left {
+    content: none;
+  }
+
+  background: white;
+  margin: 0;
+}
+
+@page :blank {
+  @bottom-right {
+    content: none;
+  }
+
+  @bottom-left {
+    content: none;
+  }
+}
+
+@page clean {
+  @bottom-right {
+    content: none;
+  }
+
+  @bottom-left {
+    content: none;
+  }
+}
+
+html {
+  counter-reset: h2-counter;
+  font-family: Rawline;
+  font-size: 10pt;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  color: #ff580a;
+  margin: 0 0 8mm 0;
+  font-size: 18pt;
+}
+
+h2 {
+  color: #1351b4;
+  margin: 4mm 0 2mm 0;
+  font-size: 12pt;
+}
+
+p, ul, li, a, section, div, span {
+  margin: 0;
+  padding: 0;
+}
+
+.pdf-page{
+  page-break-after: always;
+}
+
+.cover-content {
+  text-align: center;
+  margin-top: 80mm;
+  color: black;
+}
+.cover-content h1 {
+  font-size: 40pt;
+  font-weight: 800;
+}
+
+.cover-content .bp-title {
+  font-size: 36pt;
+  font-weight: 400;
+  text-align: center;
+  color: #636363;
+  margin: 10mm 0;
+  padding: 0;
+}
+
+.cover-content .document-date {
+  font-size: 32pt;
+  font-weight: 400;
+  font-style: italic;
+  color: #636363;
+  margin: 0;
+  text-align: center;
+  padding: 0;
+}
+
+#contents {
+  page: clean;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+
+}
+thead,
+th {
+  color: white;
+  font-weight: 800;
+  background-color: #1351b4;
+}
+th,
+td {
+  border: 1px solid black;
+  padding: 8px;
+  text-align: center;
+}
+
+img {
+  width: 180mm;
+  height: 120mm;
+  margin: 0 auto auto -15mm;
+}
+
+.highlight-first-column td:first-child {
+  color: white;
+  background-color: #1351b4;
+}
+
+.highlight-row {
+  font-weight: 800;
+  background-color: var(--blue-warm-vivid-70);
+}
+
+.centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.image-label {
+  text-align: center;
+  font-size: 8pt;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 10pt;
+}
+
+.italic {
+  font-weight: 400;
+  font-style: italic;
+}
+
+.image-container {
+  margin: 4mm 0;
+  width: 140mm;
+  height: 400px;
+}
+
+p{text-align: justify;}
+
+.flex{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.large-table-element:first-child{
+  width:140mm;
+  margin-top: 0;
+  align-items: center;
+  justify-content: center;
+  page-break-after: always;
+
+}
+.large-table-element{
+  width:140mm;
+  margin-top: 20%;
+  align-items: center;
+  page-break-after: always;
+  justify-content: center;
+
+}
+.second-large-table-element:first-child{
+  page-break-after: always;
+  width: 140mm;
+  margin-top: 0;
+  align-items: center;
+  justify-content: center;
+
+}
+.second-large-table-element{
+  width:140mm;
+  page-break-after: always;
+  margin-top: 20%;
+  align-items: center;
+  justify-content: center;
+
+}
+.mbn{
+  margin-bottom: -19%;
+}

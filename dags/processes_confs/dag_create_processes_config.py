@@ -21,7 +21,13 @@ from plugins.yaml.config_reader import read_yaml_files_from_directory
 DECIDIM_CONN_ID = "api_decidim"
 TELEGRAM_CONN_ID = "telegram_decidim"
 VARIABLE_FOR_LAST_DATE_EXECUTED = "last_config_creation_date"
+ACCEPTED_COMPONENTS_TYPES = ["Proposals"]
 TELEGRAM_MAX_RETRIES = 10
+
+TOPICS_TO_CREATE = [
+    ("telegram_moderation_proposals_topic_id", lambda name: f"{name}/Propostas"),
+    ("telegram_moderation_comments_topic_id", lambda name: f"{name}/Comentarios Em Propostas"),
+]
 
 
 def _get_participatory_space_mapped_to_query_file(participatory_spaces: List[str]):
@@ -37,10 +43,10 @@ def _get_participatory_space_mapped_to_query_file(participatory_spaces: List[str
 
 PARTICIPATORY_SPACES = [
     "participatory_processes",
-    "initiatives",
-    "consultations",
-    "conferences",
-    "assemblies",
+    # "initiatives",
+    # "consultations",
+    # "conferences",
+    # "assemblies",
 ]
 QUERIES = _get_participatory_space_mapped_to_query_file(PARTICIPATORY_SPACES)
 
@@ -62,6 +68,7 @@ def _str_to_datetime(date_to_change: str):
 @telegram_retry(max_retries=TELEGRAM_MAX_RETRIES)
 def _create_telegram_topic(chat_id: int, name: str):
     if not isinstance(chat_id, int) or not isinstance(name, str):
+        logging.error("Chat id: %s\nName: %s", chat_id, name)
         raise TypeError
 
     telegram_hook = TelegramHook(telegram_conn_id=TELEGRAM_CONN_ID, chat_id=chat_id)
@@ -77,14 +84,10 @@ def _configure_telegram_topics(component_config):
     if component_config["__typename"] == "Proposals":
         name = " ".join(str(component_config["process_id"]).split("_")).title().strip()
         telegram_topics = {
-            "telegram_moderation_proposals_topic_id": _create_telegram_topic(
-                component_config["telegram_config"]["telegram_group_id"],
-                f"{name}/Propostas",
-            ),
-            "telegram_moderation_comments_topic_id": _create_telegram_topic(
-                component_config["telegram_config"]["telegram_group_id"],
-                f"{name}/Comentarios Em Propostas",
-            ),
+            topic: _create_telegram_topic(
+                component_config["telegram_config"]["telegram_group_id"], get_chat_name(name)
+            )
+            for topic, get_chat_name in TOPICS_TO_CREATE
         }
     return telegram_topics
 
@@ -106,7 +109,9 @@ def _configure_base_yaml_in_participatory_spaces(participatory_space):
     )
 
     participatory_space_slug = participatory_space["slug"]
-    participatory_space_chat_id = -1001990530900  # TODO: Change to the id it will come with the queries.
+    participatory_space_chat_id = (
+        int(participatory_space["groupChatId"]) if participatory_space["groupChatId"] else None
+    )
 
     for component in participatory_space["components"]:
         if component["__typename"] in accepeted_component_types:
@@ -143,6 +148,9 @@ def _split_components_between_configure_and_update(participatory_space):
     configured_processes = {x["component_id"]: x for x in read_yaml_files_from_directory(config_folder)}
 
     for config in _configure_base_yaml_in_participatory_spaces(participatory_space):
+        if config["__typename"] not in ACCEPTED_COMPONENTS_TYPES:
+            continue
+
         if config["component_id"] in configured_processes:
             components_to_update.append(config)
         else:
@@ -232,7 +240,7 @@ def create_processes_configs():
             pasta_do_tipo_de_componente = Path(__file__).parent.joinpath(f"./{_component['__typename']}")
             pasta_do_tipo_de_componente.mkdir(parents=True, exist_ok=True)
 
-            if _component["__typename"] == "Proposals":
+            if _component["telegram_config"]["telegram_group_id"]:
                 telegram_topics = _configure_telegram_topics(_component)
                 _component["telegram_config"] = {**_component["telegram_config"], **telegram_topics}
             _component.pop("__typename")
@@ -262,6 +270,13 @@ def create_processes_configs():
 
             with closing(open(component_yaml_file)) as configured_component_file:
                 old_config = yaml.safe_load(configured_component_file)
+
+            if (
+                _component["telegram_config"]["telegram_group_id"]
+                and not old_config["telegram_config"]["telegram_group_id"]
+            ):
+                telegram_topics = _configure_telegram_topics(_component)
+                old_config["telegram_config"] = {**_component["telegram_config"], **telegram_topics}
 
             _component.pop("__typename")
 

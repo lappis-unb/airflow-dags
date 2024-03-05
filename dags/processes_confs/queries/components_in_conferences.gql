@@ -3,6 +3,7 @@ query ComponentsInConferences($date: String) {
     ... on Conference {
       id
       __typename
+      groupChatId
       startDate
       endDate
       title {

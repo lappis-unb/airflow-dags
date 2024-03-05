@@ -129,7 +129,6 @@ build-image:
     - echo "COPY ./plugins ./plugins" >> Dockerfile
 
     - echo "--------- Building the image ----------"
-    - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
     - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
     - docker save -o build.img $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
 
@@ -144,6 +143,9 @@ push-image-to-registry:
     default: false
   rules:
     - if: $CI_COMMIT_BRANCH == "development"
+  dependencies:
+    - build-image
   script:
     - docker load -i build.img
+    - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA

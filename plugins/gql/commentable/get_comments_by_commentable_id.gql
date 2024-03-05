@@ -10,6 +10,7 @@ query Comments($id: String!) {
       id
       body
       createdAt
+      updatedAt
       author {
         id
         name

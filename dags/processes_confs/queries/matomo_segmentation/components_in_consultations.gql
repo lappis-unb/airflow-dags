@@ -1,0 +1,10 @@
+query ComponentsInConsultations {
+  consultations {
+    ... on Consultation {
+      components {
+        id
+        __typename
+      }
+    }
+  }
+}
