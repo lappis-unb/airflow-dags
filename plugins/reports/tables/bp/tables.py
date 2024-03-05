@@ -63,11 +63,12 @@ class BrasilParticipativoTables:
             total_votes=pd.NamedAgg(column="votes_per_proposal", aggfunc="sum"),
         )
 
+        grouped = grouped.rename_axis("Tema")
+
         ranked_themes = grouped.sort_values("total_proposals", ascending=False)
 
         ranked_themes = ranked_themes.rename(
             columns={
-                "proposals_categories": "Tema",
                 "total_proposals": "Total de Propostas",
                 "total_votes": "Total de Votos",
                 "total_comments": "Total de Comentários",

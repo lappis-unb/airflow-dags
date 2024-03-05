@@ -14,7 +14,7 @@
   /* Assegura que as tabelas não sejam cortadas ao quebrar entre páginas */
   tr, td, th {
     page-break-inside: avoid;
-    
+
   }
 
   table {
@@ -56,7 +56,7 @@
   size: a4;
   line-height: 150%;
   content: "Page " counter(page) " of " counter(pages);
-  
+
 }
 
 @page :left {
@@ -138,17 +138,22 @@ body {
 h1 {
   color: #ff580a;
   margin: 0 0 8mm 0;
-  font-size: 26pt;
+  font-size: 18pt;
 }
 
 h2 {
   color: #1351b4;
   margin: 4mm 0 2mm 0;
+  font-size: 12pt;
 }
 
 p, ul, li, a, section, div, span {
   margin: 0;
   padding: 0;
+}
+
+p, ul li {
+  text-indent: 25px; /* Aplica indentação apenas na primeira linha de parágrafos e itens de lista */
 }
 
 .fullpage {

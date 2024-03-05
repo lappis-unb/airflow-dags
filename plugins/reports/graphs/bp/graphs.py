@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import pandas as pd
 import plotly.express as px
 
@@ -33,7 +31,7 @@ class BrasilParticipativoGraphs(ReportGraphs):
 
     def generate_daily_plot(
         self,
-        proposals_publication_date: list[datetime],
+        proposals_publication_date: list,
         proposals_ids: list,
         total_comments_per_proposal: list[int],
         votes_per_proposal: list[int],
@@ -59,29 +57,59 @@ class BrasilParticipativoGraphs(ReportGraphs):
         daily_data = (
             df.groupby("date")
             .agg(
-                {"proposals_ids": "count", "total_comments_per_proposal": "sum", "votes_per_proposal": "sum"}
+                proposals=("proposals_ids", "count"),
+                total_comments=("total_comments_per_proposal", "sum"),
+                total_votes=("votes_per_proposal", "sum"),
             )
             .reset_index()
         )
 
-        fig = px.line(
-            daily_data,
-            x="date",
-            y=["proposals_ids", "total_comments_per_proposal", "votes_per_proposal"],
-            labels={"value": "Quantidade", "date": "Data"},
-            title="Quantidade de Propostas, Comentários e Votos por Dia",
+        fig = px.line()
+
+        fig.add_scatter(
+            x=daily_data["date"],
+            y=daily_data["proposals"],
+            mode="lines+markers",
+            name="Propostas",
+            marker=dict(size=8),
         )
 
-        fig.update_traces(mode="markers+lines", marker=dict(size=8))
+        fig.add_scatter(
+            x=daily_data["date"],
+            y=daily_data["total_comments"],
+            mode="lines+markers",
+            name="Comentários por Propostas",
+            marker=dict(size=8),
+        )
 
-        # Customize the legend and axis labels
+        fig.add_scatter(
+            x=daily_data["date"],
+            y=daily_data["total_votes"],
+            mode="lines+markers",
+            name="Votos por Propostas",
+            marker=dict(size=8),
+        )
+
         fig.update_layout(
             legend=dict(title="", orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             xaxis_title="Data",
             yaxis_title="Quantidade",
             xaxis=dict(tickangle=45),
-            legend_traceorder="reversed",
             hovermode="x",
+        )
+
+        return self.b64_encode_graph(fig)
+
+    def generate_state_distribution_donut(self, df: pd.DataFrame, width: int = 704, height: int = 480):
+        state_counts = df["proposal_state"].value_counts().reset_index()
+        state_counts.columns = ["Estado", "Quantidade"]
+
+        state_rename = {"accepted": "Aceita", "withdrawn": "Retirada", "rejected": "Rejeitada"}
+
+        state_counts["Estado"] = state_counts["Estado"].map(state_rename)
+
+        fig = px.pie(
+            state_counts, names="Estado", values="Quantidade", hole=0.3, title="Situação das Propostas"
         )
 
         return self.b64_encode_graph(fig)
