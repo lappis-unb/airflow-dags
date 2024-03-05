@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
 
   <meta charset="utf-8" />
@@ -7,31 +8,37 @@
   <title>Relatório de dados</title>
 </head>
 
-  {% import "./jinja/macros.html" as macros %}
+{% import "./jinja/macros.html" as macros %}
 
-  <section class="pdf-page">
-    <div class="cover-content">
-      <h1>{{ data.document.title }}</h1>
-      <p class="bp-title">Brasil Participativo</p>
-      <p class="document-date">({{ data.document.date }})</p>
-    </div>
-  </section>
+<section class="pdf-page">
+  <div class="cover-content">
+    <h1>{{ data.document.title }}</h1>
+    <p class="bp-title">Brasil Participativo</p>
+    <p class="document-date">({{ data.document.date }})</p>
+  </div>
+</section>
 
-  <section id="first-page" class="pdf-page">
-    <h1>Introdução</h1>
-    <p class="bp-title" id="intro-section">O presente relatório apresenta a participação digital da {{ data.document.title }}. Apresentamos os principais indicadores de acesso e participação, propostas, comentários e dinâmica na plataforma. O objetivo do relatório é guiar os  organizadores da conferência nas estratégias de mobilização, além de comunicar os indicadores da conferência.</p>
-    <br>
-    <h1>Visão Geral</h1>
-    <p id="overview-section">Neste capítulo, serão analisados os dados referentes às contribuições recebidas durante o período selecionado. Serão apresentados dados gerais de quantidade de contribuições, seus votos e comentários, além de dados sobre a distribuição de participação no território e as devolutivas ao cidadão.</p>
+<section id="first-page" class="pdf-page">
+  <h1>Introdução</h1>
+  <p class="bp-title" id="intro-section">O presente relatório apresenta a participação digital da {{ data.document.title
+    }}. Apresentamos os principais indicadores de acesso e participação, propostas, comentários e dinâmica na
+    plataforma. O objetivo do relatório é guiar os organizadores da conferência nas estratégias de mobilização, além de
+    comunicar os indicadores da conferência.</p>
+  <br>
+  <h1>Visão Geral</h1>
+  <p id="overview-section">Neste capítulo, serão analisados os dados referentes às contribuições recebidas durante o
+    período selecionado. Serão apresentados dados gerais de quantidade de contribuições, seus votos e comentários, além
+    de dados sobre a distribuição de participação no território e as devolutivas ao cidadão.</p>
 
-    {{ macros.create_svg_element(data.participation_graph) }}
+  {{ macros.create_svg_element(data.participation_graph) }}
 
-  </section>
+</section>
 
-  <section id="second-page" class="pdf-page">
-    <h1>Número de contribuições por texto participativo</h1>
-    <p class="bp-title" id="number-of-contributing-section">Esta análise possibilita ao organizador verificar quais parágrafos/propostas mais receberam contribuições de modo a focar os esforços nestes parágrafos/propostas.</p>
-  </section>
+<section id="second-page" class="pdf-page">
+  <h1>Número de contribuições por texto participativo</h1>
+  <p class="bp-title" id="number-of-contributing-section">Esta análise possibilita ao organizador verificar quais
+    parágrafos/propostas mais receberam contribuições de modo a focar os esforços nestes parágrafos/propostas.</p>
+</section>
 
 
 </html>

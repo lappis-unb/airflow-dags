@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-br">
- <head>
+
+<head>
   <meta charset="utf-8" />
   <meta name="bp-report" content="Relatório de dados" />
   <title>Relatório de dados</title>
- </head>
- <body>
+</head>
+
+<body>
   {% import "./jinja/macros.html" as macros %}
 
-  <section class="fullpage">
+  <section class="pdf-page">
     <div class="cover-content">
       <h1>{{ data.document.title }}</h1>
       <p class="bp-title">Brasil Participativo</p>
@@ -16,103 +18,135 @@
     </div>
   </section>
 
-  <section class="fullpage">
+  <section class="pdf-page">
     <h1>Índice</h1>
     <ul>
       <li><a href="#introduction-section">Introdução</a></li>
       <li><a href="#overview-section">Propostas</a></li>
-      <li><a href="#programs-ranking">Temas</a></li>
-      <li><a href="#proposals-ranking">Top 20 Propostas</a></li>
-      <li><a href="#user-profile">Acessos</a></li>
+      <li><a href="#themes-section">Temas</a></li>
+      <li><a href="#top-20-section">Top 20 Propostas</a></li>
+      <li><a href="#citizen-section">Devolutiva ao cidadão</a></li>
+      <li><a href="#access-section">Acessos</a></li>
+      <li><a href="#devices-section">Dispositivos</a></li>
     </ul>
   </section>
 
-  <section id="introduction-section" class="fullpage">
+  <section id="introduction-section" class="pdf-page">
     <h1>Introdução</h1>
-    <p class="mb">Este relatório oferece uma análise das contribuições no(a) {{ data.document.component }}, no período de {{ data.document.date }},
+    <p class="mb">Este relatório oferece uma análise das contribuições no(a) {{ data.document.component }}, no período
+      de {{ data.document.date }},
       destacando os resultados da consulta e do perfil dos participantes.
-      O objetivo é fornecer orientações para os organizadores do processo de consulta, auxiliando-os no desenvolvimento de estratégias de mobilização e
+      O objetivo é fornecer orientações para os organizadores do processo de consulta, auxiliando-os no desenvolvimento
+      de estratégias de mobilização e
       na compreensão dos indicadores importantes para a sua condução.</p>
-    <p class="mb">Ao todo, foram recebidas {{ data.introduction.num_proposals }} propostas que somam {{ data.introduction.total_comments }} comentários e {{ data.introduction.total_votes }} votos.
+    <p class="mb">Ao todo, foram recebidas {{ data.introduction.num_proposals }} propostas que somam {{
+      data.introduction.total_comments }} comentários e {{ data.introduction.total_votes }} votos.
     </p>
   </section>
 
-  <section id="overview-section" class="fullpage">
-   <h1>Propostas</h1>
-   <p>Neste capítulo, serão analisados os dados referentes às propostas recebidas até o momento. Serão apresentados dados gerais de quantidade
-     de contribuições, seus votos e comentários, além de dados sobre a distribuição de participação no território e as devolutivas ao cidadão.
+  <section id="overview-section" class="pdf-page">
+    <h1>Propostas</h1>
+    <p>Neste capítulo, serão analisados os dados referentes às propostas recebidas até o momento. Serão apresentados
+      dados gerais de quantidade
+      de contribuições, seus votos e comentários, além de dados sobre a distribuição de participação no território e as
+      devolutivas ao cidadão.
     </p>
+
+    <br>
+
     {{ macros.create_table_from_dict(data.general_data) }}
-  <p>O gráfico abaixo mostra o comportamento da quantidade total de Propostas, Votos e comentários no período de {{ data.document.date }}. Aqui, o organizador
-    poderá analisar os dias em que mais houve recebimento de propostas, votos e comentários e verificar se algum evento específico motivou o aumento
-    das variáveis (publicação de notícia no site, post nas redes sociais, por exemplo).
-  </p>
+
+    <br>
+
+    <p>O gráfico abaixo mostra o comportamento da quantidade total de Propostas, Votos e comentários no período de {{
+      data.document.date }}. Aqui, o organizador
+      poderá analisar os dias em que mais houve recebimento de propostas, votos e comentários e verificar se algum
+      evento específico motivou o aumento
+      das variáveis (publicação de notícia no site, post nas redes sociais, por exemplo).
+    </p>
+
     {{ macros.create_image_element(data.daily_graph) }}
   </section>
 
-  {{ macros.print_large_table(data.rank_temas, "Temas",
-  "As propostas foram classificadas em grandes temas. Abaixo será possível verificar os temas com maior número de propostas e as propostas mais votadas.
-  Assim, os organizadores poderão ter uma base dos assuntos que mais renderão discussão durante as próximas etapas. Os temas com o maior número de propostas são:"
-  ,'large-table-element') }}
+  <section id="themes-section" class="pdf-page">
+    <h1>Temas</h1>
+    <p>
+      As propostas foram classificadas em grandes temas. Abaixo será possível verificar os temas com maior número de
+      propostas e as propostas mais votadas.
+      Assim, os organizadores poderão ter uma base dos assuntos que mais renderão discussão durante as próximas etapas.
+      Os temas com o maior número de propostas são:
+    </p>
 
-  {{ macros.print_large_table(data.top_proposals_filtered,
-    "Top 20 Propostas",
-    "As top 20 propostas mais votadas evidenciam as com maior mobilização e maior interesse do jovem participante.
-    É possível observar também o número de comentários por proposta.
-    ",'second-large-table-element') }}
+    <br>
 
-  <section id="user-profile" class="fullpage">
+    {{ macros.create_table_from_list_of_dicts(data.rank_temas) }}
+
+  </section>
+
+  <section id="top-20-section" class="pdf-page">
+    <h1>
+      Top 20 Propostas
+    </h1>
+    <p>
+      As top 20 propostas mais votadas evidenciam as com maior mobilização e maior interesse do jovem participante.
+      É possível observar também o número de comentários por proposta.
+    </p>
+
+    <br>
+
+    {{ macros.create_table_from_list_of_dicts(data.top_proposals_filtered) }}
+
+
+  </section>
+
+  <section id="citizen-section" class="pdf-page">
     <h2>Devolutiva ao cidadão</h2>
-    <p>O gráfico abaixo representa o status das propostas em relação à devolutiva ao cidadão. É importante que a organização esteja atenta a este dado,
-      uma vez que o cidadão que contribui espera uma resposta do órgão consultor e se sentirá estimulado a participar de outros processos de consulta.
+    <p>O gráfico abaixo representa o status das propostas em relação à devolutiva ao cidadão. É importante que a
+      organização esteja atenta a este dado,
+      uma vez que o cidadão que contribui espera uma resposta do órgão consultor e se sentirá estimulado a participar de
+      outros processos de consulta.
     </p>
     {{ macros.create_image_element(data.state_distribution_graph) }}
   </section>
 
-  <section id="user-profile" class="fullpage">
+  <section id="access-section" class="pdf-page">
     <h1>Acessos</h1>
-    <p>A análise do acesso possibilita aos organizadores terem um panorama do engajamento no processo participativo. Aqui ele poderá verificar a
+    <p>A análise do acesso possibilita aos organizadores terem um panorama do engajamento no processo participativo.
+      Aqui ele poderá verificar a
       quantidade de acessos, a distribuição no território e os dispositivos mais utilizados
     </p>
-    <p>Os dados de acesso são referentes à visitação da página da conferência. Um indicador da mobilização realizada, mas principalmente sobre o comportamento
+    <p>Os dados de acesso são referentes à visitação da página da conferência. Um indicador da mobilização realizada,
+      mas principalmente sobre o comportamento
       do usuário padrão na plataforma. Além disso, será possível analisar a taxa de abandono que
-      é quando o usuário acessa a plataforma, mas não realiza qualquer ação na mesma. Essas métricas auxiliam os organizadores a verificar se
-      a quantidade de acesso na plataforma está de acordo com o previsto. Essas métricas também guiam a revisita das estratégias de mobilização e de
+      é quando o usuário acessa a plataforma, mas não realiza qualquer ação na mesma. Essas métricas auxiliam os
+      organizadores a verificar se
+      a quantidade de acesso na plataforma está de acordo com o previsto. Essas métricas também guiam a revisita das
+      estratégias de mobilização e de
       comunicação na plataforma.
     </p>
     <h2>Dados de Acesso</h2>
     {{ macros.create_table_from_list_of_dicts(data.data_access) }}
     <h2>Mapa com a Qtd de visitas por UF</h2>
-    <p>Esse mapa explica a quantidade de acessos por Unidade Federativa do Brasil, no período de {{ data.document.date }}. Com a análise do mapa,
+    <p>Esse mapa explica a quantidade de acessos por Unidade Federativa do Brasil, no período de {{ data.document.date
+      }}. Com a análise do mapa,
       o organizador poderá pensar estratégias para aumentar a mobilização em determinado estado.
     </p>
     {{ macros.create_image_element(data.map_graph) }}
   </section>
 
-  <section id="user-profile" class="fullpage">
+  <section id="devices-section" class="pdf-page">
     <h2>Dispositivos</h2>
     <p>
-      Neste capítulo, exploramos os dados relativos às visitas a um determinado site, analisando o tráfego por diferentes tipos de dispositivos.
-      Ao investigar a distribuição de visitantes em relação aos dispositivos utilizados, podemos identificar tendências e preferências de acesso
+      Neste capítulo, exploramos os dados relativos às visitas a um determinado site, analisando o tráfego por
+      diferentes tipos de dispositivos.
+      Ao investigar a distribuição de visitantes em relação aos dispositivos utilizados, podemos identificar tendências
+      e preferências de acesso
       que podem ser valiosas para a tomada de decisões estratégicas.
     </p>
     {{ macros.create_image_element(data.device_graph) }}
   </section>
 
-  <section class="fullpage">
-    {{ macros.print_large_table(data.rank_temas, "Ranking dos Programas",
-    "Os temas com o maior número de propostas são:",'large-table-element') }}
-  </section>
-
-  <section class="fullpage">
-    {{ macros.print_large_table(data.top_proposals_filtered,
-  "TOP 20 Propostas Mais Votadas no Geral",
-  "As top 20 propostas mais votadas evidenciam as propostas com maior
-  mobilização e maior interesse do participante. Vale observar também o
-  número de comentários por propostas.",'second-large-table-element') }}
-  </section>
-
- </body>
+</body>
 
 
 </html>
