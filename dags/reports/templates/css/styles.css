@@ -1,32 +1,3 @@
-@media print {
-  table {
-    font-size: 8pt; /* Tamanho da fonte reduzido para impressão */
-  }
-
-  th, td {
-    padding: 2px; /* Menor espaço interno para células */
-  }
-
-  .fullpage {
-    padding: 10mm; /* Margens internas reduzidas para impressão */
-  }
-
-  /* Assegura que as tabelas não sejam cortadas ao quebrar entre páginas */
-  tr, td, th {
-    page-break-inside: avoid;
-
-  }
-
-  table {
-    margin-top: 20mm; /* Espaçamento superior para todas as tabelas */
-  }
-
-  table:first-of-type {
-    margin-top: 0; /* Remove a margem superior para a primeira tabela da seção/documento */
-  }
-}
-.mb{margin-bottom: 1%;}
-
 @font-face {
   font-family: Rawline;
   font-weight: bold;
@@ -51,17 +22,19 @@
 }
 
 @page {
-  margin: 5% 0;
+  margin: 0;
   padding: 0;
   size: a4;
   line-height: 150%;
-  content: "Page " counter(page) " of " counter(pages);
-
+  padding: 30mm 30mm 26mm 30mm;
+  background-image: url("./imgs/bp-background-top-bar.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
 }
 
 @page :left {
   @bottom-left {
-    content: "Page " counter(page) " of " counter(pages);
     position: absolute;
     z-index: 40;
     margin: 0;
@@ -75,7 +48,6 @@
 
 @page :right {
   @bottom-right {
-    content: "Page " counter(page) " of " counter(pages);
     position: absolute;
     z-index: 40;
     margin: 0;
@@ -152,25 +124,8 @@ p, ul, li, a, section, div, span {
   padding: 0;
 }
 
-p, ul li {
-  text-indent: 25px; /* Aplica indentação apenas na primeira linha de parágrafos e itens de lista */
-}
-
-.fullpage {
-  page: full;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  margin: 0;
-  padding: 30mm 30mm 26mm 30mm;
-  width: 150mm;
-  height: 241mm;
-  overflow: auto;
-  background-image: url("./imgs/bp-background.png");
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: contain;
+.pdf-page{
+  page-break-after: always;
 }
 
 .cover-content {
@@ -182,11 +137,7 @@ p, ul li {
   font-size: 40pt;
   font-weight: 800;
 }
-.center{
-  text-align: center;
-  width: 100%;
-  background-color: red;
-}
+
 .cover-content .bp-title {
   font-size: 36pt;
   font-weight: 400;
@@ -213,6 +164,7 @@ p, ul li {
 table {
   width: 100%;
   border-collapse: collapse;
+
 }
 thead,
 th {
@@ -291,24 +243,24 @@ p{text-align: justify;}
   width:140mm;
   margin-top: 20%;
   align-items: center;
-  justify-content: center;
   page-break-after: always;
+  justify-content: center;
 
 }
 .second-large-table-element:first-child{
-  width:140mm;
+  page-break-after: always;
+  width: 140mm;
   margin-top: 0;
   align-items: center;
   justify-content: center;
-  page-break-after: always;
 
 }
 .second-large-table-element{
   width:140mm;
+  page-break-after: always;
   margin-top: 20%;
   align-items: center;
   justify-content: center;
-  page-break-after: always;
 
 }
 .mbn{

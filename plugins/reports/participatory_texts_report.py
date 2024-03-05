@@ -31,7 +31,7 @@ class ParticipatoryTextsReport(Report):
                     "date": f"{self.start_date} até {self.end_date}",
                 },
                 "participation_graph": {
-                    "label": "",
+                    "label": "Gráfico De Participação",
                     "file": self.bp_graphs.generate_participation_graph(
                         report_data["total_comments"], report_data["total_unique_participants"]
                     ),
