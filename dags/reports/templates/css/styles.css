@@ -42,7 +42,6 @@
     left: 0;
     bottom: 10mm;
     font-size: 60pt;
-    background-color: red;
   }
 }
 
@@ -105,78 +104,82 @@ html {
 body {
   margin: 0;
   padding: 0;
-}
-
-h1 {
-  color: #ff580a;
-  margin: 0 0 8mm 0;
-  font-size: 18pt;
+  color: #434343;
+  line-height: 150%;
+  font-family: 'DM Sans';
 }
 
 h2 {
-  color: #1351b4;
-  margin: 4mm 0 2mm 0;
   font-size: 12pt;
+  font-weight: bold;
 }
 
-p, ul, li, a, section, div, span {
-  margin: 0;
-  padding: 0;
+ul{
+  list-style-type: none;
+  position: relative;
+  left: 0;
+}
+.color-black{
+  color: #000;
 }
 
+a{
+  text-decoration: none;
+  color:black;
+}
 .pdf-page{
   page-break-after: always;
 }
-
 .cover-content {
+  font-size: 32pt;
+  font-weight: bold;
   text-align: center;
-  margin-top: 80mm;
-  color: black;
+}
+.title-1{
+  font-size: 14pt;
 }
 .cover-content h1 {
-  font-size: 40pt;
-  font-weight: 800;
+  font-size: 22pt;
+  font-weight: bold;
+  margin: 40% 0 30% 0;
+}
+.cinza-escuro-4 h3 {
+  font-size: 20pt;
+  font-weight: bold;
+}
+.bold{
+  font-weight: bold;
+  font-size: 12px;
 }
 
-.cover-content .bp-title {
-  font-size: 36pt;
-  font-weight: 400;
-  text-align: center;
-  color: #636363;
-  margin: 10mm 0;
-  padding: 0;
-}
-
-.cover-content .document-date {
-  font-size: 32pt;
-  font-weight: 400;
-  font-style: italic;
-  color: #636363;
-  margin: 0;
-  text-align: center;
-  padding: 0;
+.document-date{
+  font-weight:normal;
+  font-size:12pt;
+  margin-top: 70%;
 }
 
 #contents {
   page: clean;
 }
-
 table {
   width: 100%;
   border-collapse: collapse;
-
+  
 }
 thead,
 th {
   color: white;
+  border: 1px solid #1351b4;
   font-weight: 800;
+  text-align: center;
   background-color: #1351b4;
 }
-th,
-td {
-  border: 1px solid black;
+
+td, tr {
+  border: 1px solid #1351b4;
   padding: 8px;
   text-align: center;
+  background-color: #d5d8ff;
 }
 
 img {
@@ -204,7 +207,19 @@ img {
   margin: 0;
   padding: 0;
 }
-
+.sublist{
+  margin-left: -5%!important;
+  width: 100%;
+}
+.index-title{
+  font-size: 16pt;
+}
+.bold{
+  font-weight: bold;
+}
+.text-center{
+  text-align: center;
+}
 .image-label {
   text-align: center;
   font-size: 8pt;
@@ -263,6 +278,4 @@ p{text-align: justify;}
   justify-content: center;
 
 }
-.mbn{
-  margin-bottom: -19%;
-}
+
