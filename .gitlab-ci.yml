@@ -131,7 +131,7 @@ build-image:
   artifacts:
     paths:
       - build.img
-    expire_in: 1 week
+    expire_in: 1 hour
   image: docker
   inherit:
     default: false
