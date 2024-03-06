@@ -28,64 +28,71 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
         .open()
         .read()
     )
-    proposals_hook = ProposalsHook(BP_CONN_ID, component_id)
-    query_result = proposals_hook.graphql.run_graphql_paginated_query(
-        query, variables={"id": component_id, "start_date": start_date, "end_date": end_date}
-    )
 
-    participatory_space = proposals_hook.get_participatory_space()
-    participatory_space_name = participatory_space["title"]["translation"]
+    return_file = Path(__file__).parent.joinpath("./mock/participatory_text.txt")
+    with open(return_file) as file:
+        return eval(file.read())
 
-    result = {
-        "participatory_space_name": participatory_space_name,
-        "start_date": start_date,
-        "end_date": end_date,
-        "total_comments": 0,
-        "proposals": [],
-    }
-    for page in query_result:
-        component = page["data"]["component"]
-        proposals = component["proposals"]["nodes"]
+    # proposals_hook = ProposalsHook(BP_CONN_ID, component_id)
+    # query_result = proposals_hook.graphql.run_graphql_paginated_query(
+    #     query, variables={"id": component_id, "start_date": start_date, "end_date": end_date}
+    # )
 
-        for proposal in proposals:
-            comments_df = proposals_hook.get_comments_df(
-                proposal["comments"],
-                proposal["id"],
-                start_date_filter=start_date,
-                end_date_filter=end_date,
-            )
-            total_comments_in_proposal = comments_df.shape[0] if not comments_df.empty else 0
+    # participatory_space = proposals_hook.get_participatory_space()
+    # participatory_space_name = participatory_space["title"]["translation"]
 
-            result["total_comments"] += total_comments_in_proposal
-            unique_authors = [*comments_df["author_id"].unique()] if not comments_df.empty else []
+    # result = {
+    #     "participatory_space_name": participatory_space_name,
+    #     "start_date": start_date,
+    #     "end_date": end_date,
+    #     "total_comments": 0,
+    #     "proposals": [],
+    # }
+    # for page in query_result:
+    #     component = page["data"]["component"]
+    #     proposals = component["proposals"]["nodes"]
 
-            result["proposals"].append(
-                {
-                    "vote_count": proposal["voteCount"],
-                    "total_comments": total_comments_in_proposal,
-                    "title": proposal["title"]["translation"],
-                    "id": proposal["id"],
-                    "qt_unique_authors": len(set(unique_authors)),
-                    "unique_authors": unique_authors,
-                    "comments": (
-                        comments_df[["body", "author_id", "author_name", "date_filter"]].to_dict("records")
-                        if not comments_df.empty
-                        else []
-                    ),
-                }
-            )
+    #     for proposal in proposals:
+    #         comments_df = proposals_hook.get_comments_df(
+    #             proposal["comments"],
+    #             proposal["id"],
+    #             start_date_filter=start_date,
+    #             end_date_filter=end_date,
+    #         )
+    #         total_comments_in_proposal = comments_df.shape[0] if not comments_df.empty else 0
 
-    result["total_unique_participants"] = len(
-        set(
-            chain.from_iterable(
-                [current_proposal["unique_authors"] for current_proposal in result["proposals"]]
-            )
-        )
-    )
+    #         result["total_comments"] += total_comments_in_proposal
+    #         unique_authors = [*comments_df["author_id"].unique()] if not comments_df.empty else []
 
-    logging.info("Total participants: %s", result["total_unique_participants"])
+    #         result["proposals"].append(
+    #             {
+    #                 "vote_count": proposal["voteCount"],
+    #                 "total_comments": total_comments_in_proposal,
+    #                 "title": proposal["title"]["translation"],
+    #                 "id": proposal["id"],
+    #                 "qt_unique_authors": len(set(unique_authors)),
+    #                 "unique_authors": unique_authors,
+    #                 "comments": (
+    #                     comments_df[["body", "author_id", "author_name", "date_filter"]].to_dict("records")
+    #                     if not comments_df.empty
+    #                     else []
+    #                 ),
+    #             }
+    #         )
 
-    return result
+    #         print(result)
+
+    # result["total_unique_participants"] = len(
+    #     set(
+    #         chain.from_iterable(
+    #             [current_proposal["unique_authors"] for current_proposal in result["proposals"]]
+    #         )
+    #     )
+    # )
+
+    # logging.info("Total participants: %s", result["total_unique_participants"])
+
+    #return result
 
 
 def _generate_report(filtered_data):
