@@ -179,20 +179,22 @@ class BrasilParticipativoTables:
 
         df = pd.DataFrame(
             data={
-                "proposals_ids": proposals_ids,
-                "proposals_titles": proposals_titles,
-                "votes_per_proposal": votes_per_proposal,
-                "total_comments_per_proposal": total_comments_per_proposal,
+                "id": proposals_ids,
+                "title": proposals_titles,
+                "proposal_total_votes": votes_per_proposal,
+                "total_comments": total_comments_per_proposal,
             },
             index=range(len(proposals_ids)),
         )
-        df_ranking = df.sort_values(by="votes_per_proposal", ascending=False).head()
+        df_ranking = df.sort_values(by="total_comments", ascending=False)
 
         df_ranking = df_ranking.rename(
             columns={
-                "proposals_titles": "Dispositivo",
-                "proposals_ids": "ID",                
-                "votes_per_proposal": "N de comentários",
-                "total_comments_per_proposal": "N de votos",
+                "title": "Dispositivo",
+                "id": "ID",                
+                "total_comments": "N de comentários",
+                "proposal_total_votes": "N de votos",
             }
         )
+        print(len(df_ranking.to_dict("records")))
+        return df_ranking.to_dict("records")
