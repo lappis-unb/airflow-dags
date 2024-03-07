@@ -6,6 +6,7 @@ from typing import Union
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 
+from plugins.reports.tables.bp.tables import BrasilParticipativoTables
 from plugins.reports.graphs.bp.graphs import BrasilParticipativoGraphs
 from plugins.reports.graphs.matomo.graphs import MatomoGraphs
 
@@ -62,6 +63,7 @@ class Report:
         self.start_date = start_date.strftime("%d/%m/%Y")
         self.end_date = end_date.strftime("%d/%m/%Y")
 
+        self.bp_tables = BrasilParticipativoTables()
         self.bp_graphs = BrasilParticipativoGraphs()
         self.matomo_graphs = MatomoGraphs()
 

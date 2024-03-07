@@ -64,11 +64,10 @@ class ProposalsReport(Report):
                     votes_per_proposal=bp_df["proposal_total_votes"],
                 ),
                 "top_proposals_filtered": BrasilParticipativoTables.generate_top_proposals(
-                    proposals_ids=bp_df["proposal_id"],
-                    proposals_titles=bp_df["proposal_title"],
-                    proposals_category_titles=bp_df["proposal_category_title"],
-                    votes_per_proposal=bp_df["proposal_total_votes"],
-                    total_comments_per_proposal=bp_df["proposal_total_comments"],
+                    proposals_ids=bp_df["id"],
+                    proposals_titles=bp_df["title"],
+                    votes_per_proposal=bp_df["votes_per_proposal"],
+                    total_comments_per_proposal=bp_df["total_comments"],
                 ),
                 "map_graph": {
                     "label": "Mapa de Acesso por Estado",
