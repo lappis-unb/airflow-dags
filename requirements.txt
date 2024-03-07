@@ -5,6 +5,7 @@ apache-airflow-providers-common-sql
 apache-airflow-providers-telegram
 apache-airflow-providers-smtp
 apache-airflow-providers-postgres
+apache-airflow-providers-amazon
 pandas==2.0.3
 beautifulsoup4==4.12.2
 tqdm==4.60.0
