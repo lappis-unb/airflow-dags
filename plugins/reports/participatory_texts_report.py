@@ -26,9 +26,6 @@ class ParticipatoryTextsReport(Report):
 
     def render_template(self, report_data):
 
-
-
-
         proposals_ids = [proposal['id'] for proposal in report_data['proposals']]
         proposals_titles = [proposal['title'] for proposal in report_data['proposals']]
         votes_per_proposal = [proposal['vote_count'] for proposal in report_data['proposals']]
@@ -69,6 +66,6 @@ class ParticipatoryTextsReport(Report):
                 "top_dispositivos_graph": {
                     "label": "Gráfico Diário",
                     "file": top_dispositivos_graph,
-                }
+                },
             }
         )
