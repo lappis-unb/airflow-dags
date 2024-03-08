@@ -192,9 +192,10 @@ class BrasilParticipativoTables:
             columns={
                 "title": "Dispositivo",
                 "id": "ID",                
-                "total_comments": "N de comentários",
-                "proposal_total_votes": "N de votos",
+                "total_comments": "Nº de comentários",
+                "proposal_total_votes": "Nº de votos",
             }
         )
         print(len(df_ranking.to_dict("records")))
         return df_ranking.to_dict("records")
+
