@@ -1,8 +1,6 @@
-import pandas as pd
 
 from plugins.reports.base.report import Report
-from plugins.reports.tables.base.tables import Table
-from plugins.reports.tables.bp.tables import BrasilParticipativoTables
+
 
 class ParticipatoryTextsReport(Report):
     """
@@ -28,14 +26,18 @@ class ParticipatoryTextsReport(Report):
 
     def render_template(self, report_data):
 
+
+
+
         proposals_ids = [proposal['id'] for proposal in report_data['proposals']]
         proposals_titles = [proposal['title'] for proposal in report_data['proposals']]
         votes_per_proposal = [proposal['vote_count'] for proposal in report_data['proposals']]
         total_comments_per_proposal = [proposal['total_comments'] for proposal in report_data['proposals']]
 
-        print(proposals_ids)
-
-
+        top_dispositivos_graph = self.bp_graphs.generate_top_dispositivos(
+            titles=proposals_titles,
+            total_comments=total_comments_per_proposal
+        )
         participatory_texts_file = self.bp_tables.generate_participatory_texts_proposals(
             proposals_ids, proposals_titles, votes_per_proposal, total_comments_per_proposal
         )
@@ -44,6 +46,7 @@ class ParticipatoryTextsReport(Report):
         participatory_texts_title = [text['Dispositivo'] for text in participatory_texts_file]
         participatory_texts_comments = [text['N de comentários'] for text in participatory_texts_file]
         participatory_texts_votes = [text['N de votos'] for text in participatory_texts_file]
+
 
         return self.template.render(
             data={
@@ -62,6 +65,10 @@ class ParticipatoryTextsReport(Report):
                     "Dispositivo": participatory_texts_title,
                     "N de comentários": participatory_texts_comments,
                     "N de votos": participatory_texts_votes,
+                },
+                "top_dispositivos_graph": {
+                    "label": "Gráfico Diário",
+                    "file": top_dispositivos_graph,
                 }
             }
         )

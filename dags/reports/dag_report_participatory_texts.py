@@ -3,22 +3,19 @@ from contextlib import closing
 from datetime import datetime, timedelta
 from itertools import chain
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 from airflow.decorators import dag, task
-from airflow.providers.smtp.hooks.smtp import SmtpHook
 
-from plugins.components.base_component.component import ComponentBaseHook
 from plugins.components.proposals import ProposalsHook
 from plugins.reports.participatory_texts_report import ParticipatoryTextsReport
 
 BP_CONN_ID = "bp_conn_prod"
-SMPT_CONN_ID = "gmail_smtp"
 
 
-def _get_components_url(component_id: int):
-    component_hook = ComponentBaseHook(BP_CONN_ID, component_id)
-    return component_hook.get_component_link()
+def _get_participatory_texts_data_faker(component_id: int, start_date: str, end_date: str):
+    return_file = Path(__file__).parent.joinpath("./mock/participatory_text.txt")
+    with open(return_file) as file:
+        return eval(file.read())
 
 
 def _get_participatory_texts_data(component_id: int, start_date: str, end_date: str):
@@ -28,71 +25,64 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
         .open()
         .read()
     )
+    proposals_hook = ProposalsHook(BP_CONN_ID, component_id)
+    query_result = proposals_hook.graphql.run_graphql_paginated_query(
+        query, variables={"id": component_id, "start_date": start_date, "end_date": end_date}
+    )
 
-    return_file = Path(__file__).parent.joinpath("./mock/participatory_text.txt")
-    with open(return_file) as file:
-        return eval(file.read())
+    participatory_space = proposals_hook.get_participatory_space()
+    participatory_space_name = participatory_space["title"]["translation"]
 
-    # proposals_hook = ProposalsHook(BP_CONN_ID, component_id)
-    # query_result = proposals_hook.graphql.run_graphql_paginated_query(
-    #     query, variables={"id": component_id, "start_date": start_date, "end_date": end_date}
-    # )
+    result = {
+        "participatory_space_name": participatory_space_name,
+        "start_date": start_date,
+        "end_date": end_date,
+        "total_comments": 0,
+        "proposals": [],
+    }
+    for page in query_result:
+        component = page["data"]["component"]
+        proposals = component["proposals"]["nodes"]
 
-    # participatory_space = proposals_hook.get_participatory_space()
-    # participatory_space_name = participatory_space["title"]["translation"]
+        for proposal in proposals:
+            comments_df = proposals_hook.get_comments_df(
+                proposal["comments"],
+                proposal["id"],
+                start_date_filter=start_date,
+                end_date_filter=end_date,
+            )
+            total_comments_in_proposal = comments_df.shape[0] if not comments_df.empty else 0
 
-    # result = {
-    #     "participatory_space_name": participatory_space_name,
-    #     "start_date": start_date,
-    #     "end_date": end_date,
-    #     "total_comments": 0,
-    #     "proposals": [],
-    # }
-    # for page in query_result:
-    #     component = page["data"]["component"]
-    #     proposals = component["proposals"]["nodes"]
+            result["total_comments"] += total_comments_in_proposal
+            unique_authors = [*comments_df["author_id"].unique()] if not comments_df.empty else []
 
-    #     for proposal in proposals:
-    #         comments_df = proposals_hook.get_comments_df(
-    #             proposal["comments"],
-    #             proposal["id"],
-    #             start_date_filter=start_date,
-    #             end_date_filter=end_date,
-    #         )
-    #         total_comments_in_proposal = comments_df.shape[0] if not comments_df.empty else 0
+            result["proposals"].append(
+                {
+                    "vote_count": proposal["voteCount"],
+                    "total_comments": total_comments_in_proposal,
+                    "title": proposal["title"]["translation"],
+                    "id": proposal["id"],
+                    "qt_unique_authors": len(set(unique_authors)),
+                    "unique_authors": unique_authors,
+                    "comments": (
+                        comments_df[["body", "author_id", "author_name", "date_filter"]].to_dict("records")
+                        if not comments_df.empty
+                        else []
+                    ),
+                }
+            )
 
-    #         result["total_comments"] += total_comments_in_proposal
-    #         unique_authors = [*comments_df["author_id"].unique()] if not comments_df.empty else []
+    result["total_unique_participants"] = len(
+        set(
+            chain.from_iterable(
+                [current_proposal["unique_authors"] for current_proposal in result["proposals"]]
+            )
+        )
+    )
 
-    #         result["proposals"].append(
-    #             {
-    #                 "vote_count": proposal["voteCount"],
-    #                 "total_comments": total_comments_in_proposal,
-    #                 "title": proposal["title"]["translation"],
-    #                 "id": proposal["id"],
-    #                 "qt_unique_authors": len(set(unique_authors)),
-    #                 "unique_authors": unique_authors,
-    #                 "comments": (
-    #                     comments_df[["body", "author_id", "author_name", "date_filter"]].to_dict("records")
-    #                     if not comments_df.empty
-    #                     else []
-    #                 ),
-    #             }
-    #         )
+    logging.info("Total participants: %s", result["total_unique_participants"])
 
-    #         print(result)
-
-    # result["total_unique_participants"] = len(
-    #     set(
-    #         chain.from_iterable(
-    #             [current_proposal["unique_authors"] for current_proposal in result["proposals"]]
-    #         )
-    #     )
-    # )
-
-    # logging.info("Total participants: %s", result["total_unique_participants"])
-
-    #return result
+    return result
 
 
 def _generate_report(filtered_data):
@@ -159,24 +149,17 @@ def send_email_with_pdf(
 )
 def generate_report_participatory_texts(email: str, start_date: str, end_date: str, component_id: int):
     """
+    Gera um relatorio para o BP.
 
-    Generates a report.
-
-    Parameters:
-    ----------
-        email(str): email to send a report
-        start_date(str): initial date
-        end_date(str): final date
-        component_id(int): number of component id
+    1. Pegar todos os componentes do espaço participativo.
+        1. Fazer a query para o BP com as datas passadas.
+    2. Fazer a requisição para o matomo com as datas passadas.
+    3. Gerar o relatorio.
     """
 
     @task
-    def get_components_url(component_id: int):
-        return _get_components_url(component_id)
-
-    @task
     def get_component_data(component_id: int, filter_start_date: str, filter_end_date: str):
-        return _get_participatory_texts_data(component_id, filter_start_date, filter_end_date)
+        return _get_participatory_texts_data_faker(component_id, filter_start_date, filter_end_date)
 
     @task
     def generate_data(filtered_data):
@@ -184,13 +167,7 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
 
     @task
     def send_report_email(
-        email: str,
-        report_data: dict,
-        email_body: str,
-        email_subject: str,
-        date_start: str,
-        date_end: str,
-        url: str,
+        email: str, report_data: dict, email_body: str, email_subject: str = "Seu Relatório"
     ):
         pdf_bytes = report_data["pdf_bytes"]
         send_email_with_pdf(
@@ -198,25 +175,17 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
             pdf_bytes=pdf_bytes,
             email_body=email_body,
             email_subject=email_subject,
-            date_start=date_start,
-            date_end=date_end,
-            url=url,
         )
 
     component_data = get_component_data(component_id, filter_start_date=start_date, filter_end_date=end_date)
-
-    get_components_url_task = get_components_url(component_id)
 
     report_data = generate_data(component_data)
     # print(report_data)
     send_report_email(
         email=email,
         report_data=report_data,
-        email_body="Olá, segue em anexo o relatorio gerado.",
-        email_subject="Relatorio De Texto Participativo",
-        date_start=start_date,
-        date_end=end_date,
-        url=get_components_url_task,
+        email_body="Aqui vai o corpo do seu e-mail",
+        email_subject="Relatório Participativo",
     )
 
 
