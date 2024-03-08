@@ -109,6 +109,7 @@
       comunicação na plataforma.
     </p>
     <h2  >Dados de Acesso (Geral)</h2>
+    {{ macros.create_table_from_list_of_dicts(data.data_access) }}
     <h2 >Visitantes novos e Visitantes de Retorno</h2>
     <p class="pdf-page" >&emsp;&emsp;&emsp;&emsp;&emsp;Os gráficos abaixo mostram a quantidade de visitantes novos e visitantes de retorno ao longo do espaço participativo.
       Visitantes novos são usuários que nunca utilizaram a plataforma e os visitantes de retorno são aqueles que ao menos
@@ -121,6 +122,7 @@
       }}. Com a análise do mapa,
       o organizador poderá pensar estratégias para aumentar a mobilização em determinado estado.
     </p>
+    {{ macros.create_image_element(data.map_graph) }}
   </section>
 
   <section id="access-section" class="pdf-page">
@@ -131,12 +133,11 @@
       Ao investigar a distribuição de visitantes em relação aos dispositivos utilizados, podemos identificar tendências
       e preferências de acesso que podem ser valiosas para a tomada de decisões estratégicas.
     </p>
+    {{ macros.create_image_element(data.device_graph) }}
     </section>
 
   <section id="final-consideration" class="pdf-page">
-    <h1>
-      Considerações Finais
-    </h1>
+    <h1 class="title-1 text-center">Considerações Finais</h1>
     <p>
       &emsp;&emsp;&emsp;&emsp;&emsp;A participação da sociedade na gestão de políticas e programas do Governo Federal é uma forma do Estado
       brasileiro reconhecer a importância das contribuições da sociedade civil de modo a fortalecer a democracia,
