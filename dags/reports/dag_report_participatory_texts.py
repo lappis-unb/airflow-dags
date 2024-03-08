@@ -115,25 +115,31 @@ def send_email_with_pdf(
     date_end: str,
     url: str,
 ):
-    hook = SmtpHook(SMPT_CONN_ID)
-    hook = hook.get_conn()
-    body = f"""<p>{email_body}</p>
-        <br>
-        <p>Data de inicio: {date_start}</p>
-        <p>Data final: {date_end}</p>
-        <br>
-        <p>Relatorio gerado apartir da pagina: {url}</p>"""
 
-    with TemporaryDirectory("wb") as tmpdir:
-        tmp_file = Path(tmpdir).joinpath(f"./relatorio_{date_start}-{date_end}.pdf")
-        with closing(open(tmp_file, "wb")) as file:
-            file.write(pdf_bytes)
-        hook.send_email_smtp(
-            to=email,
-            subject=email_subject,
-            html_content=body,
-            files=[tmp_file],
-        )
+    pdf_file = Path(__file__).parent.joinpath("./pdf/pdf_template_participatory_text.pdf")
+    with closing(open(pdf_file, "wb")) as file:
+        file.write(pdf_bytes)
+
+
+    # hook = SmtpHook(SMPT_CONN_ID)
+    # hook = hook.get_conn()
+    # body = f"""<p>{email_body}</p>
+    #     <br>
+    #     <p>Data de inicio: {date_start}</p>
+    #     <p>Data final: {date_end}</p>
+    #     <br>
+    #     <p>Relatorio gerado apartir da pagina: {url}</p>"""
+
+    # with TemporaryDirectory("wb") as tmpdir:
+    #     tmp_file = Path(tmpdir).joinpath(f"./relatorio_{date_start}-{date_end}.pdf")
+    #     with closing(open(tmp_file, "wb")) as file:
+    #         file.write(pdf_bytes)
+    #     hook.send_email_smtp(
+    #         to=email,
+    #         subject=email_subject,
+    #         html_content=body,
+    #         files=[tmp_file],
+    #     )
 
     print("E-mail enviado com sucesso!")
 

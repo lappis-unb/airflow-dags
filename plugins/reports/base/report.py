@@ -7,6 +7,7 @@ from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 
 from plugins.reports.graphs.bp.graphs import BrasilParticipativoGraphs
+from plugins.reports.tables.bp.tables import BrasilParticipativoTables
 from plugins.reports.graphs.matomo.graphs import MatomoGraphs
 
 
@@ -64,7 +65,9 @@ class Report:
 
         self.bp_graphs = BrasilParticipativoGraphs()
         self.matomo_graphs = MatomoGraphs()
+        self.bp_tables = BrasilParticipativoTables(
 
+        )
     def create_report_pdf(self, **kwargs):
         """
         Generates a PDF report and returns the byte data.

@@ -109,3 +109,34 @@
       </div>
     </div>
 {% endmacro %}
+
+{% macro render_participatory_texts(participatory_texts) %}
+<div class="table-element">
+  <span>
+    <table>
+      <!-- Cabeçalhos da tabela -->
+      <thead>
+        <tr>
+          {% for header in participatory_texts.keys() %}
+          <th>{{ header }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <!-- Dados da tabela -->
+      <tbody>
+        {% set max_length = participatory_texts.values()|map('length')|max %}
+        {% for i in range(max_length) %}
+        <tr>
+          {% for key, values in participatory_texts.items() %}
+          {% if i < values|length %} <td>{{ values[i] }}</td>
+            {% else %}
+            <td></td> <!-- Célula vazia para listas mais curtas -->
+            {% endif %}
+            {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </span>
+</div>
+{% endmacro %}

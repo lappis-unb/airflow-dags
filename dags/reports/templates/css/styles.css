@@ -219,6 +219,8 @@ img {
 }
 .text-center{
   text-align: center;
+.mb-1{
+  margin-bottom: 1%;
 }
 .image-label {
   text-align: center;
@@ -278,4 +280,3 @@ p{text-align: justify;}
   justify-content: center;
 
 }
-
