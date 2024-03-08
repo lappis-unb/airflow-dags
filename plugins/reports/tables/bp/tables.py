@@ -152,7 +152,7 @@ class BrasilParticipativoTables:
         df_ranking = df_ranking.rename(
             columns={
                 "title": "Dispositivo",
-                "id": "ID",                
+                "id": "ID",
                 "total_comments": "N de comentários",
                 "proposal_total_votes": "N de votos",
             }
