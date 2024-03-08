@@ -121,7 +121,7 @@ class BrasilParticipativoTables:
         print(len(df_ranking.to_dict("records")))
         return df_ranking.to_dict("records")
 
-    @classmethod    
+    @classmethod
     def generate_participatory_texts_proposals(
         cls,
         proposals_ids: list,
@@ -152,7 +152,7 @@ class BrasilParticipativoTables:
         df_ranking = df_ranking.rename(
             columns={
                 "title": "Dispositivo",
-                "id": "ID",                
+                "id": "ID",
                 "total_comments": "N de comentários",
                 "proposal_total_votes": "N de votos",
             }
