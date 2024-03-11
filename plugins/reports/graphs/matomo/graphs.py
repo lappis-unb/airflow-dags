@@ -33,7 +33,7 @@ class MatomoGraphs(ReportGraphs):
 
     def generate_brasil_access_map(self, matomo_user_country_get_region_csv: str):
         access_data = pd.read_csv(StringIO(matomo_user_country_get_region_csv))
-        access_data = access_data[access_data["metadata_country"] == "BR"].rename(
+        access_data = access_data[access_data["metadata_country"] == "br"].rename(
             columns={"metadata_region": "UF"}
         )
 

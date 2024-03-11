@@ -231,9 +231,13 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
         def matomo_extractor(
             url: str, filter_start_date: str, filter_end_date: str, module: str, method: str
         ):
-            return _get_matomo_data(
-                url=url, start_date=filter_start_date, end_date=filter_end_date, module=module, method=method
-            )
+            try:
+                return _get_matomo_data(
+                    url=url, start_date=filter_start_date, end_date=filter_end_date, module=module, method=method
+                )
+            except Exception:
+                # TODO: Adicionar mensagem que não recebeu resposta do matomo.
+                return None
 
         return matomo_extractor(
             url,
