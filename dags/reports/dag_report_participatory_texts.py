@@ -12,10 +12,8 @@ from airflow.providers.smtp.hooks.smtp import SmtpHook
 
 from plugins.components.base_component.component import ComponentBaseHook
 from plugins.components.proposals import ProposalsHook
-from plugins.reports.participatory_texts_report import ParticipatoryTextsReport
-
 from plugins.faker.matomo_faker import MatomoFaker
-
+from plugins.reports.participatory_texts_report import ParticipatoryTextsReport
 
 BP_CONN_ID = "bp_conn_prod"
 SMPT_CONN_ID = "gmail_smtp"
@@ -31,6 +29,7 @@ def _get_participatory_texts_data_faker(component_id: int, start_date: str, end_
     with open(return_file) as file:
         return eval(file.read())
 
+
 def _get_matomo_data_faker(url: list, start_date: str, end_date: str, module: str, method: str):
     lookup_table = {
         "VisitsSummary.get": MatomoFaker.VisitsSummary.get,
@@ -39,7 +38,6 @@ def _get_matomo_data_faker(url: list, start_date: str, end_date: str, module: st
         "DevicesDetection.getType": MatomoFaker.DeviceDetection.get_type,
     }
     return lookup_table[f"{module}.{method}"]()
-
 
 
 def _get_participatory_texts_data(component_id: int, start_date: str, end_date: str):
@@ -111,6 +109,7 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
 
     return result
 
+
 def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, method: str):
     matomo_connection = BaseHook.get_connection("matomo_conn")
     matomo_url = matomo_connection.host
@@ -139,11 +138,15 @@ def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, met
         raise error
 
 
-def _generate_report(filtered_data, visits_summary,
+def _generate_report(
+    filtered_data,
+    visits_summary,
     visits_frequency,
     user_country,
-    devices_detection,start_date: str,
-    end_date: str,):
+    devices_detection,
+    start_date: str,
+    end_date: str,
+):
     report_name = filtered_data["participatory_space_name"]
     template_path = Path(__file__).parent.joinpath("./templates/template_participatory_texts.html")
     start_date = datetime.strptime(filtered_data["start_date"], "%Y-%m-%d")
@@ -151,10 +154,15 @@ def _generate_report(filtered_data, visits_summary,
 
     report_generator = ParticipatoryTextsReport(report_name, template_path, start_date, end_date)
 
-    return {"pdf_bytes": report_generator.create_report_pdf(report_data=filtered_data, matomo_visits_summary_csv=visits_summary,
-        matomo_visits_frequency_csv=visits_frequency,
-        matomo_user_country_csv=user_country,
-        matomo_devices_detection_csv=devices_detection,)}
+    return {
+        "pdf_bytes": report_generator.create_report_pdf(
+            report_data=filtered_data,
+            matomo_visits_summary_csv=visits_summary,
+            matomo_visits_frequency_csv=visits_frequency,
+            matomo_user_country_csv=user_country,
+            matomo_devices_detection_csv=devices_detection,
+        )
+    }
 
 
 def send_email_with_pdf(
@@ -233,7 +241,11 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
         ):
             try:
                 return _get_matomo_data(
-                    url=url, start_date=filter_start_date, end_date=filter_end_date, module=module, method=method
+                    url=url,
+                    start_date=filter_start_date,
+                    end_date=filter_end_date,
+                    module=module,
+                    method=method,
                 )
             except Exception:
                 # TODO: Adicionar mensagem que não recebeu resposta do matomo.
@@ -253,7 +265,7 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
     matomo_devices_detection_task = _get_matomo_extractor(
         get_components_url_task, "DevicesDetection", "getType"
     )
-    
+
     @task(multiple_outputs=True)
     def generate_data(
         filtered_data,
@@ -273,7 +285,7 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
             filter_start_date,
             filter_end_date,
         )
-    
+
     @task
     def send_report_email(
         email: str,
@@ -297,12 +309,15 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
 
     component_data = get_component_data(component_id, filter_start_date=start_date, filter_end_date=end_date)
 
-    report_data = generate_data(component_data, visits_summary=matomo_visits_summary_task,
+    report_data = generate_data(
+        component_data,
+        visits_summary=matomo_visits_summary_task,
         visits_frequency=matomo_visits_frequency_task,
         user_contry=matomo_user_contry_task,
         devices_detection=matomo_devices_detection_task,
         filter_start_date=start_date,
-        filter_end_date=end_date,)
+        filter_end_date=end_date,
+    )
 
     send_report_email(
         email=email,

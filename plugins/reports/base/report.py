@@ -66,9 +66,8 @@ class Report:
         self.bp_tables = BrasilParticipativoTables()
         self.bp_graphs = BrasilParticipativoGraphs()
         self.matomo_graphs = MatomoGraphs()
-        self.bp_tables = BrasilParticipativoTables(
+        self.bp_tables = BrasilParticipativoTables()
 
-        )
     def create_report_pdf(self, **kwargs):
         """
         Generates a PDF report and returns the byte data.

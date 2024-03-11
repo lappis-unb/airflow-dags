@@ -206,7 +206,11 @@ def generate_report_proposals(email: str, start_date: str, end_date: str, compon
         ):
             try:
                 return _get_matomo_data(
-                    url=url, start_date=filter_start_date, end_date=filter_end_date, module=module, method=method
+                    url=url,
+                    start_date=filter_start_date,
+                    end_date=filter_end_date,
+                    module=module,
+                    method=method,
                 )
             except Exception:
                 # TODO: Adicionar mensagem que não recebeu resposta do matomo.

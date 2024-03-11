@@ -119,27 +119,30 @@ class BrasilParticipativoGraphs(ReportGraphs):
         assert len(titles) == len(total_comments)
 
         # Criando o DataFrame
-        df = pd.DataFrame({
-            "title": titles,
-            "total_comments": total_comments
-        })
+        df = pd.DataFrame({"title": titles, "total_comments": total_comments})
 
         # Ordenando o DataFrame com base no total de comentários
-        df_sorted = df.sort_values(by='total_comments', ascending=False).head(10)
+        df_sorted = df.sort_values(by="total_comments", ascending=False).head(10)
 
         # Criando o gráfico de barras
-        fig = px.bar(df_sorted, y='title', x='total_comments', orientation='h',
-                    title='Dispositivos mais comentados', text='total_comments')
+        fig = px.bar(
+            df_sorted,
+            y="title",
+            x="total_comments",
+            orientation="h",
+            title="Dispositivos mais comentados",
+            text="total_comments",
+        )
 
         # Atualizando o layout do gráfico para combinar com o estilo desejado
         fig.update_layout(
-        yaxis={'categoryorder': 'total ascending'},
-        xaxis_title=None,
-        yaxis_title=None,
-        showlegend=False,
-        title_x=0.5,
-        uniformtext_minsize=8,
-        uniformtext_mode='hide'
+            yaxis={"categoryorder": "total ascending"},
+            xaxis_title=None,
+            yaxis_title=None,
+            showlegend=False,
+            title_x=0.5,
+            uniformtext_minsize=8,
+            uniformtext_mode="hide",
         )
 
         # Retornando o gráfico codificado em base64
