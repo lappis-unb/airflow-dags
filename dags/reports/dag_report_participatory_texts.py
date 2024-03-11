@@ -14,6 +14,9 @@ from plugins.components.base_component.component import ComponentBaseHook
 from plugins.components.proposals import ProposalsHook
 from plugins.reports.participatory_texts_report import ParticipatoryTextsReport
 
+from plugins.faker.matomo_faker import MatomoFaker
+
+
 BP_CONN_ID = "bp_conn_prod"
 SMPT_CONN_ID = "gmail_smtp"
 
@@ -27,6 +30,16 @@ def _get_participatory_texts_data_faker(component_id: int, start_date: str, end_
     return_file = Path(__file__).parent.joinpath("./mock/participatory_text.txt")
     with open(return_file) as file:
         return eval(file.read())
+
+def _get_matomo_data_faker(url: list, start_date: str, end_date: str, module: str, method: str):
+    lookup_table = {
+        "VisitsSummary.get": MatomoFaker.VisitsSummary.get,
+        "VisitFrequency.get": MatomoFaker.VisitFrequency.get,
+        "UserCountry.getRegion": MatomoFaker.UserCountry.get_region,
+        "DevicesDetection.getType": MatomoFaker.DeviceDetection.get_type,
+    }
+    return lookup_table[f"{module}.{method}"]()
+
 
 
 def _get_participatory_texts_data(component_id: int, start_date: str, end_date: str):
@@ -154,30 +167,25 @@ def send_email_with_pdf(
     url: str,
 ):
 
-    pdf_file = Path(__file__).parent.joinpath("./pdf/pdf_template_participatory_text.pdf")
-    with closing(open(pdf_file, "wb")) as file:
-        file.write(pdf_bytes)
+    hook = SmtpHook(SMPT_CONN_ID)
+    hook = hook.get_conn()
+    body = f"""<p>{email_body}</p>
+        <br>
+        <p>Data de inicio: {date_start}</p>
+        <p>Data final: {date_end}</p>
+        <br>
+        <p>Relatorio gerado apartir da pagina: {url}</p>"""
 
-
-    # hook = SmtpHook(SMPT_CONN_ID)
-    # hook = hook.get_conn()
-    # body = f"""<p>{email_body}</p>
-    #     <br>
-    #     <p>Data de inicio: {date_start}</p>
-    #     <p>Data final: {date_end}</p>
-    #     <br>
-    #     <p>Relatorio gerado apartir da pagina: {url}</p>"""
-
-    # with TemporaryDirectory("wb") as tmpdir:
-    #     tmp_file = Path(tmpdir).joinpath(f"./relatorio_{date_start}-{date_end}.pdf")
-    #     with closing(open(tmp_file, "wb")) as file:
-    #         file.write(pdf_bytes)
-    #     hook.send_email_smtp(
-    #         to=email,
-    #         subject=email_subject,
-    #         html_content=body,
-    #         files=[tmp_file],
-    #     )
+    with TemporaryDirectory("wb") as tmpdir:
+        tmp_file = Path(tmpdir).joinpath(f"./relatorio_{date_start}-{date_end}.pdf")
+        with closing(open(tmp_file, "wb")) as file:
+            file.write(pdf_bytes)
+        hook.send_email_smtp(
+            to=email,
+            subject=email_subject,
+            html_content=body,
+            files=[tmp_file],
+        )
 
     print("E-mail enviado com sucesso!")
 
@@ -214,7 +222,7 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
 
     @task
     def get_component_data(component_id: int, filter_start_date: str, filter_end_date: str):
-        return _get_participatory_texts_data_faker(component_id, filter_start_date, filter_end_date)
+        return _get_participatory_texts_data(component_id, filter_start_date, filter_end_date)
 
     get_components_url_task = get_components_url(component_id)
 

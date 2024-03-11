@@ -51,6 +51,7 @@ class ParticipatoryTextsReport(Report):
         participatory_texts_comments = [text['Nº de comentários'] for text in participatory_texts_file]
         participatory_texts_votes = [text['Nº de votos'] for text in participatory_texts_file]
 
+        
 
         return self.template.render(
             data={
@@ -71,7 +72,7 @@ class ParticipatoryTextsReport(Report):
                     "Nº de votos": participatory_texts_votes,
                 },
                 "top_dispositivos_graph": {
-                    "label": "Gráfico Diário",
+                    "label": "Dispositivos mais utilizados",
                     "file": top_dispositivos_graph,
                 },
                 "data_access": MatotmoTables.generate_table_access_data_overview(
@@ -79,11 +80,11 @@ class ParticipatoryTextsReport(Report):
                 ),
                 "device_graph": {
                     "label": "Detecção de Dispositivos",
-                    "file": self.matomo_graphs.generate_device_graph(matomo_devices_detection_csv),
+                    "file": self.matomo_graphs.try_build_graph(self.matomo_graphs.generate_device_graph, matomo_devices_detection_csv),
                 },
                 "map_graph": {
-                    "label": "Mapa de Acesso por Estado",
-                    "file": self.matomo_graphs.generate_brasil_access_map(matomo_user_country_csv),
+                    "label": "Acesso por Estado",
+                    "file": self.matomo_graphs.try_build_graph(self.matomo_graphs.generate_brasil_access_map, matomo_user_country_csv),
                 },
             }
         )
