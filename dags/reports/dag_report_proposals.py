@@ -288,7 +288,7 @@ def generate_report_proposals(email: str, start_date: str, end_date: str, compon
     send_report_email(
         email=email,
         pdf_bytes=generated_data["pdf_bytes"],
-        email_body="Olá, segue em anexo o relatorio gerado.",
+        email_body="Olá, segue em anexo o relatorio solicitado.",
         email_subject="Relatorio De Propostas",
         date_start=start_date,
         date_end=end_date,

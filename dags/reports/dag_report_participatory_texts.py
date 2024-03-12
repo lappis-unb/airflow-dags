@@ -95,8 +95,6 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
                 }
             )
 
-            print(result)
-
     result["total_unique_participants"] = len(
         set(
             chain.from_iterable(
@@ -195,7 +193,7 @@ def send_email_with_pdf(
             files=[tmp_file],
         )
 
-    print("E-mail enviado com sucesso!")
+    logging.info("E-mail enviado com sucesso!")
 
 
 @dag(
@@ -322,7 +320,7 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
     send_report_email(
         email=email,
         report_data=report_data,
-        email_body="Olá, segue em anexo o relatorio gerado.",
+        email_body="Olá, segue em anexo o relatorio solicitado.",
         email_subject="Relatorio De Texto Participativo",
         date_start=start_date,
         date_end=end_date,
