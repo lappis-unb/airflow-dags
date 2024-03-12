@@ -101,30 +101,35 @@ class BrasilParticipativoGraphs(ReportGraphs):
         return self.b64_encode_graph(fig)
 
     def generate_state_distribution_donut(self, df: pd.DataFrame, width: int = 704, height: int = 480):
-        state_counts = df["proposal_state"].value_counts().reset_index()
-        state_counts.columns = ["Estado", "Quantidade"]
+        state_rename = {"accepted": "Aceita", "withdrawn": "Retirada",
+                        "rejected": "Rejeitada", None: "Em avaliação"}
 
-        state_rename = {"accepted": "Aceita", "withdrawn": "Retirada", "rejected": "Rejeitada"}
+        df['proposal_state'] = df['proposal_state'].map(state_rename)
 
-        state_counts["Estado"] = state_counts["Estado"].map(state_rename)
+        state_counts = df['proposal_state'].value_counts().reset_index()
+        state_counts.columns = ['Estado', 'Quantidade']
+
+        color_map = {
+            "Aceita": "green",
+            "Rejeitada": "red",
+            "Retirada": "yellow",
+            "Em avaliação": "blue"
+        }
 
         fig = px.pie(
-            state_counts, names="Estado", values="Quantidade", hole=0.3, title="Situação das Propostas"
-        )
+            state_counts, names='Estado', values='Quantidade', hole=0.3,
+            title='Situação das Propostas', width=width, height=height, color='Estado',
+            color_discrete_map=color_map)
 
         return self.b64_encode_graph(fig)
 
     def generate_top_dispositivos(self, titles: list, total_comments: list):
-        # Certifique-se de que titles e total_comments têm o mesmo tamanho
         assert len(titles) == len(total_comments)
 
-        # Criando o DataFrame
         df = pd.DataFrame({"title": titles, "total_comments": total_comments})
 
-        # Ordenando o DataFrame com base no total de comentários
         df_sorted = df.sort_values(by="total_comments", ascending=False).head(10)
 
-        # Criando o gráfico de barras
         fig = px.bar(
             df_sorted,
             y="title",
@@ -134,7 +139,6 @@ class BrasilParticipativoGraphs(ReportGraphs):
             text="total_comments",
         )
 
-        # Atualizando o layout do gráfico para combinar com o estilo desejado
         fig.update_layout(
             yaxis={"categoryorder": "total ascending"},
             xaxis_title=None,
@@ -145,5 +149,4 @@ class BrasilParticipativoGraphs(ReportGraphs):
             uniformtext_mode="hide",
         )
 
-        # Retornando o gráfico codificado em base64
         return self.b64_encode_graph(fig)
