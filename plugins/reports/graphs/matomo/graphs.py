@@ -5,7 +5,7 @@ import geopandas as gpd
 import pandas as pd
 import plotly.express as px
 
-from plugins.faker.matomo_faker import MatomoFaker
+from plugins.reports.decorators import decople
 from plugins.reports.graphs.base.graphs import ReportGraphs
 
 
@@ -16,6 +16,7 @@ class MatomoGraphs(ReportGraphs):
         shapefile_path = Path(__file__).parent.joinpath("./geo/shapefile/estados_2010.shp")
         return gpd.read_file(shapefile_path)
 
+    @decople
     def generate_device_graph(self, matomo_device_get_type: str):
         df = pd.read_csv(StringIO(matomo_device_get_type))
         matomo_data_sorted = df.sort_values("nb_visits", ascending=False).head(3)
@@ -31,9 +32,10 @@ class MatomoGraphs(ReportGraphs):
         )
         return self.b64_encode_graph(fig)
 
+    @decople
     def generate_brasil_access_map(self, matomo_user_country_get_region_csv: str):
         access_data = pd.read_csv(StringIO(matomo_user_country_get_region_csv))
-        access_data = access_data[access_data["metadata_country"] == "BR"].rename(
+        access_data = access_data[access_data["metadata_country"] == "br"].rename(
             columns={"metadata_region": "UF"}
         )
 
@@ -58,11 +60,3 @@ class MatomoGraphs(ReportGraphs):
         )
 
         return self.b64_encode_graph(fig)
-
-
-def main():
-    print(MatomoGraphs().generate_brasil_access_map(MatomoFaker.UserCountry.get_region()))
-
-
-if __name__ == "__main__":
-    main()

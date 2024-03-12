@@ -42,3 +42,10 @@ class ReportGraphs:
             buffer.seek(0)
             graph = base64.b64encode(buffer.getvalue()).decode("utf-8")
         return graph
+
+    @staticmethod
+    def try_build_graph(graph_func, *args, **kwargs):
+        try:
+            return graph_func(*args, **kwargs)
+        except KeyError:
+            return None

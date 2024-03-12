@@ -204,9 +204,17 @@ def generate_report_proposals(email: str, start_date: str, end_date: str, compon
         def matomo_extractor(
             url: str, filter_start_date: str, filter_end_date: str, module: str, method: str
         ):
-            return _get_matomo_data(
-                url=url, start_date=filter_start_date, end_date=filter_end_date, module=module, method=method
-            )
+            try:
+                return _get_matomo_data(
+                    url=url,
+                    start_date=filter_start_date,
+                    end_date=filter_end_date,
+                    module=module,
+                    method=method,
+                )
+            except Exception:
+                # TODO: Adicionar mensagem que não recebeu resposta do matomo.
+                return None
 
         return matomo_extractor(
             url,
@@ -280,7 +288,7 @@ def generate_report_proposals(email: str, start_date: str, end_date: str, compon
     send_report_email(
         email=email,
         pdf_bytes=generated_data["pdf_bytes"],
-        email_body="Olá, segue em anexo o relatorio gerado.",
+        email_body="Olá, segue em anexo o relatorio solicitado.",
         email_subject="Relatorio De Propostas",
         date_start=start_date,
         date_end=end_date,

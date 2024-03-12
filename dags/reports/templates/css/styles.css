@@ -146,6 +146,7 @@ a{
 .cinza-escuro-4 h3 {
   font-size: 20pt;
   font-weight: bold;
+  line-height: 1.5;
 }
 .bold{
   font-weight: bold;
@@ -155,7 +156,10 @@ a{
 .document-date{
   font-weight:normal;
   font-size:12pt;
-  margin-top: 70%;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 10px;
 }
 
 #contents {
@@ -219,6 +223,8 @@ img {
 }
 .text-center{
   text-align: center;
+.mb-1{
+  margin-bottom: 1%;
 }
 .image-label {
   text-align: center;
@@ -278,4 +284,3 @@ p{text-align: justify;}
   justify-content: center;
 
 }
-
