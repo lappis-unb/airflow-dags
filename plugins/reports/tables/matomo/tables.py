@@ -8,8 +8,8 @@ from plugins.reports.decorators import decople
 class MatotmoTables:
     """Provides methods to generate specific tables for the matomo report."""
 
-    @decople
     @classmethod
+    @decople
     def generate_table_access_data_overview(
         cls, matomo_visits_summary_csv: str, matomo_visits_frequency_csv: str
     ):
