@@ -5,7 +5,6 @@ import geopandas as gpd
 import pandas as pd
 import plotly.express as px
 
-from plugins.faker.matomo_faker import MatomoFaker
 from plugins.reports.decorators import decople
 from plugins.reports.graphs.base.graphs import ReportGraphs
 

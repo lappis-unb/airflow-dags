@@ -12,4 +12,5 @@ def decople(func):
             logging.info("Exception caught: %s", e)
             # TODO: Fazer a notificação para avisar que o grafico não foi.
             return None
+
     return wrapper

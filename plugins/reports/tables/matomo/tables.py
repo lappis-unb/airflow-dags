@@ -35,4 +35,3 @@ class MatotmoTables:
         )
 
         return df_acess.to_dict("records")
-
