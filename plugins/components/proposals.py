@@ -24,7 +24,7 @@ class ProposalsHook(ComponentBaseHook):
 
     """
 
-    def get_component(self, **kwargs) -> dict[str, str]:
+    def get_component(self, **kwargs) -> "dict[str, str]":
         """
         Retrieves information about the Decidim component, proposals.
 
@@ -56,7 +56,8 @@ class ProposalsHook(ComponentBaseHook):
 
         result = None
         for page in self.graphql.run_graphql_paginated_query(
-            graphql_query, variables=variables, component_type=self.component_type
+            graphql_query,
+            variables=variables,
         ):
             if result is None:
                 result = page
@@ -193,3 +194,32 @@ class ProposalsHook(ComponentBaseHook):
         df.sort_values(by=["updatedAt"], inplace=True)
 
         return df
+
+    def get_comments(self, **kwargs):
+        start_date = kwargs.get("start_date")
+        query = (
+            Path(__file__)
+            .parent.joinpath("./queries/proposals/get_comments_from_proposals.gql")
+            .open()
+            .read()
+        )
+        comments_df = None
+        for page in self.graphql.run_graphql_paginated_query(query, variables={"id": self.component_id}):
+            proposals = page["data"]["component"]["proposals"]["nodes"]
+            for proposal in proposals:
+                if comments_df is not None:
+                    comments_df = pd.concat([comments_df, self.get_comments_df(
+                    proposal["comments"],
+                    proposal["id"],
+                    start_date_filter=start_date
+                )])
+                else:
+                    comments_df = self.get_comments_df(
+                    proposal["comments"],
+                    proposal["id"],
+                    start_date_filter=start_date
+                )
+        if isinstance(comments_df, pd.DataFrame):
+            return comments_df.to_dict('records')
+        else:
+            return None

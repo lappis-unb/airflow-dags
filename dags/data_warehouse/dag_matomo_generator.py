@@ -101,7 +101,9 @@ class MatomoDagGenerator:  # noqa: D101
             date_filter = execution_date.strftime("%Y-%m-%d")
         elif period == "week":
             # Calculate the last day of the previous week
-            last_day_of_week = execution_date - timedelta(days=execution_date.weekday() + 1)
+            last_day_of_week = execution_date - timedelta(
+                days=execution_date.weekday() + 1
+            )
             date_filter = last_day_of_week.strftime("%Y-%m-%d")
         elif period == "month":
             # Calculate the last day of the previous month
@@ -136,7 +138,9 @@ class MatomoDagGenerator:  # noqa: D101
         minio_bucket = minio_conn.schema
         s3_client = _create_s3_client()
         filename = _generate_s3_filename(module, method, period, execution_date)
-        s3_client.put_object(Body=data, Bucket=minio_bucket, Key=filename, ContentType="text/csv")
+        s3_client.put_object(
+            Body=data, Bucket=minio_bucket, Key=filename, ContentType="text/csv"
+        )
 
     def generate_extraction_dag(self, period: str, schedule: str):
         @dag(
@@ -159,15 +163,22 @@ class MatomoDagGenerator:  # noqa: D101
                 @task(task_id=f"extract_{method}_{module}")
                 def fetch_data(module_: str, method_: str, **context):
                     data = self.get_matomo_data(
-                        module_, method_, context["data_interval_start"], matomo_period[period]
+                        module_,
+                        method_,
+                        context["data_interval_start"],
+                        matomo_period[period],
                     )
-                    self.save_to_minio(data, module_, method_, period, context["data_interval_start"])
+                    self.save_to_minio(
+                        data, module_, method_, period, context["data_interval_start"]
+                    )
 
                 fetch_data(module, method)
 
         return matomo_data_extraction()
 
-    def _ingest_into_postgres(self, module: str, method: str, period: str, execution_date: datetime):
+    def _ingest_into_postgres(
+        self, module: str, method: str, period: str, execution_date: datetime
+    ):
         """
         Ingest data from a CSV file in MinIO into a PostgreSQL database.
 
@@ -229,7 +240,9 @@ class MatomoDagGenerator:  # noqa: D101
                 @task(task_id=f"ingest_{method}_{module}")
                 def ingest_data(module_: str, method_: str, **context):
                     """Task to ingest data from MinIO into a PostgreSQL database."""
-                    self._ingest_into_postgres(module_, method_, period, context["data_interval_start"])
+                    self._ingest_into_postgres(
+                        module_, method_, period, context["data_interval_start"]
+                    )
 
                 ingest_data(module, method)
 

@@ -24,6 +24,49 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Union
 
+# pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
+
+import logging
+import time
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import Union
+
+import pandas as pd
+from airflow.decorators import dag, task
+from airflow.models import Variable
+from airflow.operators.empty import EmptyOperator
+from airflow.providers.telegram.hooks.telegram import TelegramHook
+from telegram.error import RetryAfter
+from tenacity import RetryError
+
+# pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
+
+import asyncio
+import logging
+import re
+from contextlib import closing
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List
+
+import yaml
+from airflow.decorators import dag, task
+from airflow.models import Variable
+from airflow.providers.telegram.hooks.telegram import TelegramHook
+from unidecode import unidecode
+
+from plugins.graphql.hooks.graphql_hook import GraphQLHook
+from plugins.telegram.decorators import telegram_retry
+from plugins.yaml.config_reader import read_yaml_files_from_directory
+from airflow.hooks.base_hook import BaseHook
+
+import boto3
+from io import StringIO
+
+from plugins.decidim_hook import DecidimHook
+from plugins.yaml.config_reader import read_yaml_files_from_directory
+
 from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.operators.empty import EmptyOperator
@@ -57,12 +100,20 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
 
         self.telegram_conn_id = telegram_config["telegram_conn_id"]
         self.telegram_chat_id = telegram_config["telegram_group_id"]
-        self.telegram_topic_id = telegram_config["telegram_moderation_proposals_topic_id"]
+        self.telegram_topic_id = telegram_config[
+            "telegram_moderation_proposals_topic_id"
+        ]
 
         self.most_recent_msg_time = f"most_recent_msg_time_{process_id}"
-        self.start_date = start_date if isinstance(start_date, str) else start_date.strftime("%Y-%m-%d")
+        self.start_date = (
+            start_date
+            if isinstance(start_date, str)
+            else start_date.strftime("%Y-%m-%d")
+        )
         if end_date is not None:
-            self.end_date = end_date if isinstance(end_date, str) else end_date.strftime("%Y-%m-%d")
+            self.end_date = (
+                end_date if isinstance(end_date, str) else end_date.strftime("%Y-%m-%d")
+            )
         else:
             self.end_date = end_date
         # DAG
@@ -120,14 +171,16 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                 -------
                     dict: result of decidim API query on proposals.
                 """
-                component_dict = DecidimHook(DECIDIM_CONN_ID, component_id=component_id).get_component(
-                    update_date_filter=update_date
-                )
+                component_dict = DecidimHook(
+                    DECIDIM_CONN_ID, component_id=component_id
+                ).get_component(update_date_filter=update_date)
 
                 return component_dict
 
             @task(multiple_outputs=True)
-            def mount_telegram_messages(component_id, proposals_json: dict, update_date: datetime) -> dict:
+            def mount_telegram_messages(
+                component_id, proposals_json: dict, update_date: datetime
+            ) -> dict:
                 """Airflow task that parse proposals json, to mount telegram messages.
 
                 Args:
@@ -149,15 +202,16 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                     "max_datetime": None,
                 }
 
-                proposals_df = DecidimHook(DECIDIM_CONN_ID, component_id).component_json_to_dataframe(
-                    proposals_json
-                )
+                proposals_df = DecidimHook(
+                    DECIDIM_CONN_ID, component_id
+                ).component_json_to_dataframe(proposals_json)
                 if proposals_df.empty:
                     return result
 
                 # filter dataframe to only newer than update_date
                 proposals_df_new = proposals_df[
-                    (proposals_df["publishedAt"] > update_date) | (proposals_df["updatedAt"] > update_date)
+                    (proposals_df["publishedAt"] > update_date)
+                    | (proposals_df["updatedAt"] > update_date)
                 ].copy()
 
                 for _, row in proposals_df_new.iterrows():
@@ -251,7 +305,9 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
             # Instantiation
             update_date = get_update_date(start_date)
             proposals_json = get_proposals(component_id, update_date)
-            selected_proposals = mount_telegram_messages(component_id, proposals_json, update_date)
+            selected_proposals = mount_telegram_messages(
+                component_id, proposals_json, update_date
+            )
             check_if_new_proposals_task = check_if_new_proposals(selected_proposals)
 
             # Orchestration
@@ -265,8 +321,37 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
         return notify_new_proposals()
 
 
-config_directory = Path(__file__).parent.parent.joinpath("./processes_confs")
-for config in read_yaml_files_from_directory(config_directory):
+def _create_s3_client():
+    minio_conn = BaseHook.get_connection("minio_connection_id")
+    minio_url = minio_conn.host
+    minio_access_key = minio_conn.login
+    minio_secret = minio_conn.password
+
+    return boto3.client(
+        "s3",
+        endpoint_url=minio_url,
+        aws_access_key_id=minio_access_key,
+        aws_secret_access_key=minio_secret,
+        region_name="us-east-1",
+    )
+
+
+def _get_config_file(filename):
+    # filename = f"{component_id}.yaml"
+    s3_client = _create_s3_client()
+    minio_conn = BaseHook.get_connection("minio_connection_id")
+    obj = s3_client.get_object(Bucket=minio_conn.schema, Key=filename)
+
+    return yaml.safe_load(obj["Body"].read().decode("utf-8"))
+
+
+def _get_all_config_files():
+    s3_client = _create_s3_client()
+    for key in s3_client.list_objects(Bucket="proposals-config")["Contents"]:
+        yield _get_config_file(key["Key"])
+
+
+for config in _get_all_config_files():
     if not config["telegram_config"]["telegram_group_id"]:
         continue
     DecidimNotifierDAGGenerator().generate_dag(**config)

@@ -14,6 +14,30 @@ from airflow.providers.telegram.hooks.telegram import TelegramHook
 from telegram.error import RetryAfter
 from tenacity import RetryError
 
+# pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
+
+import asyncio
+import logging
+import re
+from contextlib import closing
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List
+
+import yaml
+from airflow.decorators import dag, task
+from airflow.models import Variable
+from airflow.providers.telegram.hooks.telegram import TelegramHook
+from unidecode import unidecode
+
+from plugins.graphql.hooks.graphql_hook import GraphQLHook
+from plugins.telegram.decorators import telegram_retry
+from plugins.yaml.config_reader import read_yaml_files_from_directory
+from airflow.hooks.base_hook import BaseHook
+
+import boto3
+from io import StringIO
+
 from plugins.decidim_hook import DecidimHook
 from plugins.yaml.config_reader import read_yaml_files_from_directory
 
@@ -34,14 +58,22 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
     ):
         self.telegram_conn_id = telegram_config["telegram_conn_id"]
         self.telegram_chat_id = telegram_config["telegram_group_id"]
-        self.telegram_topic_id = telegram_config["telegram_moderation_comments_topic_id"]
+        self.telegram_topic_id = telegram_config[
+            "telegram_moderation_comments_topic_id"
+        ]
 
         self.component_id = component_id
         self.process_id = process_id
         self.most_recent_msg_time = f"most_recent_comment_time_{process_id}"
-        self.start_date = start_date if isinstance(start_date, str) else start_date.strftime("%Y-%m-%d")
+        self.start_date = (
+            start_date
+            if isinstance(start_date, str)
+            else start_date.strftime("%Y-%m-%d")
+        )
         if end_date is not None:
-            self.end_date = end_date if isinstance(end_date, str) else end_date.strftime("%Y-%m-%d")
+            self.end_date = (
+                end_date if isinstance(end_date, str) else end_date.strftime("%Y-%m-%d")
+            )
         else:
             self.end_date = end_date
 
@@ -59,7 +91,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
         @dag(
             dag_id=f"notify_new_comments_{self.process_id}",
             default_args=default_args,
-            schedule="@hourly",  # every 1 hour
+            schedule="*/1 * * * *",  # every 1 hour
             catchup=False,
             description=__doc__,
             max_active_runs=1,
@@ -101,7 +133,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                     dict: result of decidim API query on comments.
                 """
                 msgs_dict = DecidimHook(DECIDIM_CONN_ID, component_id).get_comments(
-                    update_date_filter=update_date
+                    start_date=update_date
                 )
 
                 return msgs_dict
@@ -132,7 +164,9 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                 if df.empty:
                     return result
 
-                df["creation_date"] = pd.to_datetime(df["creation_date"], format="ISO8601")
+                df["creation_date"] = pd.to_datetime(
+                    df["creation_date"], format="ISO8601"
+                )
 
                 for _, row in df.iterrows():
                     comment_message = (
@@ -230,8 +264,37 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
         return notify_new_comments()
 
 
-config_directory = Path(__file__).parent.parent.joinpath("./processes_confs")
-for config in read_yaml_files_from_directory(config_directory):
+def _create_s3_client():
+    minio_conn = BaseHook.get_connection("minio_connection_id")
+    minio_url = minio_conn.host
+    minio_access_key = minio_conn.login
+    minio_secret = minio_conn.password
+
+    return boto3.client(
+        "s3",
+        endpoint_url=minio_url,
+        aws_access_key_id=minio_access_key,
+        aws_secret_access_key=minio_secret,
+        region_name="us-east-1",
+    )
+
+
+def _get_config_file(filename):
+    # filename = f"{component_id}.yaml"
+    s3_client = _create_s3_client()
+    minio_conn = BaseHook.get_connection("minio_connection_id")
+    obj = s3_client.get_object(Bucket=minio_conn.schema, Key=filename)
+
+    return yaml.safe_load(obj["Body"].read().decode("utf-8"))
+
+
+def _get_all_config_files():
+    s3_client = _create_s3_client()
+    for key in s3_client.list_objects(Bucket="proposals-config")["Contents"]:
+        yield _get_config_file(key["Key"])
+
+
+for config in _get_all_config_files():
     if not config["telegram_config"]["telegram_group_id"]:
         continue
     DecidimNotifierDAGGenerator().generate_dag(**config)

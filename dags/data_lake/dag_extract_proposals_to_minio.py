@@ -37,7 +37,9 @@ def save_to_minio(data, filename):
         aws_secret_access_key=minio_secret_access,
         region_name="us-east-1",
     )
-    s3_client.put_object(Body=data, Bucket=minio_bucket, Key=filename, ContentType="text/csv")
+    s3_client.put_object(
+        Body=data, Bucket=minio_bucket, Key=filename, ContentType="text/csv"
+    )
 
 
 COMPONENT_TYPE_TO_EXTRACT = "Proposals"
@@ -61,7 +63,9 @@ def decidim_data_extraction():
 
     @task
     def get_propolsas_components_ids():
-        all_components = GraphQLHook(DECIDIM_CONN_ID).get_components_ids_by_type(COMPONENT_TYPE_TO_EXTRACT)
+        all_components = GraphQLHook(DECIDIM_CONN_ID).get_components_ids_by_type(
+            COMPONENT_TYPE_TO_EXTRACT
+        )
         return all_components
 
     @task
@@ -104,11 +108,12 @@ def decidim_data_extraction():
 
             data_dict = proposal_hook.graphql.run_graphql_paginated_query(
                 proposals_query,
-                COMPONENT_TYPE_TO_EXTRACT,
                 variables=proposals_variables,
             )
 
-            json_data_list = [data["data"]["component"]["proposals"]["nodes"] for data in data_dict]
+            json_data_list = [
+                data["data"]["component"]["proposals"]["nodes"] for data in data_dict
+            ]
 
             data_normalized = pd.concat(
                 [pd.json_normalize(data) for data in json_data_list],
@@ -134,16 +139,22 @@ def decidim_data_extraction():
                 data_normalized["scope_id"] = " "
                 data_normalized["scope"] = " "
 
-            data_normalized["participatory.space.title"] = participatory_space["title"]["translation"]
+            data_normalized["participatory.space.title"] = participatory_space["title"][
+                "translation"
+            ]
 
             link_base = proposal_hook.get_component_link()
 
             ids = np.char.array(data_normalized["id"].values, unicode=True)
-            data_normalized = data_normalized.assign(link=(link_base + "/" + ids).astype(str))
+            data_normalized = data_normalized.assign(
+                link=(link_base + "/" + ids).astype(str)
+            )
             if final_data is None:
                 final_data = data_normalized
             elif isinstance(final_data, pd.DataFrame):
-                final_data = pd.concat([final_data, data_normalized]).reset_index(drop=True)
+                final_data = pd.concat([final_data, data_normalized]).reset_index(
+                    drop=True
+                )
 
         csv_string = final_data.sort_values(by="id").to_csv(index=False)
         save_to_minio(csv_string, f"{filter_date}-proposals.csv")
@@ -177,7 +188,9 @@ def decidim_data_extraction():
             if result_df is None:
                 result_df = pd.DataFrame.from_records(current_comments)
             else:
-                result_df = pd.concat([result_df, pd.DataFrame.from_records(current_comments)], axis=0)
+                result_df = pd.concat(
+                    [result_df, pd.DataFrame.from_records(current_comments)], axis=0
+                )
 
         if result_df is None:  # Faz sentido não guardar nenhum dado ?
             logging.warning("Nenhum comentario feito no dia %s.", filter_date)

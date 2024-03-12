@@ -9,7 +9,9 @@ from airflow.models.connection import Connection
 from telegram.error import RetryAfter, TimedOut
 from tenacity import RetryError
 
-from dags.processes_confs.dag_create_processes_config import __file__ as path_to_queries_in_processes_config
+from dags.processes_confs.dag_create_processes_config import (
+    __file__ as path_to_queries_in_processes_config,
+)
 from dags.processes_confs.dag_create_processes_config import (
     _create_telegram_topic,
     _get_participatory_space_mapped_to_query_file,
@@ -25,7 +27,9 @@ def time_sleep_mocker(mocker):
 
 @pytest.fixture
 def create_forum_topic_mocker(mocker) -> mock.MagicMock:
-    return mocker.patch("airflow.providers.telegram.hooks.telegram.TelegramHook.get_conn")
+    return mocker.patch(
+        "airflow.providers.telegram.hooks.telegram.TelegramHook.get_conn"
+    )
 
 
 @pytest.fixture
@@ -57,7 +61,9 @@ def mock_connection(mocker):
         ({"ENDDATE": 23}, r"(end|closing).*Date", "ENDDATE"),
     ],
 )
-def test_multi_keys_search(participatory_space: Dict[str, Any], date_key_pattern: str, expected: str):
+def test_multi_keys_search(
+    participatory_space: Dict[str, Any], date_key_pattern: str, expected: str
+):
     assert _search_date_key(participatory_space, date_key_pattern) == expected
 
 
@@ -74,7 +80,9 @@ def _create_test_cases():
         list: Uma lista de casos de teste, cada um representado por uma tupla
         contendo uma lista de participatory_spaces e um dicionário com os mapeamentos esperados.
     """
-    queries_folder = Path(path_to_queries_in_processes_config).parent.joinpath("./queries")
+    queries_folder = Path(path_to_queries_in_processes_config).parent.joinpath(
+        "./queries"
+    )
     test_case = [
         "participatory_processes",
         "initiatives",
@@ -101,7 +109,9 @@ def _create_test_cases():
 
 
 @pytest.mark.parametrize("participatory_spaces,expected", _create_test_cases())
-def test_success_get_participatory_space_mapped(participatory_spaces: List, expected: Dict[str, str]):
+def test_success_get_participatory_space_mapped(
+    participatory_spaces: List, expected: Dict[str, str]
+):
     """
     Testa o sucesso da função _obter_espaco_participativo_mapeado_para_arquivo_de_consulta.
 
@@ -114,7 +124,10 @@ def test_success_get_participatory_space_mapped(participatory_spaces: List, expe
     associadas aos espaços participativos fornecidos.
     """
     assert (
-        _get_participatory_space_mapped_to_query_file(participatory_spaces=participatory_spaces) == expected
+        _get_participatory_space_mapped_to_query_file(
+            participatory_spaces=participatory_spaces
+        )
+        == expected
     )
 
 
@@ -132,12 +145,20 @@ class TestingTelegram:  # noqa: D101
     ],
 )
 def test_success_create_telegram_topic(
-    mock_connection, create_forum_topic_mocker, time_sleep_mocker, mocker, chat_id, name, expected
+    mock_connection,
+    create_forum_topic_mocker,
+    time_sleep_mocker,
+    mocker,
+    chat_id,
+    name,
+    expected,
 ):
     async def get_expected_value():
         return TestingTelegram(expected)
 
-    create_forum_topic_mocker.return_value.create_forum_topic.return_value = get_expected_value()
+    create_forum_topic_mocker.return_value.create_forum_topic.return_value = (
+        get_expected_value()
+    )
     assert _create_telegram_topic(chat_id, name) == expected
     assert create_forum_topic_mocker.call_count == 2
 
@@ -152,7 +173,12 @@ def test_success_create_telegram_topic(
     ],
 )
 def test_fail_create_telegram_topic(
-    mock_connection, create_forum_topic_mocker, time_sleep_mocker, chat_id, name, expected
+    mock_connection,
+    create_forum_topic_mocker,
+    time_sleep_mocker,
+    chat_id,
+    name,
+    expected,
 ):
     with pytest.raises(TypeError):
         assert _create_telegram_topic(chat_id, name) == expected
@@ -183,7 +209,13 @@ def name_test_retries(value):
     ids=lambda x: name_test_retries(x),
 )
 def test_retry_success_create_telegram_topic(
-    mock_connection, time_sleep_mocker, create_forum_topic_mocker, chat_id, name, sequence, expected
+    mock_connection,
+    time_sleep_mocker,
+    create_forum_topic_mocker,
+    chat_id,
+    name,
+    sequence,
+    expected,
 ):
     async def get_expected_value():
         return TestingTelegram(expected)
@@ -203,7 +235,12 @@ def test_retry_success_create_telegram_topic(
     [(-15156165165161, "Test Fail Retries", 45)],
 )
 def test_retry_fail_create_telegram_topic(
-    mock_connection, create_forum_topic_mocker, time_sleep_mocker, chat_id, name, expected
+    mock_connection,
+    create_forum_topic_mocker,
+    time_sleep_mocker,
+    chat_id,
+    name,
+    expected,
 ):
     possible_raises = [RetryAfter(30), RetryError(False), TimedOut]
     sequence = random.choices(possible_raises, k=10)

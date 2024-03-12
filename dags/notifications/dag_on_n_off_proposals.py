@@ -49,12 +49,20 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
 
         self.telegram_conn_id = telegram_config["telegram_conn_id"]
         self.telegram_chat_id = telegram_config["telegram_group_id"]
-        self.telegram_topic_id = telegram_config["telegram_moderation_proposals_topic_id"]
+        self.telegram_topic_id = telegram_config[
+            "telegram_moderation_proposals_topic_id"
+        ]
 
         self.most_recent_msg_time = f"most_recent_msg_time_{process_id}"
-        self.start_date = start_date if isinstance(start_date, str) else start_date.strftime("%Y-%m-%d")
+        self.start_date = (
+            start_date
+            if isinstance(start_date, str)
+            else start_date.strftime("%Y-%m-%d")
+        )
         if end_date is not None:
-            self.end_date = end_date if isinstance(end_date, str) else end_date.strftime("%Y-%m-%d")
+            self.end_date = (
+                end_date if isinstance(end_date, str) else end_date.strftime("%Y-%m-%d")
+            )
         else:
             self.end_date = end_date
 
@@ -151,7 +159,9 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
 
                 return_component_page = session.get(f"{self.decidim_url}")
                 if return_component_page.status_code != 200:
-                    raise HTTPError(f"Status code is {return_component_page.status_code} and not 200.")
+                    raise HTTPError(
+                        f"Status code is {return_component_page.status_code} and not 200."
+                    )
 
                 b = BeautifulSoup(return_component_page.text, "html.parser")
                 html_form = b.find(class_=PAGE_FORM_CLASS)
@@ -196,7 +206,9 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                     }
                 )
 
-            set_proposals_availability(proposals_status) >> send_telegram(proposals_status)
+            set_proposals_availability(proposals_status) >> send_telegram(
+                proposals_status
+            )
 
         return notify_on_n_off_proposals
 

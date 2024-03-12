@@ -60,7 +60,7 @@ class ComponentBaseHook:
         inflect_engine = inflect.engine()
         link_base = urljoin(
             self.graphql.api_url,
-            f"{inflect_engine.plural(participatory_space['type_for_links'])}/{participatory_space['slug']}/f/{self.component_id}/",
+            f"{inflect_engine.plural(participatory_space['type_for_links'])}/{participatory_space['slug']}/f/{self.component_id}/{self.component_type.lower()}",
         )
         del inflect_engine
         return link_base
@@ -80,6 +80,7 @@ class ComponentBaseHook:
                         }}
                     }}
                     """
+        logging.info("Getting component type for component id %s.", self.component_id)
         response = self.graphql.run_graphql_query(graphql_query=graphql_query)
         assert response["data"]["component"] is not None, response
         return response["data"]["component"]["__typename"]
@@ -136,9 +137,13 @@ class ComponentBaseHook:
         }}
         """
         response = self.graphql.run_graphql_query(graphql_query)
-        participatory_space: dict[str, str] = response["data"]["component"]["participatorySpace"]
+        participatory_space: dict[str, str] = response["data"]["component"][
+            "participatorySpace"
+        ]
 
-        participatory_space["type"] = self._lower_first_letter(participatory_space["type"].split("::")[-1])
+        participatory_space["type"] = self._lower_first_letter(
+            participatory_space["type"].split("::")[-1]
+        )
 
         return participatory_space
 
@@ -170,7 +175,9 @@ class ComponentBaseHook:
             participatory_space["type"] = self._lower_first_letter(
                 participatory_space["type"].split("::")[-1]
             )
-            participatory_space["type_for_links"] = underscore(participatory_space["type"]).split("_")[-1]
+            participatory_space["type_for_links"] = underscore(
+                participatory_space["type"]
+            ).split("_")[-1]
         except KeyError as error:
             logging.error(response)
             raise error
@@ -194,7 +201,9 @@ class ComponentBaseHook:
         """
         return {
             "root_component_id": root_component_id,
-            "parent_comment_id": (parent_comment_id if parent_comment_id else comment["id"]),
+            "parent_comment_id": (
+                parent_comment_id if parent_comment_id else comment["id"]
+            ),
             "body": comment["body"],
             "author_id": comment["author"]["id"],
             "author_name": comment["author"]["name"],
@@ -203,7 +212,9 @@ class ComponentBaseHook:
             "update_date": comment["updatedAt"],
         }
 
-    def _build_comment_thread(self, parent_comment: dict[str], root_component_id: int, thread_level: int = 1):
+    def _build_comment_thread(
+        self, parent_comment: dict[str], root_component_id: int, thread_level: int = 1
+    ):
         """
         Constrói uma thread de comentários recursivamente.
 
@@ -214,13 +225,17 @@ class ComponentBaseHook:
             thread_level (int): O nível da thread de comentários.
         """
         graphql_query = self.graphql.get_graphql_query_from_file(
-            Path(__file__).parent.joinpath("../../gql/commentable/get_comments_by_commentable_id.gql")
+            Path(__file__).parent.joinpath(
+                "../../gql/commentable/get_comments_by_commentable_id.gql"
+            )
         )
         query_params = {"id": str(parent_comment["id"])}
         result = self.graphql.run_graphql_query(graphql_query, variables=query_params)
         commentable = result["data"]["commentable"]
         if thread_level == 1:  # Nível raiz
-            yield self._format_comment(parent_comment, root_component_id=root_component_id)
+            yield self._format_comment(
+                parent_comment, root_component_id=root_component_id
+            )
         for comment in commentable["comments"]:
             yield self._format_comment(
                 comment,
@@ -233,7 +248,7 @@ class ComponentBaseHook:
                 root_component_id=root_component_id,
             )
 
-    def get_comments_threads(self, root_comments: list[dict[str]], root_component_id):
+    def get_comments_threads(self, root_comments: "list[dict[str]]", root_component_id):
         """
         Recupera threads de comentários para uma lista de comentários raiz.
 
@@ -247,30 +262,41 @@ class ComponentBaseHook:
             dict: Um comentário na thread.
         """
         for comment in root_comments:
-            yield from self._build_comment_thread(comment, root_component_id=root_component_id)
+            yield from self._build_comment_thread(
+                comment, root_component_id=root_component_id
+            )
 
     def get_comments_df(
         self,
-        root_comments: list[dict[str]],
+        root_comments: "list[dict[str]]",
         root_component_id,
-        start_date_filter: Optional[datetime],
-        end_date_filter: Optional[datetime],
+        start_date_filter: Optional[datetime] = None,
+        end_date_filter: Optional[datetime] = None,
     ):
 
-        comments = self.get_comments_threads(root_comments=root_comments, root_component_id=root_component_id)
+        comments = self.get_comments_threads(
+            root_comments=root_comments, root_component_id=root_component_id
+        )
         df = pd.DataFrame(comments)
         logging.info("Dataframe shape of comments: %s", df.shape)
         if df.empty:
             logging.warning(
-                "Dataframe empty. %s", [root_comments, root_component_id, start_date_filter, end_date_filter]
+                "Dataframe empty. %s",
+                [root_comments, root_component_id, start_date_filter, end_date_filter],
             )
             return df
 
-        df["creation_date"] = pd.to_datetime(df["creation_date"], utc=True, format="ISO8601")
-        df["update_date"] = pd.to_datetime(df["update_date"], utc=True, format="ISO8601")
+        df["creation_date"] = pd.to_datetime(
+            df["creation_date"], utc=True, format="ISO8601"
+        )
+        df["update_date"] = pd.to_datetime(
+            df["update_date"], utc=True, format="ISO8601"
+        )
 
         df["date_filter"] = df[["creation_date", "update_date"]].max(axis=1)
-        df["date_filter"] = pd.to_datetime(df["date_filter"], utc=True, format="ISO8601")
+        df["date_filter"] = pd.to_datetime(
+            df["date_filter"], utc=True, format="ISO8601"
+        )
 
         if start_date_filter:
             df = df[df["date_filter"] >= pd.to_datetime(start_date_filter, utc=True)]
@@ -278,8 +304,10 @@ class ComponentBaseHook:
             df = df[df["date_filter"] <= pd.to_datetime(end_date_filter, utc=True)]
 
         #! TODO: Corrigir o time zone para GMT-3 ao invez de UTC
-        df["date_filter"] = df["date_filter"].apply(lambda date: date.strftime("%d/%m/%Y %H:%M"))
-        link_base = self.get_component_link()
+        df["date_filter"] = df["date_filter"].apply(
+            lambda date: date.strftime("%d/%m/%Y %H:%M")
+        )
+        link_base = self.get_component_link().rstrip("/")
 
         ids = np.char.array(df["root_component_id"].values, unicode=True)
         df = df.assign(link=(link_base + "/" + ids).astype(str))
@@ -287,7 +315,7 @@ class ComponentBaseHook:
 
         return df
 
-    def get_component(self, **kwargs) -> dict[str, str]:
+    def get_component(self, **kwargs) -> "dict[str, str]":
         """
         Recupera informações sobre o componente.
 
@@ -306,6 +334,8 @@ class ComponentBaseHook:
             NotImplementedError: Este método deve ser implementado em classes derivadas.
         """
         raise NotImplementedError
+
+        return self.get_comments_df()
 
     def component_json_to_dataframe(self, json_component, **kwargs):
         """
