@@ -55,10 +55,7 @@ class ParticipatoryTextsReport(Report):
         for text in top_texts:
             text["comments"] = sorted(text["comments"], key=lambda x: x["date_filter"], reverse=True)[:3]
 
-        comments_data = [{
-            "title": text["title"],
-            "comments": text["comments"]
-        } for text in top_texts]
+        comments_data = [{"title": text["title"], "comments": text["comments"]} for text in top_texts]
 
         return self.template.render(
             data={
@@ -97,8 +94,6 @@ class ParticipatoryTextsReport(Report):
                         self.matomo_graphs.generate_brasil_access_map, matomo_user_country_csv
                     ),
                 },
-                "comments": {
-                    "content": comments_data
-                }
+                "comments": {"content": comments_data},
             }
         )

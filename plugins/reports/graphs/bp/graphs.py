@@ -101,25 +101,31 @@ class BrasilParticipativoGraphs(ReportGraphs):
         return self.b64_encode_graph(fig)
 
     def generate_state_distribution_donut(self, df: pd.DataFrame, width: int = 704, height: int = 480):
-        state_rename = {"accepted": "Aceita", "withdrawn": "Retirada",
-                        "rejected": "Rejeitada", None: "Em avaliação"}
-
-        df['proposal_state'] = df['proposal_state'].map(state_rename)
-
-        state_counts = df['proposal_state'].value_counts().reset_index()
-        state_counts.columns = ['Estado', 'Quantidade']
-
-        color_map = {
-            "Aceita": "green",
-            "Rejeitada": "red",
-            "Retirada": "yellow",
-            "Em avaliação": "blue"
+        state_rename = {
+            "accepted": "Aceita",
+            "withdrawn": "Retirada",
+            "rejected": "Rejeitada",
+            None: "Em avaliação",
         }
 
+        df["proposal_state"] = df["proposal_state"].map(state_rename)
+
+        state_counts = df["proposal_state"].value_counts().reset_index()
+        state_counts.columns = ["Estado", "Quantidade"]
+
+        color_map = {"Aceita": "green", "Rejeitada": "red", "Retirada": "yellow", "Em avaliação": "blue"}
+
         fig = px.pie(
-            state_counts, names='Estado', values='Quantidade', hole=0.3,
-            title='Situação das Propostas', width=width, height=height, color='Estado',
-            color_discrete_map=color_map)
+            state_counts,
+            names="Estado",
+            values="Quantidade",
+            hole=0.3,
+            title="Situação das Propostas",
+            width=width,
+            height=height,
+            color="Estado",
+            color_discrete_map=color_map,
+        )
 
         return self.b64_encode_graph(fig)
 
