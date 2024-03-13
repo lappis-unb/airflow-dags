@@ -123,7 +123,7 @@ class BrasilParticipativoGraphs(ReportGraphs):
 
         return self.b64_encode_graph(fig)
 
-    def generate_top_dispositivos(self, titles: list, total_comments: list):
+    def generate_top_devices(self, titles: list, total_comments: list):
         assert len(titles) == len(total_comments)
 
         df = pd.DataFrame({"title": titles, "total_comments": total_comments})

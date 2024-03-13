@@ -19,7 +19,7 @@ class MatotmoTables:
 
         df_acess = pd.concat(
             [
-                df_summary[["nb_visits", "bounce_count"]],
+                df_summary[["nb_visits", "bounce_rate"]],
                 df_frequency[["nb_visits_new", "nb_visits_returning"]],
             ],
             axis=1,
@@ -28,7 +28,7 @@ class MatotmoTables:
         df_acess = df_acess.rename(
             columns={
                 "nb_visits": "Visitas",
-                "bounce_count": "Taxa de Rejeição",
+                "bounce_rate": "Taxa de Rejeição",
                 "nb_visits_new": "Visitas Novas",
                 "nb_visits_returning": "Visitas de Retorno",
             }

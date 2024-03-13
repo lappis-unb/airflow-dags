@@ -19,6 +19,7 @@ class ProposalsReport(Report):
         general_data = BrasilParticipativoTables.generate_table_proposals_overview(
             votes_per_proposal=bp_df["proposal_total_votes"],
             total_comments_per_proposal=bp_df["proposal_total_comments"],
+            proposal_states=bp_df["proposal_state"],
         )
 
         return self.template.render(
@@ -36,6 +37,7 @@ class ProposalsReport(Report):
                 "general_data": BrasilParticipativoTables.generate_table_proposals_overview(
                     votes_per_proposal=bp_df["proposal_total_votes"],
                     total_comments_per_proposal=bp_df["proposal_total_comments"],
+                    proposal_states=bp_df["proposal_state"]
                 ),
                 "daily_graph": {
                     "label": "Gráfico Diário",
