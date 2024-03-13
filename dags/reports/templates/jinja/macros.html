@@ -169,3 +169,21 @@
   </span>
 </div>
 {% endmacro %}
+
+{% macro render_comments_section(comments) %}
+<div class="comments-section">
+    {% for proposal in comments %}
+        <div class="proposal">
+            <h2>{{ proposal.title }}</h2>
+            {% for comment in proposal.comments %}
+                <div class="comment">
+                    <p>
+                        <strong>{{ comment.author_name }} ({{ comment.date_filter }}):</strong>
+                        {{ comment.body }}
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>
+{% endmacro %}
