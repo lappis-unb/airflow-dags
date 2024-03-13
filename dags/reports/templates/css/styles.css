@@ -245,7 +245,11 @@ img {
   height: 400px;
 }
 
-p{text-align: justify;}
+p {text-align: justify;}
+
+.paragraph {
+  text-align: justify;
+}
 
 .flex{
   display: flex;

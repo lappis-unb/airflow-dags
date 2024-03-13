@@ -1,3 +1,5 @@
+import logging
+
 from plugins.components.base_component.component import ComponentBaseHook
 from plugins.components.proposals import ProposalsHook
 
@@ -37,7 +39,7 @@ class DecidimHook:
 
     def __new__(cls, conn_id: str, component_id: int):
         component_type = ComponentBaseHook(conn_id, component_id).get_component_type()
-
+        logging.info("Current component type: %s", component_type)
         if component_type == "Proposals":
             return ProposalsHook(conn_id, component_id)
         else:

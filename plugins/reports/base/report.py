@@ -51,7 +51,11 @@ class Report:
     """
 
     def __init__(
-        self, report_name: str, template_path: Union[str, Path], start_date: datetime, end_date: datetime
+        self,
+        report_name: str,
+        template_path: Union[str, Path],
+        start_date: datetime,
+        end_date: datetime,
     ) -> None:
         template_path = Path(template_path)
         self.css_file = template_path.parent.joinpath("./css/styles.css")

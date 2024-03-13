@@ -104,7 +104,6 @@ def decidim_data_extraction():
 
             data_dict = proposal_hook.graphql.run_graphql_paginated_query(
                 proposals_query,
-                COMPONENT_TYPE_TO_EXTRACT,
                 variables=proposals_variables,
             )
 

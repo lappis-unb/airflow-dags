@@ -64,7 +64,10 @@ def setup_invalid_yaml():
 
 def test_success_read_yaml_from_tree(setup_yaml_tests):
     for expected, return_from_func in zip(
-        sorted(read_yaml_files_from_directory(setup_yaml_tests["folder"]), key=lambda x: x["id"]),
+        sorted(
+            read_yaml_files_from_directory(setup_yaml_tests["folder"]),
+            key=lambda x: x["id"],
+        ),
         sorted(setup_yaml_tests["expected"], key=lambda x: x["id"]),
     ):
         assert expected == return_from_func

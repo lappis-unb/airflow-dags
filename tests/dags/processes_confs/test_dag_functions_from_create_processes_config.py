@@ -9,7 +9,9 @@ from airflow.models.connection import Connection
 from telegram.error import RetryAfter, TimedOut
 from tenacity import RetryError
 
-from dags.processes_confs.dag_create_processes_config import __file__ as path_to_queries_in_processes_config
+from dags.processes_confs.dag_create_processes_config import (
+    __file__ as path_to_queries_in_processes_config,
+)
 from dags.processes_confs.dag_create_processes_config import (
     _create_telegram_topic,
     _get_participatory_space_mapped_to_query_file,
@@ -132,7 +134,13 @@ class TestingTelegram:  # noqa: D101
     ],
 )
 def test_success_create_telegram_topic(
-    mock_connection, create_forum_topic_mocker, time_sleep_mocker, mocker, chat_id, name, expected
+    mock_connection,
+    create_forum_topic_mocker,
+    time_sleep_mocker,
+    mocker,
+    chat_id,
+    name,
+    expected,
 ):
     async def get_expected_value():
         return TestingTelegram(expected)
@@ -152,7 +160,12 @@ def test_success_create_telegram_topic(
     ],
 )
 def test_fail_create_telegram_topic(
-    mock_connection, create_forum_topic_mocker, time_sleep_mocker, chat_id, name, expected
+    mock_connection,
+    create_forum_topic_mocker,
+    time_sleep_mocker,
+    chat_id,
+    name,
+    expected,
 ):
     with pytest.raises(TypeError):
         assert _create_telegram_topic(chat_id, name) == expected
@@ -183,7 +196,13 @@ def name_test_retries(value):
     ids=lambda x: name_test_retries(x),
 )
 def test_retry_success_create_telegram_topic(
-    mock_connection, time_sleep_mocker, create_forum_topic_mocker, chat_id, name, sequence, expected
+    mock_connection,
+    time_sleep_mocker,
+    create_forum_topic_mocker,
+    chat_id,
+    name,
+    sequence,
+    expected,
 ):
     async def get_expected_value():
         return TestingTelegram(expected)
@@ -203,7 +222,12 @@ def test_retry_success_create_telegram_topic(
     [(-15156165165161, "Test Fail Retries", 45)],
 )
 def test_retry_fail_create_telegram_topic(
-    mock_connection, create_forum_topic_mocker, time_sleep_mocker, chat_id, name, expected
+    mock_connection,
+    create_forum_topic_mocker,
+    time_sleep_mocker,
+    chat_id,
+    name,
+    expected,
 ):
     possible_raises = [RetryAfter(30), RetryError(False), TimedOut]
     sequence = random.choices(possible_raises, k=10)
