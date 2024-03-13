@@ -30,7 +30,8 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     logging.info(query)
 
     query_result = GraphQLHook(BP_CONN_ID).run_graphql_paginated_query(
-        query, variables={"id": component_id, "start_date": start_date, "end_date": end_date}
+        query,
+        variables={"id": component_id, "start_date": start_date, "end_date": end_date},
     )
 
     result_proposals_data = []
@@ -202,7 +203,11 @@ def generate_report_proposals(email: str, start_date: str, end_date: str, compon
     def _get_matomo_extractor(url: str, matomo_module: str, matomo_method: str):
         @task(task_id=f"get_matomo_{matomo_module}_{matomo_method}")
         def matomo_extractor(
-            url: str, filter_start_date: str, filter_end_date: str, module: str, method: str
+            url: str,
+            filter_start_date: str,
+            filter_end_date: str,
+            module: str,
+            method: str,
         ):
             try:
                 return _get_matomo_data(

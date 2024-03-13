@@ -56,7 +56,8 @@ class MatomoGraphs(ReportGraphs):
         # Customize the layout
         fig.update_geos(fitbounds="locations", visible=False)
         fig.update_layout(
-            title=dict(x=0.5, y=0.95, xanchor="center", yanchor="top"), margin=dict(l=0, r=0, b=0, t=0)
+            title=dict(x=0.5, y=0.95, xanchor="center", yanchor="top"),
+            margin=dict(l=0, r=0, b=0, t=0),
         )
 
         return self.b64_encode_graph(fig)

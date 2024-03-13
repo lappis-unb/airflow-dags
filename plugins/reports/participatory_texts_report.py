@@ -42,7 +42,10 @@ class ParticipatoryTextsReport(Report):
             titles=proposals_titles, total_comments=total_comments_per_proposal
         )
         participatory_texts_file = self.bp_tables.generate_participatory_texts_proposals(
-            proposals_ids, proposals_titles, votes_per_proposal, total_comments_per_proposal
+            proposals_ids,
+            proposals_titles,
+            votes_per_proposal,
+            total_comments_per_proposal,
         )
 
         participatory_texts_ids = [text["ID"] for text in participatory_texts_file]
@@ -59,7 +62,8 @@ class ParticipatoryTextsReport(Report):
                 "participation_graph": {
                     "label": "Gráfico De Participação",
                     "file": self.bp_graphs.generate_participation_graph(
-                        report_data["total_comments"], report_data["total_unique_participants"]
+                        report_data["total_comments"],
+                        report_data["total_unique_participants"],
                     ),
                 },
                 "participatory_texts": {
@@ -78,13 +82,15 @@ class ParticipatoryTextsReport(Report):
                 "device_graph": {
                     "label": "Detecção de Dispositivos",
                     "file": self.matomo_graphs.try_build_graph(
-                        self.matomo_graphs.generate_device_graph, matomo_devices_detection_csv
+                        self.matomo_graphs.generate_device_graph,
+                        matomo_devices_detection_csv,
                     ),
                 },
                 "map_graph": {
                     "label": "Acesso por Estado",
                     "file": self.matomo_graphs.try_build_graph(
-                        self.matomo_graphs.generate_brasil_access_map, matomo_user_country_csv
+                        self.matomo_graphs.generate_brasil_access_map,
+                        matomo_user_country_csv,
                     ),
                 },
             }

@@ -119,7 +119,9 @@ class GraphQLHook(BaseHook):
             return file.read()
 
     def run_graphql_query(
-        self, graphql_query: Union[str, Path], variables: Optional[Dict[str, Any]] = None
+        self,
+        graphql_query: Union[str, Path],
+        variables: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, str]:
         """
         Executes a GraphQL query and returns the JSON response.

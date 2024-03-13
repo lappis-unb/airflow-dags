@@ -88,7 +88,7 @@ def _filter_out_components_urls(*participatory_spaces):
     matomo_segmentations = pd.read_csv(StringIO(response.text))
 
     matomo_segmentations["bp_component_id"] = matomo_segmentations["definition"].apply(
-        lambda segmentation: segmentation.split("/")[-2] if len(segmentation.split("/")) > 1 else None
+        lambda segmentation: (segmentation.split("/")[-2] if len(segmentation.split("/")) > 1 else None)
     )
 
     return set(chain.from_iterable(participatory_spaces)).difference(

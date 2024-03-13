@@ -50,7 +50,8 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
 
     proposals_hook = ProposalsHook(BP_CONN_ID, component_id)
     query_result = proposals_hook.graphql.run_graphql_paginated_query(
-        query, variables={"id": component_id, "start_date": start_date, "end_date": end_date}
+        query,
+        variables={"id": component_id, "start_date": start_date, "end_date": end_date},
     )
 
     participatory_space = proposals_hook.get_participatory_space()
@@ -235,7 +236,11 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
     def _get_matomo_extractor(url: str, matomo_module: str, matomo_method: str):
         @task(task_id=f"get_matomo_{matomo_module}_{matomo_method}")
         def matomo_extractor(
-            url: str, filter_start_date: str, filter_end_date: str, module: str, method: str
+            url: str,
+            filter_start_date: str,
+            filter_end_date: str,
+            module: str,
+            method: str,
         ):
             try:
                 return _get_matomo_data(

@@ -165,7 +165,10 @@ def mock_run_graphql_query(mocker):
 
 def test_run_graphql_paginated_query_single_page(mock_run_graphql_query, mocker, mock_graphql_connection):
     # Arrange
-    mock_response = {"data": {"result": "success"}, "pageInfo": {"hasNextPage": False, "endCursor": "null"}}
+    mock_response = {
+        "data": {"result": "success"},
+        "pageInfo": {"hasNextPage": False, "endCursor": "null"},
+    }
     mock_run_graphql_query.return_value = mock_response
 
     your_instance = GraphQLHook("graph_ql_conn")
@@ -203,7 +206,10 @@ def test_run_graphql_paginated_query_multiple_pages(mock_run_graphql_query, mock
 
 def test_run_graphql_paginated_query_with_variables(mock_run_graphql_query, mocker, mock_graphql_connection):
     # Arrange
-    mock_response = {"data": {"result": "success"}, "pageInfo": {"hasNextPage": False, "endCursor": "null"}}
+    mock_response = {
+        "data": {"result": "success"},
+        "pageInfo": {"hasNextPage": False, "endCursor": "null"},
+    }
     mock_run_graphql_query.return_value = mock_response
 
     your_instance = GraphQLHook("graph_ql_conn")
