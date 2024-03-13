@@ -7,9 +7,7 @@ from plugins.decidim_hook import ComponentNotSupportedError, DecidimHook
 
 @pytest.fixture
 def mock_get_component_type(mocker):
-    return mocker.patch(
-        "plugins.components.base_component.component.ComponentBaseHook.get_component_type"
-    )
+    return mocker.patch("plugins.components.base_component.component.ComponentBaseHook.get_component_type")
 
 
 @pytest.fixture

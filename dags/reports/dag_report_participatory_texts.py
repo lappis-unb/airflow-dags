@@ -24,17 +24,13 @@ def _get_components_url(component_id: int):
     return component_hook.get_component_link()
 
 
-def _get_participatory_texts_data_faker(
-    component_id: int, start_date: str, end_date: str
-):
+def _get_participatory_texts_data_faker(component_id: int, start_date: str, end_date: str):
     return_file = Path(__file__).parent.joinpath("./mock/participatory_text.txt")
     with open(return_file) as file:
         return eval(file.read())
 
 
-def _get_matomo_data_faker(
-    url: list, start_date: str, end_date: str, module: str, method: str
-):
+def _get_matomo_data_faker(url: list, start_date: str, end_date: str, module: str, method: str):
     lookup_table = {
         "VisitsSummary.get": MatomoFaker.VisitsSummary.get,
         "VisitFrequency.get": MatomoFaker.VisitFrequency.get,
@@ -79,14 +75,10 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
                 start_date_filter=start_date,
                 end_date_filter=end_date,
             )
-            total_comments_in_proposal = (
-                comments_df.shape[0] if not comments_df.empty else 0
-            )
+            total_comments_in_proposal = comments_df.shape[0] if not comments_df.empty else 0
 
             result["total_comments"] += total_comments_in_proposal
-            unique_authors = (
-                [*comments_df["author_id"].unique()] if not comments_df.empty else []
-            )
+            unique_authors = [*comments_df["author_id"].unique()] if not comments_df.empty else []
 
             result["proposals"].append(
                 {
@@ -97,9 +89,7 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
                     "qt_unique_authors": len(set(unique_authors)),
                     "unique_authors": unique_authors,
                     "comments": (
-                        comments_df[
-                            ["body", "author_id", "author_name", "date_filter"]
-                        ].to_dict("records")
+                        comments_df[["body", "author_id", "author_name", "date_filter"]].to_dict("records")
                         if not comments_df.empty
                         else []
                     ),
@@ -109,10 +99,7 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
     result["total_unique_participants"] = len(
         set(
             chain.from_iterable(
-                [
-                    current_proposal["unique_authors"]
-                    for current_proposal in result["proposals"]
-                ]
+                [current_proposal["unique_authors"] for current_proposal in result["proposals"]]
             )
         )
     )
@@ -122,9 +109,7 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
     return result
 
 
-def _get_matomo_data(
-    url: list, start_date: str, end_date: str, module: str, method: str
-):
+def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, method: str):
     matomo_connection = BaseHook.get_connection("matomo_conn")
     matomo_url = matomo_connection.host
     token_auth = matomo_connection.password
@@ -162,15 +147,11 @@ def _generate_report(
     end_date: str,
 ):
     report_name = filtered_data["participatory_space_name"]
-    template_path = Path(__file__).parent.joinpath(
-        "./templates/template_participatory_texts.html"
-    )
+    template_path = Path(__file__).parent.joinpath("./templates/template_participatory_texts.html")
     start_date = datetime.strptime(filtered_data["start_date"], "%Y-%m-%d")
     end_date = datetime.strptime(filtered_data["end_date"], "%Y-%m-%d")
 
-    report_generator = ParticipatoryTextsReport(
-        report_name, template_path, start_date, end_date
-    )
+    report_generator = ParticipatoryTextsReport(report_name, template_path, start_date, end_date)
 
     return {
         "pdf_bytes": report_generator.create_report_pdf(
@@ -229,9 +210,7 @@ def send_email_with_pdf(
     description=__doc__,
     tags=["decidim", "reports", "participatory-texts", "bp"],
 )
-def generate_report_participatory_texts(
-    email: str, start_date: str, end_date: str, component_id: int
-):
+def generate_report_participatory_texts(email: str, start_date: str, end_date: str, component_id: int):
     """
 
     Generates a report.
@@ -249,12 +228,8 @@ def generate_report_participatory_texts(
         return _get_components_url(component_id)
 
     @task
-    def get_component_data(
-        component_id: int, filter_start_date: str, filter_end_date: str
-    ):
-        return _get_participatory_texts_data(
-            component_id, filter_start_date, filter_end_date
-        )
+    def get_component_data(component_id: int, filter_start_date: str, filter_end_date: str):
+        return _get_participatory_texts_data(component_id, filter_start_date, filter_end_date)
 
     get_components_url_task = get_components_url(component_id)
 
@@ -287,15 +262,9 @@ def generate_report_participatory_texts(
             matomo_method,
         )
 
-    matomo_visits_summary_task = _get_matomo_extractor(
-        get_components_url_task, "VisitsSummary", "get"
-    )
-    matomo_visits_frequency_task = _get_matomo_extractor(
-        get_components_url_task, "VisitFrequency", "get"
-    )
-    matomo_user_contry_task = _get_matomo_extractor(
-        get_components_url_task, "UserCountry", "getRegion"
-    )
+    matomo_visits_summary_task = _get_matomo_extractor(get_components_url_task, "VisitsSummary", "get")
+    matomo_visits_frequency_task = _get_matomo_extractor(get_components_url_task, "VisitFrequency", "get")
+    matomo_user_contry_task = _get_matomo_extractor(get_components_url_task, "UserCountry", "getRegion")
     matomo_devices_detection_task = _get_matomo_extractor(
         get_components_url_task, "DevicesDetection", "getType"
     )
@@ -341,9 +310,7 @@ def generate_report_participatory_texts(
             url=url,
         )
 
-    component_data = get_component_data(
-        component_id, filter_start_date=start_date, filter_end_date=end_date
-    )
+    component_data = get_component_data(component_id, filter_start_date=start_date, filter_end_date=end_date)
 
     report_data = generate_data(
         component_data,

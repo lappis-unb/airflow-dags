@@ -25,10 +25,7 @@ def _get_components_url(component_id: int):
 
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     query = (
-        Path(__file__)
-        .parent.joinpath("./queries/proposals/get_proposals_by_component_id.gql")
-        .open()
-        .read()
+        Path(__file__).parent.joinpath("./queries/proposals/get_proposals_by_component_id.gql").open().read()
     )
     logging.info(query)
 
@@ -45,9 +42,7 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
 
         page_component_id = component.get("id")
         participatory_space_id = component.get("participatorySpace", {}).get("id")
-        participatory_space_type = (
-            component.get("participatorySpace", {}).get("type", "").split("::")[-1]
-        )
+        participatory_space_type = component.get("participatorySpace", {}).get("type", "").split("::")[-1]
         page_component_name = component.get("name", {}).get("translation", "-")
         page_proposals = component.get("proposals", {}).get("nodes", [])
 
@@ -84,9 +79,7 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
     return result_proposals_data
 
 
-def _get_matomo_data(
-    url: list, start_date: str, end_date: str, module: str, method: str
-):
+def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, method: str):
     matomo_connection = BaseHook.get_connection("matomo_conn")
     matomo_url = matomo_connection.host
     token_auth = matomo_connection.password
@@ -128,12 +121,8 @@ def _generate_report(
 
     report_title = bp_data[0]["page_component_name"]
 
-    template_path = Path(__file__).parent.joinpath(
-        "./templates/template_proposals.html"
-    )
-    report_generator = ProposalsReport(
-        report_title, template_path, start_date, end_date
-    )
+    template_path = Path(__file__).parent.joinpath("./templates/template_proposals.html")
+    report_generator = ProposalsReport(report_title, template_path, start_date, end_date)
     pdf_bytes = report_generator.create_report_pdf(
         bp_df=pd.DataFrame(bp_data),
         matomo_visits_summary_csv=visits_summary,
@@ -165,9 +154,7 @@ def send_email_with_pdf(
         <p>Relatorio gerado apartir da pagina: {url}</p>"""
 
     with TemporaryDirectory("wb") as tmpdir:
-        tmp_file = Path(tmpdir).joinpath(
-            f"./relatorio_propostas_{date_start}-{date_end}.pdf"
-        )
+        tmp_file = Path(tmpdir).joinpath(f"./relatorio_propostas_{date_start}-{date_end}.pdf")
         with closing(open(tmp_file, "wb")) as file:
             file.write(pdf_bytes)
         hook.send_email_smtp(
@@ -193,9 +180,7 @@ def send_email_with_pdf(
     description=__doc__,
     tags=["decidim", "reports", "participacao", "bp"],
 )
-def generate_report_proposals(
-    email: str, start_date: str, end_date: str, component_id: int
-):
+def generate_report_proposals(email: str, start_date: str, end_date: str, component_id: int):
     """
     Gera um relatorio para o BP.
 
@@ -210,9 +195,7 @@ def generate_report_proposals(
         return _get_components_url(component_id)
 
     @task
-    def get_component_data(
-        component_id: int, filter_start_date: str, filter_end_date: str
-    ):
+    def get_component_data(component_id: int, filter_start_date: str, filter_end_date: str):
         return _get_proposals_data(component_id, filter_start_date, filter_end_date)
 
     get_components_url_task = get_components_url(component_id)
@@ -246,15 +229,9 @@ def generate_report_proposals(
             matomo_method,
         )
 
-    matomo_visits_summary_task = _get_matomo_extractor(
-        get_components_url_task, "VisitsSummary", "get"
-    )
-    matomo_visits_frequency_task = _get_matomo_extractor(
-        get_components_url_task, "VisitFrequency", "get"
-    )
-    matomo_user_contry_task = _get_matomo_extractor(
-        get_components_url_task, "UserCountry", "getRegion"
-    )
+    matomo_visits_summary_task = _get_matomo_extractor(get_components_url_task, "VisitsSummary", "get")
+    matomo_visits_frequency_task = _get_matomo_extractor(get_components_url_task, "VisitFrequency", "get")
+    matomo_user_contry_task = _get_matomo_extractor(get_components_url_task, "UserCountry", "getRegion")
     matomo_devices_detection_task = _get_matomo_extractor(
         get_components_url_task, "DevicesDetection", "getType"
     )

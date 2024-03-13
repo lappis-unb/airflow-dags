@@ -208,18 +208,19 @@ class ProposalsHook(ComponentBaseHook):
             proposals = page["data"]["component"]["proposals"]["nodes"]
             for proposal in proposals:
                 if comments_df is not None:
-                    comments_df = pd.concat([comments_df, self.get_comments_df(
-                    proposal["comments"],
-                    proposal["id"],
-                    start_date_filter=start_date
-                )])
+                    comments_df = pd.concat(
+                        [
+                            comments_df,
+                            self.get_comments_df(
+                                proposal["comments"], proposal["id"], start_date_filter=start_date
+                            ),
+                        ]
+                    )
                 else:
                     comments_df = self.get_comments_df(
-                    proposal["comments"],
-                    proposal["id"],
-                    start_date_filter=start_date
-                )
+                        proposal["comments"], proposal["id"], start_date_filter=start_date
+                    )
         if isinstance(comments_df, pd.DataFrame):
-            return comments_df.to_dict('records')
+            return comments_df.to_dict("records")
         else:
             return None

@@ -59,9 +59,9 @@ class Report:
     ) -> None:
         template_path = Path(template_path)
         self.css_file = template_path.parent.joinpath("./css/styles.css")
-        self.template = Environment(
-            loader=FileSystemLoader(template_path.parent)
-        ).get_template(template_path.name)
+        self.template = Environment(loader=FileSystemLoader(template_path.parent)).get_template(
+            template_path.name
+        )
 
         self.report_name = report_name
         self.start_date = start_date.strftime("%d/%m/%Y")
@@ -87,9 +87,7 @@ class Report:
         rendered_html = self.render_template(**kwargs)
 
         pdf_bytes = BytesIO()
-        HTML(string=rendered_html).write_pdf(
-            target=pdf_bytes, stylesheets=[self.css_file.as_posix()]
-        )
+        HTML(string=rendered_html).write_pdf(target=pdf_bytes, stylesheets=[self.css_file.as_posix()])
         pdf_bytes.seek(0)
 
         return pdf_bytes.getvalue()

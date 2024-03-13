@@ -27,9 +27,7 @@ def time_sleep_mocker(mocker):
 
 @pytest.fixture
 def create_forum_topic_mocker(mocker) -> mock.MagicMock:
-    return mocker.patch(
-        "airflow.providers.telegram.hooks.telegram.TelegramHook.get_conn"
-    )
+    return mocker.patch("airflow.providers.telegram.hooks.telegram.TelegramHook.get_conn")
 
 
 @pytest.fixture
@@ -61,9 +59,7 @@ def mock_connection(mocker):
         ({"ENDDATE": 23}, r"(end|closing).*Date", "ENDDATE"),
     ],
 )
-def test_multi_keys_search(
-    participatory_space: Dict[str, Any], date_key_pattern: str, expected: str
-):
+def test_multi_keys_search(participatory_space: Dict[str, Any], date_key_pattern: str, expected: str):
     assert _search_date_key(participatory_space, date_key_pattern) == expected
 
 
@@ -80,9 +76,7 @@ def _create_test_cases():
         list: Uma lista de casos de teste, cada um representado por uma tupla
         contendo uma lista de participatory_spaces e um dicionário com os mapeamentos esperados.
     """
-    queries_folder = Path(path_to_queries_in_processes_config).parent.joinpath(
-        "./queries"
-    )
+    queries_folder = Path(path_to_queries_in_processes_config).parent.joinpath("./queries")
     test_case = [
         "participatory_processes",
         "initiatives",
@@ -109,9 +103,7 @@ def _create_test_cases():
 
 
 @pytest.mark.parametrize("participatory_spaces,expected", _create_test_cases())
-def test_success_get_participatory_space_mapped(
-    participatory_spaces: List, expected: Dict[str, str]
-):
+def test_success_get_participatory_space_mapped(participatory_spaces: List, expected: Dict[str, str]):
     """
     Testa o sucesso da função _obter_espaco_participativo_mapeado_para_arquivo_de_consulta.
 
@@ -124,10 +116,7 @@ def test_success_get_participatory_space_mapped(
     associadas aos espaços participativos fornecidos.
     """
     assert (
-        _get_participatory_space_mapped_to_query_file(
-            participatory_spaces=participatory_spaces
-        )
-        == expected
+        _get_participatory_space_mapped_to_query_file(participatory_spaces=participatory_spaces) == expected
     )
 
 
@@ -156,9 +145,7 @@ def test_success_create_telegram_topic(
     async def get_expected_value():
         return TestingTelegram(expected)
 
-    create_forum_topic_mocker.return_value.create_forum_topic.return_value = (
-        get_expected_value()
-    )
+    create_forum_topic_mocker.return_value.create_forum_topic.return_value = get_expected_value()
     assert _create_telegram_topic(chat_id, name) == expected
     assert create_forum_topic_mocker.call_count == 2
 

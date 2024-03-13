@@ -59,9 +59,7 @@ class BrasilParticipativoTables:
 
         grouped = df.groupby("proposals_categories").agg(
             total_proposals=pd.NamedAgg(column="proposals_ids", aggfunc="count"),
-            total_comments=pd.NamedAgg(
-                column="total_comments_per_proposal", aggfunc="sum"
-            ),
+            total_comments=pd.NamedAgg(column="total_comments_per_proposal", aggfunc="sum"),
             total_votes=pd.NamedAgg(column="votes_per_proposal", aggfunc="sum"),
         )
 

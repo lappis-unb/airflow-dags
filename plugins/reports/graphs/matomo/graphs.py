@@ -13,9 +13,7 @@ class MatomoGraphs(ReportGraphs):
     """Provides methods to generate specific graphs for the Matomo report."""
 
     def _get_brasil_states_map(self) -> gpd.GeoDataFrame:
-        shapefile_path = Path(__file__).parent.joinpath(
-            "./geo/shapefile/estados_2010.shp"
-        )
+        shapefile_path = Path(__file__).parent.joinpath("./geo/shapefile/estados_2010.shp")
         return gpd.read_file(shapefile_path)
 
     @decople
@@ -42,9 +40,7 @@ class MatomoGraphs(ReportGraphs):
         )
 
         brasil_states_map = self._get_brasil_states_map()
-        brasil_states_map = brasil_states_map.merge(
-            access_data, left_on="sigla", right_on="UF", how="left"
-        )
+        brasil_states_map = brasil_states_map.merge(access_data, left_on="sigla", right_on="UF", how="left")
         brasil_states_map["nb_visits"].fillna(0, inplace=True)
 
         fig = px.choropleth(

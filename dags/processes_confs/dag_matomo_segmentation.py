@@ -29,9 +29,7 @@ ACCEPTED_TYPES = ["Proposals", "Meetings", "Surveys"]
 def _get_participatory_space_mapped_to_query_file(participatory_spaces: list[str]):
     queries_folder = Path(__file__).parent.joinpath("./queries/matomo_segmentation")
     queries_files = {
-        participatory_space: queries_folder.joinpath(
-            f"./components_in_{participatory_space}.gql"
-        )
+        participatory_space: queries_folder.joinpath(f"./components_in_{participatory_space}.gql")
         for participatory_space in participatory_spaces
     }
     for query in queries_files.values():
@@ -55,9 +53,7 @@ DEFAULT_ARGS = {
 def _get_components(query_path):
     hook = GraphQLHook(DECIDIM_CONN_ID)
 
-    query_result: dict[str] = hook.run_graphql_query(
-        hook.get_graphql_query_from_file(query_path)
-    )["data"]
+    query_result: dict[str] = hook.run_graphql_query(hook.get_graphql_query_from_file(query_path))["data"]
 
     # Todas as queries feitas devem ter apenas uma chave.
     assert len(query_result.keys()) == 1
@@ -92,9 +88,7 @@ def _filter_out_components_urls(*participatory_spaces):
     matomo_segmentations = pd.read_csv(StringIO(response.text))
 
     matomo_segmentations["bp_component_id"] = matomo_segmentations["definition"].apply(
-        lambda segmentation: (
-            segmentation.split("/")[-2] if len(segmentation.split("/")) > 1 else None
-        )
+        lambda segmentation: (segmentation.split("/")[-2] if len(segmentation.split("/")) > 1 else None)
     )
 
     return set(chain.from_iterable(participatory_spaces)).difference(
@@ -172,10 +166,7 @@ def matomo_segmentation():
     def create_matomo_segmentation(components_urls: list[str]):
         # TODO: Adicionar forma de salvar as segmentações ja feitas.
 
-        return [
-            _create_matomo_segmentation(component_url)
-            for component_url in components_urls
-        ]
+        return [_create_matomo_segmentation(component_url) for component_url in components_urls]
 
     @task
     def save_segmented_ids(new_ids_segmented: list):

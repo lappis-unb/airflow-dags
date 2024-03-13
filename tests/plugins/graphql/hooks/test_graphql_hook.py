@@ -79,9 +79,7 @@ def mock_requests_session_post(mocker):
     return mocker.patch("requests.Session.post")
 
 
-def test_successful_authentication(
-    mock_requests_session_post, mocker, mock_graphql_connection
-):
+def test_successful_authentication(mock_requests_session_post, mocker, mock_graphql_connection):
     mock_response = Mock()
     mock_response.raise_for_status.return_value = None
     mock_requests_session_post.return_value = mock_response
@@ -91,14 +89,10 @@ def test_successful_authentication(
     assert isinstance(result, requests.Session)
 
 
-def test_get_session_failed_authentication(
-    mock_requests_session_post, mocker, mock_graphql_connection
-):
+def test_get_session_failed_authentication(mock_requests_session_post, mocker, mock_graphql_connection):
     # Arrange
     mock_response = Mock()
-    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-        "Mocked HTTPError"
-    )
+    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("Mocked HTTPError")
     mock_requests_session_post.return_value = mock_response
 
     your_instance = GraphQLHook("graph_ql_conn")
@@ -106,14 +100,10 @@ def test_get_session_failed_authentication(
         your_instance.get_session()
 
 
-def test_get_session_network_error(
-    mock_requests_session_post, mocker, mock_graphql_connection
-):
+def test_get_session_network_error(mock_requests_session_post, mocker, mock_graphql_connection):
     # Arrange
     mock_response = Mock()
-    mock_response.raise_for_status.side_effect = requests.exceptions.RequestException(
-        "Network error"
-    )
+    mock_response.raise_for_status.side_effect = requests.exceptions.RequestException("Network error")
     mock_requests_session_post.return_value = mock_response
 
     your_instance = GraphQLHook("graph_ql_conn")
@@ -121,9 +111,7 @@ def test_get_session_network_error(
         your_instance.get_session()
 
 
-def test_run_graphql_query_success(
-    mock_requests_session_post, mocker, mock_graphql_connection
-):
+def test_run_graphql_query_success(mock_requests_session_post, mocker, mock_graphql_connection):
     # Arrange
     mock_response = Mock()
     mock_response.raise_for_status.return_value = None
@@ -139,14 +127,10 @@ def test_run_graphql_query_success(
     assert result == {"data": {"result": "success"}}
 
 
-def test_run_graphql_query_failure(
-    mock_requests_session_post, mocker, mock_graphql_connection
-):
+def test_run_graphql_query_failure(mock_requests_session_post, mocker, mock_graphql_connection):
     # Arrange
     mock_response = Mock()
-    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-        "Mocked HTTPError"
-    )
+    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("Mocked HTTPError")
     mock_requests_session_post.return_value = mock_response
 
     your_instance = GraphQLHook("graph_ql_conn")
@@ -156,9 +140,7 @@ def test_run_graphql_query_failure(
         your_instance.run_graphql_query(graphql_query="your_query")
 
 
-def test_run_graphql_query_with_variables(
-    mock_requests_session_post, mocker, mock_graphql_connection
-):
+def test_run_graphql_query_with_variables(mock_requests_session_post, mocker, mock_graphql_connection):
     # Arrange
     mock_response = Mock()
     mock_response.raise_for_status.return_value = None
@@ -170,9 +152,7 @@ def test_run_graphql_query_with_variables(
     variables = {"variable1": "value1", "variable2": "value2"}
 
     # Act
-    result = your_instance.run_graphql_query(
-        graphql_query="your_query", variables=variables
-    )
+    result = your_instance.run_graphql_query(graphql_query="your_query", variables=variables)
 
     # Assert
     assert result == {"data": {"result": "success"}}
@@ -183,9 +163,7 @@ def mock_run_graphql_query(mocker):
     return mocker.patch.object(GraphQLHook, "run_graphql_query")
 
 
-def test_run_graphql_paginated_query_single_page(
-    mock_run_graphql_query, mocker, mock_graphql_connection
-):
+def test_run_graphql_paginated_query_single_page(mock_run_graphql_query, mocker, mock_graphql_connection):
     # Arrange
     mock_response = {
         "data": {"result": "success"},
@@ -196,18 +174,14 @@ def test_run_graphql_paginated_query_single_page(
     your_instance = GraphQLHook("graph_ql_conn")
 
     # Act
-    result_generator = your_instance.run_graphql_paginated_query(
-        paginated_query="your_query"
-    )
+    result_generator = your_instance.run_graphql_paginated_query(paginated_query="your_query")
 
     # Assert
     result = list(result_generator)
     assert result == [mock_response]
 
 
-def test_run_graphql_paginated_query_multiple_pages(
-    mock_run_graphql_query, mocker, mock_graphql_connection
-):
+def test_run_graphql_paginated_query_multiple_pages(mock_run_graphql_query, mocker, mock_graphql_connection):
     # Arrange
     mock_response_page1 = {
         "data": {"result": "success1"},
@@ -223,18 +197,14 @@ def test_run_graphql_paginated_query_multiple_pages(
     your_instance = GraphQLHook("graph_ql_conn")
 
     # Act
-    result_generator = your_instance.run_graphql_paginated_query(
-        paginated_query="your_query"
-    )
+    result_generator = your_instance.run_graphql_paginated_query(paginated_query="your_query")
 
     # Assert
     result = list(result_generator)
     assert result == [mock_response_page2, mock_response_page1]
 
 
-def test_run_graphql_paginated_query_with_variables(
-    mock_run_graphql_query, mocker, mock_graphql_connection
-):
+def test_run_graphql_paginated_query_with_variables(mock_run_graphql_query, mocker, mock_graphql_connection):
     # Arrange
     mock_response = {
         "data": {"result": "success"},

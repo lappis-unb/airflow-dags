@@ -20,9 +20,7 @@ class BrasilParticipativoGraphs(ReportGraphs):
         }
 
         # Create a bar chart using Plotly Express
-        fig = px.bar(
-            data, x="Valores", y="Metrica", text="Valores", labels={"Valores": "Total"}
-        )
+        fig = px.bar(data, x="Valores", y="Metrica", text="Valores", labels={"Valores": "Total"})
 
         # Customize the layout if needed
         fig.update_layout(
@@ -32,9 +30,7 @@ class BrasilParticipativoGraphs(ReportGraphs):
             width=width,  # Set the width of the plot
             height=height,  # Set the height of the plot
         )
-        fig.update_traces(
-            marker_color=["#1f77b4", "#ff7f0e"], insidetextanchor="middle"
-        )
+        fig.update_traces(marker_color=["#1f77b4", "#ff7f0e"], insidetextanchor="middle")
         return self.b64_encode_graph(fig)
 
     def generate_daily_plot(
@@ -63,9 +59,7 @@ class BrasilParticipativoGraphs(ReportGraphs):
             index=range(len(proposals_ids)),
         )
 
-        df["proposals_publication_date"] = pd.to_datetime(
-            df["proposals_publication_date"]
-        )
+        df["proposals_publication_date"] = pd.to_datetime(df["proposals_publication_date"])
         df["date"] = df["proposals_publication_date"].dt.date
 
         daily_data = (
@@ -121,9 +115,7 @@ class BrasilParticipativoGraphs(ReportGraphs):
 
         return self.b64_encode_graph(fig)
 
-    def generate_state_distribution_donut(
-        self, df: pd.DataFrame, width: int = 704, height: int = 480
-    ):
+    def generate_state_distribution_donut(self, df: pd.DataFrame, width: int = 704, height: int = 480):
         state_counts = df["proposal_state"].value_counts().reset_index()
         state_counts.columns = ["Estado", "Quantidade"]
 

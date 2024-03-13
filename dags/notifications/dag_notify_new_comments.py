@@ -1,45 +1,23 @@
 # pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
 
+# pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
 import logging
 import time
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 from typing import Union
 
+import boto3
 import pandas as pd
+import yaml
 from airflow.decorators import dag, task
+from airflow.hooks.base_hook import BaseHook
 from airflow.models import Variable
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.telegram.hooks.telegram import TelegramHook
 from telegram.error import RetryAfter
 from tenacity import RetryError
 
-# pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
-
-import asyncio
-import logging
-import re
-from contextlib import closing
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List
-
-import yaml
-from airflow.decorators import dag, task
-from airflow.models import Variable
-from airflow.providers.telegram.hooks.telegram import TelegramHook
-from unidecode import unidecode
-
-from plugins.graphql.hooks.graphql_hook import GraphQLHook
-from plugins.telegram.decorators import telegram_retry
-from plugins.yaml.config_reader import read_yaml_files_from_directory
-from airflow.hooks.base_hook import BaseHook
-
-import boto3
-from io import StringIO
-
 from plugins.decidim_hook import DecidimHook
-from plugins.yaml.config_reader import read_yaml_files_from_directory
 
 DECIDIM_CONN_ID = "api_decidim"
 MESSAGE_COOLDOWN_DELAY = 30
@@ -58,22 +36,14 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
     ):
         self.telegram_conn_id = telegram_config["telegram_conn_id"]
         self.telegram_chat_id = telegram_config["telegram_group_id"]
-        self.telegram_topic_id = telegram_config[
-            "telegram_moderation_comments_topic_id"
-        ]
+        self.telegram_topic_id = telegram_config["telegram_moderation_comments_topic_id"]
 
         self.component_id = component_id
         self.process_id = process_id
         self.most_recent_msg_time = f"most_recent_comment_time_{process_id}"
-        self.start_date = (
-            start_date
-            if isinstance(start_date, str)
-            else start_date.strftime("%Y-%m-%d")
-        )
+        self.start_date = start_date if isinstance(start_date, str) else start_date.strftime("%Y-%m-%d")
         if end_date is not None:
-            self.end_date = (
-                end_date if isinstance(end_date, str) else end_date.strftime("%Y-%m-%d")
-            )
+            self.end_date = end_date if isinstance(end_date, str) else end_date.strftime("%Y-%m-%d")
         else:
             self.end_date = end_date
 
@@ -132,9 +102,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                 -------
                     dict: result of decidim API query on comments.
                 """
-                msgs_dict = DecidimHook(DECIDIM_CONN_ID, component_id).get_comments(
-                    start_date=update_date
-                )
+                msgs_dict = DecidimHook(DECIDIM_CONN_ID, component_id).get_comments(start_date=update_date)
 
                 return msgs_dict
 
@@ -164,9 +132,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                 if df.empty:
                     return result
 
-                df["creation_date"] = pd.to_datetime(
-                    df["creation_date"], format="ISO8601"
-                )
+                df["creation_date"] = pd.to_datetime(df["creation_date"], format="ISO8601")
 
                 for _, row in df.iterrows():
                     comment_message = (

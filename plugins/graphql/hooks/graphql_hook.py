@@ -70,9 +70,7 @@ class GraphQLHook(BaseHook):
         assert isinstance(conn_id, str), "Param type of conn_id has to be str"
 
         conn_values = self.get_connection(conn_id)
-        assert isinstance(
-            conn_values, Connection
-        ), "conn_values was not created correctly."
+        assert isinstance(conn_values, Connection), "conn_values was not created correctly."
 
         self.conn_id = conn_id
         self.api_url = conn_values.host
@@ -101,9 +99,7 @@ class GraphQLHook(BaseHook):
         return session
 
     @classmethod
-    def get_graphql_query_from_file(
-        cls, path_para_arquivo_query: Union[Path, str]
-    ) -> str:
+    def get_graphql_query_from_file(cls, path_para_arquivo_query: Union[Path, str]) -> str:
         """
         Reads and returns the contents of a GraphQL query file.
 
@@ -118,9 +114,7 @@ class GraphQLHook(BaseHook):
         assert isinstance(
             path_para_arquivo_query, (Path, str)
         ), "Param path_para_arquivo_query has to be one of [str, Path]"
-        assert Path(
-            path_para_arquivo_query
-        ).exists(), f"Query file: {path_para_arquivo_query}, not found"
+        assert Path(path_para_arquivo_query).exists(), f"Query file: {path_para_arquivo_query}, not found"
         with closing(open(path_para_arquivo_query)) as file:
             return file.read()
 
@@ -218,11 +212,5 @@ class GraphQLHook(BaseHook):
 
                 for components in component["data"][space_type]:
                     space_components = components["components"]
-                    result.extend(
-                        [
-                            x["id"]
-                            for x in space_components
-                            if x["__typename"] == component_type
-                        ]
-                    )
+                    result.extend([x["id"] for x in space_components if x["__typename"] == component_type])
         return result

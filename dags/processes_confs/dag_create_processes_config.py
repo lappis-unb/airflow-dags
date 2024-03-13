@@ -5,22 +5,20 @@ import logging
 import re
 from contextlib import closing
 from datetime import datetime, timedelta
+from io import StringIO
 from pathlib import Path
 from typing import Any, Dict, List
 
+import boto3
 import yaml
 from airflow.decorators import dag, task
+from airflow.hooks.base_hook import BaseHook
 from airflow.models import Variable
 from airflow.providers.telegram.hooks.telegram import TelegramHook
 from unidecode import unidecode
 
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 from plugins.telegram.decorators import telegram_retry
-from plugins.yaml.config_reader import read_yaml_files_from_directory
-from airflow.hooks.base_hook import BaseHook
-
-import boto3
-from io import StringIO
 
 DECIDIM_CONN_ID = "api_decidim"
 TELEGRAM_CONN_ID = "telegram_decidim"
@@ -88,9 +86,7 @@ def save_to_minio(data, filename):
 def _get_participatory_space_mapped_to_query_file(participatory_spaces: List[str]):
     queries_folder = Path(__file__).parent.joinpath("./queries")
     queries_files = {
-        participatory_space: queries_folder.joinpath(
-            f"./components_in_{participatory_space}.gql"
-        )
+        participatory_space: queries_folder.joinpath(f"./components_in_{participatory_space}.gql")
         for participatory_space in participatory_spaces
     }
     for query in queries_files.values():
@@ -130,9 +126,7 @@ def _create_telegram_topic(chat_id: int, name: str):
 
     telegram_hook = TelegramHook(telegram_conn_id=TELEGRAM_CONN_ID, chat_id=chat_id)
 
-    new_telegram_topic = asyncio.run(
-        telegram_hook.get_conn().create_forum_topic(chat_id=chat_id, name=name)
-    )
+    new_telegram_topic = asyncio.run(telegram_hook.get_conn().create_forum_topic(chat_id=chat_id, name=name))
     logging.info(type(new_telegram_topic))
 
     return new_telegram_topic.message_thread_id
@@ -170,19 +164,13 @@ def _configure_base_yaml_in_participatory_spaces(participatory_space):
 
     participatory_space_slug = participatory_space["slug"]
     participatory_space_chat_id = (
-        int(participatory_space["groupChatId"])
-        if participatory_space["groupChatId"]
-        else None
+        int(participatory_space["groupChatId"]) if participatory_space["groupChatId"] else None
     )
 
     for component in participatory_space["components"]:
         if component["__typename"] in accepeted_component_types:
-            component_name = (
-                component["name"].get("translation", "").upper().replace(" ", "_")
-            )
-            participatory_space_slug = participatory_space_slug.upper().replace(
-                " ", "_"
-            )
+            component_name = component["name"].get("translation", "").upper().replace(" ", "_")
+            participatory_space_slug = participatory_space_slug.upper().replace(" ", "_")
             configure_infos = {
                 "__typename": component["__typename"],
                 "process_id": re.sub(
@@ -257,11 +245,7 @@ def create_processes_configs():
         """
         date_format = "%Y-%m-%d"
         update_datetime = Variable.get(VARIABLE_FOR_LAST_DATE_EXECUTED, None)
-        return (
-            datetime.strptime(update_datetime, date_format)
-            if update_datetime is not None
-            else None
-        )
+        return datetime.strptime(update_datetime, date_format) if update_datetime is not None else None
 
     get_update_date_task = get_update_date()
 
@@ -295,9 +279,7 @@ def create_processes_configs():
         for participatory_spaces_in_set in set_of_participatory_spaces:
             for participatory_space in participatory_spaces_in_set:
                 logging.info(participatory_space)
-                to_configure, to_update = (
-                    _split_components_between_configure_and_update(participatory_space)
-                )
+                to_configure, to_update = _split_components_between_configure_and_update(participatory_space)
                 components_to_configure.extend(to_configure)
                 components_to_update.extend(to_update)
 
@@ -319,9 +301,7 @@ def create_processes_configs():
 
             _component["start_date"] = _str_to_datetime(_component["start_date"])
             _component["end_date"] = (
-                _str_to_datetime(_component["end_date"])
-                if _component["end_date"]
-                else None
+                _str_to_datetime(_component["end_date"]) if _component["end_date"] else None
             )
 
             save_to_minio(_component, f"{_component['component_id']}.yaml")
@@ -345,16 +325,12 @@ def create_processes_configs():
 
             old_config["start_date"] = _str_to_datetime(_component["start_date"])
             old_config["end_date"] = (
-                _str_to_datetime(_component["end_date"])
-                if _component["end_date"]
-                else None
+                _str_to_datetime(_component["end_date"]) if _component["end_date"] else None
             )
 
             save_to_minio(old_config, f"{_component['component_id']}.yaml")
 
-    filter_and_configure_componets_task = filter_and_configure_componets(
-        *tasks_to_get_all_components
-    )
+    filter_and_configure_componets_task = filter_and_configure_componets(*tasks_to_get_all_components)
     configure_component(filter_and_configure_componets_task["components_to_configure"])
     update_component(filter_and_configure_componets_task["components_to_update"])
 

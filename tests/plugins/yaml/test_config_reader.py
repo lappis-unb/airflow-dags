@@ -28,9 +28,7 @@ def setup_yaml_tests():
                 "email": fake.email(),
                 "phone_number": fake.phone_number(),
                 "job": fake.job(),
-                "date_of_birth": fake.date_of_birth(
-                    minimum_age=18, maximum_age=65
-                ).strftime("%Y-%m-%d"),
+                "date_of_birth": fake.date_of_birth(minimum_age=18, maximum_age=65).strftime("%Y-%m-%d"),
             }
             yaml.dump(yaml_content, yaml_file)
         yamls_files.append(yaml_content)
@@ -49,7 +47,9 @@ def setup_invalid_yaml():
     yamls_folder_root.mkdir()
     invalid_yaml = yamls_folder_root.joinpath("./invalid.yaml")
     invalid_yaml2 = yamls_folder_root.joinpath("./invalid2.yaml")
-    invalid_yaml_content = """invalid_yaml: !!python/object/apply:os.system ["echo", "This is an intentional YAML error"]"""
+    invalid_yaml_content = (
+        """invalid_yaml: !!python/object/apply:os.system ["echo", "This is an intentional YAML error"]"""
+    )
 
     with closing(open(invalid_yaml, "w")) as yaml_file:
         yaml_file.write(invalid_yaml_content)
