@@ -159,7 +159,10 @@ class MatomoDagGenerator:  # noqa: D101
                 @task(task_id=f"extract_{method}_{module}")
                 def fetch_data(module_: str, method_: str, **context):
                     data = self.get_matomo_data(
-                        module_, method_, context["data_interval_start"], matomo_period[period]
+                        module_,
+                        method_,
+                        context["data_interval_start"],
+                        matomo_period[period],
                     )
                     self.save_to_minio(data, module_, method_, period, context["data_interval_start"])
 

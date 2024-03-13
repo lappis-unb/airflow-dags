@@ -8,7 +8,11 @@ class BrasilParticipativoGraphs(ReportGraphs):
     """Provides methods to generate specific graphs for the Brasil Participativo report."""
 
     def generate_participation_graph(
-        self, total_comments: int, total_unique_participants: int, width: int = 704, height: int = 480
+        self,
+        total_comments: int,
+        total_unique_participants: int,
+        width: int = 704,
+        height: int = 480,
     ):
         data = {
             "Metrica": ["Contribuições", "Participantes"],
@@ -38,7 +42,11 @@ class BrasilParticipativoGraphs(ReportGraphs):
     ):
         assert all(
             len(lst) == len(proposals_ids)
-            for lst in [proposals_publication_date, total_comments_per_proposal, votes_per_proposal]
+            for lst in [
+                proposals_publication_date,
+                total_comments_per_proposal,
+                votes_per_proposal,
+            ]
         )
 
         df = pd.DataFrame(
@@ -91,7 +99,14 @@ class BrasilParticipativoGraphs(ReportGraphs):
         )
 
         fig.update_layout(
-            legend=dict(title="", orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            legend=dict(
+                title="",
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1,
+            ),
             xaxis_title="Data",
             yaxis_title="Quantidade",
             xaxis=dict(tickangle=45),

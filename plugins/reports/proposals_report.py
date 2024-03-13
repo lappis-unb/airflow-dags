@@ -58,7 +58,8 @@ class ProposalsReport(Report):
                 "device_graph": {
                     "label": "Detecção de Dispositivos",
                     "file": self.matomo_graphs.try_build_graph(
-                        self.matomo_graphs.generate_device_graph, matomo_devices_detection_csv
+                        self.matomo_graphs.generate_device_graph,
+                        matomo_devices_detection_csv,
                     ),
                 },
                 "rank_temas": BrasilParticipativoTables.generate_table_theme_ranking(
@@ -77,7 +78,8 @@ class ProposalsReport(Report):
                 "map_graph": {
                     "label": "Acesso por Estado",
                     "file": self.matomo_graphs.try_build_graph(
-                        self.matomo_graphs.generate_brasil_access_map, matomo_user_country_csv
+                        self.matomo_graphs.generate_brasil_access_map,
+                        matomo_user_country_csv,
                     ),
                 },
             }
