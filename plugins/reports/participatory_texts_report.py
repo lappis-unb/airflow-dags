@@ -55,8 +55,9 @@ class ParticipatoryTextsReport(Report):
 
         participatory_texts = report_data["proposals"]
 
-        comments_data = [{"title": text["title"],
-                        "comments": text["comments"]} for text in participatory_texts]
+        comments_data = [
+            {"title": text["title"], "comments": text["comments"]} for text in participatory_texts
+        ]
 
         return self.template.render(
             data={
