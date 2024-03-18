@@ -12,29 +12,19 @@ from datetime import datetime, timedelta
 from io import StringIO
 from typing import ClassVar, Dict, List
 
-import boto3
 import pandas as pd
 import requests
 from airflow.decorators import dag, task
 from airflow.hooks.base_hook import BaseHook
 from airflow.hooks.postgres_hook import PostgresHook
 
+from plugins.minio.hooks import MinioHook
+
 logger = logging.getLogger(__name__)
 
 
-def _create_s3_client():
-    minio_conn = BaseHook.get_connection("minio_connection_id")
-    minio_url = minio_conn.host
-    minio_access_key = minio_conn.login
-    minio_secret = minio_conn.password
-
-    return boto3.client(
-        "s3",
-        endpoint_url=minio_url,
-        aws_access_key_id=minio_access_key,
-        aws_secret_access_key=minio_secret,
-        region_name="us-east-1",
-    )
+MINIO_CONN = "minio_connection_id"
+MINIO_BUCKET = "matomo-extractions-csv"
 
 
 def _generate_s3_filename(module, method, period, execution_date):
@@ -132,11 +122,9 @@ class MatomoDagGenerator:  # noqa: D101
             )
 
     def save_to_minio(self, data, module, method, period, execution_date):
-        minio_conn = BaseHook.get_connection("minio_connection_id")
-        minio_bucket = minio_conn.schema
-        s3_client = _create_s3_client()
+
         filename = _generate_s3_filename(module, method, period, execution_date)
-        s3_client.put_object(Body=data, Bucket=minio_bucket, Key=filename, ContentType="text/csv")
+        MinioHook(MINIO_CONN).save_csv_data_to_minio(bucket_name=MINIO_BUCKET, data=data, filename=filename)
 
     def generate_extraction_dag(self, period: str, schedule: str):
         @dag(
@@ -181,12 +169,8 @@ class MatomoDagGenerator:  # noqa: D101
             method (str): The method name corresponding to the action type.
             execution_date (datetime): The execution date for the DAG run.
         """
-        s3_client = _create_s3_client()
-        minio_conn = BaseHook.get_connection("minio_connection_id")
         filename = _generate_s3_filename(module, method, period, execution_date)
-
-        obj = s3_client.get_object(Bucket=minio_conn.schema, Key=filename)
-        csv_content = obj["Body"].read().decode("utf-8")
+        csv_content = MinioHook(MINIO_CONN).get_file_content(bucket_name=MINIO_BUCKET, filename=filename)
 
         # Read the CSV content into a pandas DataFrame
         df = pd.read_csv(StringIO(csv_content))
