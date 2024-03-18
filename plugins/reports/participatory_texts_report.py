@@ -53,12 +53,10 @@ class ParticipatoryTextsReport(Report):
         participatory_texts_comments = [text["Nº de comentários"] for text in participatory_texts_file]
         participatory_texts_votes = [text["Nº de votos"] for text in participatory_texts_file]
 
-        top_texts = sorted(report_data["proposals"], key=lambda x: x["total_comments"], reverse=True)[:3]
+        participatory_texts = report_data["proposals"]
 
-        for text in top_texts:
-            text["comments"] = sorted(text["comments"], key=lambda x: x["date_filter"], reverse=True)[:3]
-
-        comments_data = [{"title": text["title"], "comments": text["comments"]} for text in top_texts]
+        comments_data = [{"title": text["title"],
+                        "comments": text["comments"]} for text in participatory_texts]
 
         return self.template.render(
             data={
