@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import re
 from contextlib import closing
 from datetime import datetime, timedelta
@@ -19,7 +20,7 @@ from plugins.yaml.config_reader import read_yaml_files_from_directory
 DECIDIM_CONN_ID = "api_decidim"
 TELEGRAM_CONN_ID = "telegram_decidim"
 VARIABLE_FOR_LAST_DATE_EXECUTED = "last_config_creation_date"
-CONFIG_FOLDER = Path("/dags-data/Notifications-Configs")
+CONFIG_FOLDER = Path(os.environ["AIRFLOW_HOME"] / Path("dags-data/Notifications-Configs"))
 ACCEPTED_COMPONENTS_TYPES = ["Proposals"]
 TELEGRAM_MAX_RETRIES = 10
 
@@ -108,9 +109,12 @@ def _configure_base_yaml_in_participatory_spaces(participatory_space):
     )
 
     participatory_space_slug = participatory_space["slug"]
-    participatory_space_chat_id = (
-        int(participatory_space["groupChatId"]) if participatory_space["groupChatId"] else None
-    )
+    try:
+        participatory_space_chat_id = (
+            int(participatory_space["groupChatId"]) if participatory_space["groupChatId"] else None
+        )
+    except ValueError:
+        participatory_space_chat_id = None
 
     for component in participatory_space["components"]:
         if component["__typename"] in accepeted_component_types:
@@ -141,6 +145,9 @@ def _configure_base_yaml_in_participatory_spaces(participatory_space):
 def _split_components_between_configure_and_update(participatory_space):
     components_to_configure = []
     components_to_update = []
+    logging.info(CONFIG_FOLDER)
+    if not CONFIG_FOLDER.exists():
+        CONFIG_FOLDER.mkdir(parents=True, exist_ok=True)
 
     configured_processes = {x["component_id"]: x for x in read_yaml_files_from_directory(CONFIG_FOLDER)}
 

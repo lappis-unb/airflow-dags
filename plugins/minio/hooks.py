@@ -15,6 +15,12 @@ from airflow.models.connection import Connection
 
 
 class MinioHook(BaseHook):
+    """Minio hook.
+
+    Hook para poder configurar a conexão com o MinIO
+
+    """
+
     def __init__(self, conn_id: str):
         """
         Initializes the MinioHook instance.
