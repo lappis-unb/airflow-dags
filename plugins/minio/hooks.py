@@ -43,13 +43,15 @@ class MinioHook(BaseHook):
         if self._session:
             return self._session
 
-        return boto3.client(
+        self._session = boto3.client(
             "s3",
             endpoint_url=self._host,
             aws_access_key_id=self._access_key,
             aws_secret_access_key=self._secret,
             region_name="us-east-1",
         )
+
+        return self._session
 
     def _save_to_minio(self, bucket_name, data, filename, content_type):
         self._get_session().put_object(
