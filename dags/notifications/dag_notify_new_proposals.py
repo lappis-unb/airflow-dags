@@ -22,14 +22,13 @@ If there's new messages to send, call [send_telegram_messages].
 
 # pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
 import logging
+import os
 import time
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Union
 
-import boto3
-import yaml
 from airflow.decorators import dag, task
-from airflow.hooks.base_hook import BaseHook
 from airflow.models import Variable
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.telegram.hooks.telegram import TelegramHook
@@ -37,6 +36,7 @@ from telegram.error import RetryAfter
 from tenacity import RetryError
 
 from plugins.decidim_hook import DecidimHook
+from plugins.yaml.config_reader import read_yaml_files_from_directory
 
 # from airflow_commons.slack_messages import send_slack
 
@@ -269,37 +269,8 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
         return notify_new_proposals()
 
 
-def _create_s3_client():
-    minio_conn = BaseHook.get_connection("minio_connection_id")
-    minio_url = minio_conn.host
-    minio_access_key = minio_conn.login
-    minio_secret = minio_conn.password
-
-    return boto3.client(
-        "s3",
-        endpoint_url=minio_url,
-        aws_access_key_id=minio_access_key,
-        aws_secret_access_key=minio_secret,
-        region_name="us-east-1",
-    )
-
-
-def _get_config_file(filename):
-    # filename = f"{component_id}.yaml"
-    s3_client = _create_s3_client()
-    minio_conn = BaseHook.get_connection("minio_connection_id")
-    obj = s3_client.get_object(Bucket=minio_conn.schema, Key=filename)
-
-    return yaml.safe_load(obj["Body"].read().decode("utf-8"))
-
-
-def _get_all_config_files():
-    s3_client = _create_s3_client()
-    for key in s3_client.list_objects(Bucket="proposals-config")["Contents"]:
-        yield _get_config_file(key["Key"])
-
-
-for config in _get_all_config_files():
+CONFIG_FOLDER = Path(os.environ["AIRFLOW_HOME"] / Path("dags-data/Notifications-Configs"))
+for config in read_yaml_files_from_directory(CONFIG_FOLDER):
     if not config["telegram_config"]["telegram_group_id"]:
         continue
     DecidimNotifierDAGGenerator().generate_dag(**config)
