@@ -28,6 +28,7 @@ query participatoryText($id: ID!, $page: String) {
             body
             upVotes
             downVotes
+            status
           }
         }
       }

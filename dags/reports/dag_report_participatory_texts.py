@@ -15,7 +15,7 @@ from plugins.components.proposals import ProposalsHook
 from plugins.faker.matomo_faker import MatomoFaker
 from plugins.reports.participatory_texts_report import ParticipatoryTextsReport
 
-BP_CONN_ID = "bp_conn_prod"
+BP_CONN_ID = "lab_conn"
 SMPT_CONN_ID = "gmail_smtp"
 
 
@@ -89,7 +89,9 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
                     "qt_unique_authors": len(set(unique_authors)),
                     "unique_authors": unique_authors,
                     "comments": (
-                        comments_df[["body", "author_id", "author_name", "date_filter"]].to_dict("records")
+                        comments_df[["body", "author_id", "author_name", "date_filter", "status"]].to_dict(
+                            "records"
+                        )
                         if not comments_df.empty
                         else []
                     ),

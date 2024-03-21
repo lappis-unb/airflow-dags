@@ -202,6 +202,7 @@ class ComponentBaseHook:
             "comment_id": comment["id"],
             "creation_date": comment["createdAt"],
             "update_date": comment["updatedAt"],
+            "status": comment["status"],
         }
 
     def _build_comment_thread(self, parent_comment: dict[str], root_component_id: int, thread_level: int = 1):
