@@ -102,6 +102,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                 -------
                     dict: result of decidim API query on comments.
                 """
+                logging.info("Start date for comments: %s", update_date)
                 msgs_dict = DecidimHook(DECIDIM_CONN_ID, component_id).get_comments(start_date=update_date)
 
                 return msgs_dict
@@ -132,11 +133,21 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                 if df.empty:
                     return result
 
+                state_map = {
+                    "update": {"label": "Comentario atualizado", "emoji": "🔄 🔄 🔄"},
+                    "new": {"label": "Novo comentario", "emoji": "💬"},
+                }
+                get_state = lambda update_date, creation_date: (
+                    state_map.get("update") if update_date > creation_date else state_map.get("new")
+                )
+
                 df["creation_date"] = pd.to_datetime(df["creation_date"], format="ISO8601")
+                df["update_date"] = pd.to_datetime(df["update_date"], format="ISO8601")
 
                 for _, row in df.iterrows():
+                    state = get_state(row["update_date"], row["creation_date"])
                     comment_message = (
-                        f"💬💬💬  Novo comentario em {row['creation_date'].strftime('%d/%m/%Y %H:%M')}"
+                        f"{state['emoji']} {state['label']}: {row['date_filter'].strftime('%d/%m/%Y %H:%M')}"
                         "\n"
                         f"\n<b>Autor</b>"
                         f"\n{row['author_name']}"
@@ -148,7 +159,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                     )
                     result["comments_messages"].append(comment_message)
 
-                result["max_datetime"] = df["creation_date"].max()
+                result["max_datetime"] = df["date_filter"].max().strftime("%Y-%m-%d %H:%M:%S%z")
 
                 logging.info("Monted %s menssages.", len(result["comments_messages"]))
                 return result
@@ -211,6 +222,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                 ----
                     max_datetime (str): last comment datetime
                 """
+                logging.info("Setting max date as %s.", max_datetime)
                 Variable.set(self.most_recent_msg_time, max_datetime)
 
             # Instantiation
