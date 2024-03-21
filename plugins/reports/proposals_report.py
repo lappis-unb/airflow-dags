@@ -13,6 +13,7 @@ class ProposalsReport(Report):
         bp_df: pd.DataFrame,
         matomo_visits_summary_csv: str,
         matomo_visits_frequency_csv: str,
+        matomo_user_region_csv: str,
         matomo_user_country_csv: str,
         matomo_devices_detection_csv: str,
     ):
@@ -80,6 +81,7 @@ class ProposalsReport(Report):
                     "file": self.matomo_graphs.try_build_graph(
                         self.matomo_graphs.generate_brasil_access_map,
                         matomo_user_country_csv,
+                        matomo_user_region_csv,
                     ),
                 },
             }
