@@ -141,6 +141,7 @@ def _generate_report(
     filtered_data,
     visits_summary,
     visits_frequency,
+    user_region,
     user_country,
     devices_detection,
     start_date: str,
@@ -158,6 +159,7 @@ def _generate_report(
             report_data=filtered_data,
             matomo_visits_summary_csv=visits_summary,
             matomo_visits_frequency_csv=visits_frequency,
+            matomo_user_region_csv=user_region,
             matomo_user_country_csv=user_country,
             matomo_devices_detection_csv=devices_detection,
         )

@@ -98,7 +98,6 @@ class ParticipatoryTextsReport(Report):
                     "file": self.matomo_graphs.try_build_graph(
                         self.matomo_graphs.generate_brasil_access_map,
                         matomo_user_country_csv,
-                        matomo_visits_summary_csv,
                         matomo_user_region_csv,
                     ),
                 },
