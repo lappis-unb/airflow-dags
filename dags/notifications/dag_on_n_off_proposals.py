@@ -14,7 +14,6 @@ else
 
 # pylint: disable=import-error, invalid-name, expression-not-assigned
 
-
 import logging
 import re
 from collections import defaultdict
@@ -35,7 +34,7 @@ PAGE_FORM_CLASS = "form edit_component"
 class DecidimNotifierDAGGenerator:  # noqa: D101
     def generate_dag(
         self,
-        telegram_config: str,
+        telegram_config: dict,
         component_id: str,
         process_id: str,
         start_date: str,
@@ -65,7 +64,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
             "start_date": self.start_date,
             "end_date": self.end_date,
             "depends_on_past": False,
-            "retries": 3,
+            "retries": 0,
             "retry_delay": timedelta(minutes=1),
             # "on_failure_callback": send_slack,
             # "on_retry_callback": send_slack, #! Change to telegram notifications.
@@ -100,6 +99,8 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                 """
                 dict_output = defaultdict(list)
                 for tag in html_form.find_all("input"):
+                    if "value" not in tag:
+                        continue
                     if tag.get("type", None) == "checkbox":
                         if tag.get("checked", None):
                             dict_output[tag["name"]].append(tag["value"])
@@ -125,7 +126,8 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                     IndexError: If does not found a component of creation enabled.
                 """
                 # name="component[default_step_settings][creation_enabled]"
-                pattern = r"component\[.*step_settings\]\[creation_enabled\]"
+                # component[step_settings][27][creation_enabled]
+                pattern = r"component\[.*step_settings\]\[{0-9}*\]\[creation_enabled\]"
                 pattern_match = re.findall(pattern, str(dict_form))
                 logging.info(dict_form)
 
@@ -216,8 +218,17 @@ def yaml_to_dag(process_config: dict):
     )(False)
 
 
-# config_directory = Path(__file__).parent.parent.joinpath("./processes_confs")
-# for config in read_yaml_files_from_directory(config_directory):
-#   if not config["telegram_config"]["telegram_group_id"]:
-#       continue
-#   yaml_to_dag(config)
+yaml_to_dag(
+    {
+        "component_id": 284,
+        "process_id": "planoclima",
+        "start_date": "2024-01-26",
+        "end_date": None,
+        "decidim_url": "https://lab-decide.dataprev.gov.br/admin/participatory_processes/planoclima/components/284/edit",
+        "telegram_config": {
+            "telegram_group_id": -1002122697479,
+            "telegram_moderation_proposals_topic_id": 1,
+            "telegram_conn_id": "telegram_decidim",
+        },
+    }
+)
