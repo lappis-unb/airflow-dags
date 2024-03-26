@@ -222,7 +222,9 @@ img {
   font-weight: bold;
 }
 .text-center{
-  text-align: center;
+  text-align: justify;
+  text-justify: inter-word;
+}
 .mb-1{
   margin-bottom: 1%;
 }
