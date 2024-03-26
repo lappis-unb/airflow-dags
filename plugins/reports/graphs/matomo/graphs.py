@@ -50,11 +50,16 @@ class MatomoGraphs(ReportGraphs):
         )
 
         country_visits = pd.read_csv(StringIO(matomo_user_get_country_csv))
-        total_brazil_visits = country_visits.loc[country_visits["metadata_code"] == "br", "nb_visits"].iloc[0]
+        total_brazil_visits = country_visits.loc[
+            country_visits["metadata_code"] == "br", "sum_daily_nb_uniq_visitors"
+        ].iloc[0]
 
         population_data = self._get_population_data()
         region_visits["access_ratio"] = region_visits.apply(
-            lambda x: (x["nb_visits"] / total_brazil_visits) * 100 / population_data[x["UF"]], axis=1
+            lambda x: (x["sum_daily_nb_uniq_visitors"] / total_brazil_visits)
+            * 100
+            / population_data[x["UF"]],
+            axis=1,
         )
 
         brasil_states_map = self._get_brasil_states_map()
@@ -62,12 +67,12 @@ class MatomoGraphs(ReportGraphs):
         brasil_states_map["access_ratio"].fillna(0, inplace=True)
 
         scale = [
-            (0.0, "blue"),
-            (0.45, "cyan"),
+            (0.0, "red"),
+            (0.45, "yellow"),
             (0.49, "white"),
             (0.51, "white"),
-            (0.55, "yellow"),
-            (1.0, "red"),
+            (0.55, "cyan"),
+            (1.0, "blue"),
         ]
 
         fig = px.choropleth(
