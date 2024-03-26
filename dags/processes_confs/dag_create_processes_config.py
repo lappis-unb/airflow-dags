@@ -20,7 +20,9 @@ from plugins.yaml.config_reader import read_yaml_files_from_directory
 DECIDIM_CONN_ID = "api_decidim"
 TELEGRAM_CONN_ID = "telegram_decidim"
 VARIABLE_FOR_LAST_DATE_EXECUTED = "last_config_creation_date"
-CONFIG_FOLDER = Path(os.environ["AIRFLOW_HOME"] / Path("dags-data/Notifications-Configs"))
+CONFIG_FOLDER = Path(
+    os.environ.get("AIRFLOW_HOME", "/opt/airflow/") / Path("dags-data/Notifications-Configs")
+)
 ACCEPTED_COMPONENTS_TYPES = ["Proposals"]
 TELEGRAM_MAX_RETRIES = 10
 
