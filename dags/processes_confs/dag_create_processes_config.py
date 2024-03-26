@@ -1,86 +1,35 @@
-# pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
-
 import asyncio
 import logging
+import os
 import re
 from contextlib import closing
 from datetime import datetime, timedelta
-from io import StringIO
 from pathlib import Path
 from typing import Any, Dict, List
 
-import boto3
 import yaml
 from airflow.decorators import dag, task
-from airflow.hooks.base_hook import BaseHook
 from airflow.models import Variable
 from airflow.providers.telegram.hooks.telegram import TelegramHook
 from unidecode import unidecode
 
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 from plugins.telegram.decorators import telegram_retry
+from plugins.yaml.config_reader import read_yaml_files_from_directory
 
 DECIDIM_CONN_ID = "api_decidim"
 TELEGRAM_CONN_ID = "telegram_decidim"
 VARIABLE_FOR_LAST_DATE_EXECUTED = "last_config_creation_date"
+CONFIG_FOLDER = Path(
+    os.environ.get("AIRFLOW_HOME", "/opt/airflow/") / Path("dags-data/Notifications-Configs")
+)
 ACCEPTED_COMPONENTS_TYPES = ["Proposals"]
 TELEGRAM_MAX_RETRIES = 10
 
 TOPICS_TO_CREATE = [
     ("telegram_moderation_proposals_topic_id", lambda name: f"{name}/Propostas"),
-    (
-        "telegram_moderation_comments_topic_id",
-        lambda name: f"{name}/Comentarios Em Propostas",
-    ),
+    ("telegram_moderation_comments_topic_id", lambda name: f"{name}/Comentarios Em Propostas"),
 ]
-
-
-def _create_s3_client():
-    minio_conn = BaseHook.get_connection("minio_connection_id")
-    minio_url = minio_conn.host
-    minio_access_key = minio_conn.login
-    minio_secret = minio_conn.password
-
-    return boto3.client(
-        "s3",
-        endpoint_url=minio_url,
-        aws_access_key_id=minio_access_key,
-        aws_secret_access_key=minio_secret,
-        region_name="us-east-1",
-    )
-
-
-def _get_config_file(filename):
-    # filename = f"{component_id}.yaml"
-    s3_client = _create_s3_client()
-    minio_conn = BaseHook.get_connection("minio_connection_id")
-    obj = s3_client.get_object(Bucket=minio_conn.schema, Key=filename)
-
-    return yaml.safe_load(obj["Body"].read().decode("utf-8"))
-
-
-def _get_all_config_files():
-    s3_client = _create_s3_client()
-    for key in s3_client.list_objects(Bucket="proposals-config")["Contents"]:
-        yield _get_config_file(key["Key"])
-
-
-def save_to_minio(data, filename):
-    # Fetching MinIO connection details from Airflow connections
-    minio_conn = BaseHook.get_connection("minio_connection_id")
-    minio_conn = minio_conn.host
-    minio_bucket = "proposals-config"
-    s3_client = _create_s3_client()
-    with closing(StringIO()) as buffer:
-        yaml.dump(data, buffer)
-        buffer.seek(0)
-        # Saving JSON to MinIO bucket using boto3
-        s3_client.put_object(
-            Body=buffer.getvalue(),
-            Bucket=minio_bucket,
-            Key=filename,
-            ContentType="text/yaml",
-        )
 
 
 def _get_participatory_space_mapped_to_query_file(participatory_spaces: List[str]):
@@ -138,8 +87,7 @@ def _configure_telegram_topics(component_config):
         name = " ".join(str(component_config["process_id"]).split("_")).title().strip()
         telegram_topics = {
             topic: _create_telegram_topic(
-                component_config["telegram_config"]["telegram_group_id"],
-                get_chat_name(name),
+                component_config["telegram_config"]["telegram_group_id"], get_chat_name(name)
             )
             for topic, get_chat_name in TOPICS_TO_CREATE
         }
@@ -163,9 +111,12 @@ def _configure_base_yaml_in_participatory_spaces(participatory_space):
     )
 
     participatory_space_slug = participatory_space["slug"]
-    participatory_space_chat_id = (
-        int(participatory_space["groupChatId"]) if participatory_space["groupChatId"] else None
-    )
+    try:
+        participatory_space_chat_id = (
+            int(participatory_space["groupChatId"]) if participatory_space["groupChatId"] else None
+        )
+    except ValueError:
+        participatory_space_chat_id = None
 
     for component in participatory_space["components"]:
         if component["__typename"] in accepeted_component_types:
@@ -177,9 +128,7 @@ def _configure_base_yaml_in_participatory_spaces(participatory_space):
                     r"[^\w\d]",
                     "_",
                     unidecode(
-                        f"{participatory_space_slug}_{component_name}",
-                        errors="replace",
-                        replace_str="_",
+                        f"{participatory_space_slug}_{component_name}", errors="replace", replace_str="_"
                     ),
                 ).strip("_"),
                 "component_id": int(component["id"]),
@@ -198,8 +147,11 @@ def _configure_base_yaml_in_participatory_spaces(participatory_space):
 def _split_components_between_configure_and_update(participatory_space):
     components_to_configure = []
     components_to_update = []
+    logging.info(CONFIG_FOLDER)
+    if not CONFIG_FOLDER.exists():
+        CONFIG_FOLDER.mkdir(parents=True, exist_ok=True)
 
-    configured_processes = {x["component_id"]: x for x in _get_all_config_files()}
+    configured_processes = {x["component_id"]: x for x in read_yaml_files_from_directory(CONFIG_FOLDER)}
 
     for config in _configure_base_yaml_in_participatory_spaces(participatory_space):
         if config["__typename"] not in ACCEPTED_COMPONENTS_TYPES:
@@ -291,12 +243,12 @@ def create_processes_configs():
     @task
     def configure_component(componentes_to_configure):
         for _component in componentes_to_configure:
+            pasta_do_tipo_de_componente = CONFIG_FOLDER.joinpath(f"./{_component['__typename']}")
+            pasta_do_tipo_de_componente.mkdir(parents=True, exist_ok=True)
+
             if _component["telegram_config"]["telegram_group_id"]:
                 telegram_topics = _configure_telegram_topics(_component)
-                _component["telegram_config"] = {
-                    **_component["telegram_config"],
-                    **telegram_topics,
-                }
+                _component["telegram_config"] = {**_component["telegram_config"], **telegram_topics}
             _component.pop("__typename")
 
             _component["start_date"] = _str_to_datetime(_component["start_date"])
@@ -304,22 +256,33 @@ def create_processes_configs():
                 _str_to_datetime(_component["end_date"]) if _component["end_date"] else None
             )
 
-            save_to_minio(_component, f"{_component['component_id']}.yaml")
+            with closing(
+                open(
+                    pasta_do_tipo_de_componente.joinpath(f"./{_component['component_id']}.yaml"),
+                    mode="w",
+                )
+            ) as component_yaml:
+                yaml.safe_dump(
+                    _component,
+                    component_yaml,
+                )
 
     @task
     def update_component(componentes_to_update):
         for _component in componentes_to_update:
-            old_config = _get_config_file(f"{_component['component_id']}.yaml")
+            pasta_do_tipo_de_componente = CONFIG_FOLDER.joinpath(f"./{_component['__typename']}")
+            pasta_do_tipo_de_componente.mkdir(parents=True, exist_ok=True)
+            component_yaml_file = pasta_do_tipo_de_componente.joinpath(f"./{_component['component_id']}.yaml")
+
+            with closing(open(component_yaml_file)) as configured_component_file:
+                old_config = yaml.safe_load(configured_component_file)
 
             if (
                 _component["telegram_config"]["telegram_group_id"]
                 and not old_config["telegram_config"]["telegram_group_id"]
             ):
                 telegram_topics = _configure_telegram_topics(_component)
-                old_config["telegram_config"] = {
-                    **_component["telegram_config"],
-                    **telegram_topics,
-                }
+                old_config["telegram_config"] = {**_component["telegram_config"], **telegram_topics}
 
             _component.pop("__typename")
 
@@ -328,7 +291,11 @@ def create_processes_configs():
                 _str_to_datetime(_component["end_date"]) if _component["end_date"] else None
             )
 
-            save_to_minio(old_config, f"{_component['component_id']}.yaml")
+            with closing(open(component_yaml_file, mode="w")) as component_yaml:
+                yaml.safe_dump(
+                    old_config,
+                    component_yaml,
+                )
 
     filter_and_configure_componets_task = filter_and_configure_componets(*tasks_to_get_all_components)
     configure_component(filter_and_configure_componets_task["components_to_configure"])
