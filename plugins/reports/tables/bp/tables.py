@@ -22,16 +22,21 @@ class BrasilParticipativoTables:
 
     @classmethod
     def generate_table_proposals_overview(
-        cls, votes_per_proposal: list[int], total_comments_per_proposal: list[int]
+        cls, votes_per_proposal: list[int], total_comments_per_proposal: list[int], proposal_states: list[str]
     ):
-        assert len(votes_per_proposal) == len(total_comments_per_proposal)
+        assert len(votes_per_proposal) == len(total_comments_per_proposal) == len(proposal_states)
 
-        num_proposals = len(votes_per_proposal)
+        filtered_indices = [i for i, state in enumerate(proposal_states) if state != "withdrawn"]
+
+        filtered_votes = [votes_per_proposal[i] for i in filtered_indices]
+        filtered_comments = [total_comments_per_proposal[i] for i in filtered_indices]
+
+        num_proposals = len(filtered_indices)
 
         return {
             "Propostas": num_proposals,
-            "Votos": sum(votes_per_proposal),
-            "Comentários": sum(total_comments_per_proposal),
+            "Votos": sum(filtered_votes),
+            "Comentários": sum(filtered_comments),
         }
 
     @classmethod

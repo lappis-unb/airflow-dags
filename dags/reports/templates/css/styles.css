@@ -222,7 +222,9 @@ img {
   font-weight: bold;
 }
 .text-center{
-  text-align: center;
+  text-align: justify;
+  text-justify: inter-word;
+}
 .mb-1{
   margin-bottom: 1%;
 }
@@ -287,4 +289,24 @@ p {text-align: justify;}
   align-items: center;
   justify-content: center;
 
+}
+
+.Aceita {
+  color: green
+}
+
+.Retirada {
+  color: lightcoral
+}
+
+.Rejeitada {
+  color: red
+}
+
+.Avaliando {
+  color: lightblue
+}
+
+.comment {
+  text-indent: 2em;
 }
