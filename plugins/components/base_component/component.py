@@ -268,19 +268,20 @@ class ComponentBaseHook:
             )
             return df
 
-        df["creation_date"] = pd.to_datetime(df["creation_date"], utc=True, format="ISO8601")
-        df["update_date"] = pd.to_datetime(df["update_date"], utc=True, format="ISO8601")
+        df["creation_date"] = pd.to_datetime(df["creation_date"], infer_datetime_format=True)
+        df["update_date"] = pd.to_datetime(df["update_date"], infer_datetime_format=True)
 
         df["date_filter"] = df[["creation_date", "update_date"]].max(axis=1)
-        df["date_filter"] = pd.to_datetime(df["date_filter"], utc=True, format="ISO8601")
+        df["date_filter"] = pd.to_datetime(df["date_filter"], infer_datetime_format=True)
 
         if start_date_filter:
-            df = df[df["date_filter"] >= pd.to_datetime(start_date_filter, utc=True)]
+            df = df[df["date_filter"] > pd.to_datetime(start_date_filter, infer_datetime_format=True)]
         if end_date_filter:
-            df = df[df["date_filter"] <= pd.to_datetime(end_date_filter, utc=True)]
+            df = df[df["date_filter"] < pd.to_datetime(end_date_filter, infer_datetime_format=True)]
 
         #! TODO: Corrigir o time zone para GMT-3 ao invez de UTC
-        df["date_filter"] = df["date_filter"].apply(lambda date: date.strftime("%d/%m/%Y %H:%M"))
+        # df["date_filter"] = df["date_filter"]
+        logging.info(df["date_filter"].max())
         link_base = self.get_component_link().rstrip("/")
 
         ids = np.char.array(df["root_component_id"].values, unicode=True)
