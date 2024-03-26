@@ -4,6 +4,7 @@ stages:
   - sonarcloud
   - build
   - deploy
+  - production
 
 
 variables:
@@ -156,8 +157,8 @@ build-image:
     - echo "COPY ./plugins ./plugins" >> Dockerfile
 
     - echo "--------- Building the image ----------"
-    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
-    - docker save -o build.img $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker build -t $CI_COMMIT_BRANCH-$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
+    - docker save -o build.img $CI_COMMIT_BRANCH-$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
 
 push-image-to-registry:
   stage: deploy
@@ -175,4 +176,23 @@ push-image-to-registry:
   script:
     - docker load -i build.img
     - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_COMMIT_BRANCH-$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+
+
+push-image-to-registry-prod:
+  stage: production
+  tags:
+    - docker
+  services:
+    - docker:dind
+  image: docker
+  inherit:
+    default: false
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  dependencies:
+    - build-image
+  script:
+    - docker load -i build.img
+    - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+    - docker push $CI_COMMIT_BRANCH-$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
