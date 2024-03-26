@@ -56,8 +56,19 @@ class ParticipatoryTextsReport(Report):
 
         participatory_texts = report_data["proposals"]
 
+        state_rename = {
+            "accepted": "Aceita",
+            "withdrawn": "Retirada",
+            "rejected": "Rejeitada",
+        }
+
+        rename_state = lambda comments: [
+            {**comment, "status": state_rename.get(comment["status"], "Avaliando")} for comment in comments
+        ]
+
         comments_data = [
-            {"title": text["title"], "comments": text["comments"]} for text in participatory_texts
+            {"title": text["title"], "comments": rename_state(text["comments"])}
+            for text in participatory_texts
         ]
 
         return self.template.render(

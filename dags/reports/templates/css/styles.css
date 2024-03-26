@@ -290,3 +290,23 @@ p {text-align: justify;}
   justify-content: center;
 
 }
+
+.Aceita {
+  color: green
+}
+
+.Retirada {
+  color: lightcoral
+}
+
+.Rejeitada {
+  color: red
+}
+
+.Avaliando {
+  color: lightblue
+}
+
+.comment {
+  text-indent: 2em;
+}
