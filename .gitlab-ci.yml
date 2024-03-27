@@ -157,8 +157,8 @@ build-image:
     - echo "COPY ./plugins ./plugins" >> Dockerfile
 
     - echo "--------- Building the image ----------"
-    - docker build -t $CI_COMMIT_BRANCH-$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
-    - docker save -o build.img $CI_COMMIT_BRANCH-$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker build -t $CI_MERGE_REQUEST_TARGET_BRANCH_NAME-$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
+    - docker save -o build.img $CI_MERGE_REQUEST_TARGET_BRANCH_NAME-$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
 
 push-image-to-registry:
   stage: deploy
