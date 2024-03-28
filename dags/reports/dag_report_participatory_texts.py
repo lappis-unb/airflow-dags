@@ -15,7 +15,7 @@ from plugins.components.proposals import ProposalsHook
 from plugins.faker.matomo_faker import MatomoFaker
 from plugins.reports.participatory_texts_report import ParticipatoryTextsReport
 
-BP_CONN_ID = "bp_conn_prod"
+BP_CONN_ID = "lab_conn"
 SMPT_CONN_ID = "gmail_smtp"
 
 
@@ -89,7 +89,9 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
                     "qt_unique_authors": len(set(unique_authors)),
                     "unique_authors": unique_authors,
                     "comments": (
-                        comments_df[["body", "author_id", "author_name", "date_filter"]].to_dict("records")
+                        comments_df[["body", "author_id", "author_name", "date_filter", "status"]].to_dict(
+                            "records"
+                        )
                         if not comments_df.empty
                         else []
                     ),
@@ -141,6 +143,7 @@ def _generate_report(
     filtered_data,
     visits_summary,
     visits_frequency,
+    user_region,
     user_country,
     devices_detection,
     start_date: str,
@@ -158,6 +161,7 @@ def _generate_report(
             report_data=filtered_data,
             matomo_visits_summary_csv=visits_summary,
             matomo_visits_frequency_csv=visits_frequency,
+            matomo_user_region_csv=user_region,
             matomo_user_country_csv=user_country,
             matomo_devices_detection_csv=devices_detection,
         )
@@ -264,7 +268,9 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
 
     matomo_visits_summary_task = _get_matomo_extractor(get_components_url_task, "VisitsSummary", "get")
     matomo_visits_frequency_task = _get_matomo_extractor(get_components_url_task, "VisitFrequency", "get")
-    matomo_user_contry_task = _get_matomo_extractor(get_components_url_task, "UserCountry", "getRegion")
+    matomo_user_region_task = _get_matomo_extractor(get_components_url_task, "UserCountry", "getRegion")
+    matomo_user_country_task = _get_matomo_extractor(get_components_url_task, "UserCountry", "getCountry")
+
     matomo_devices_detection_task = _get_matomo_extractor(
         get_components_url_task, "DevicesDetection", "getType"
     )
@@ -274,7 +280,8 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
         filtered_data,
         visits_summary,
         visits_frequency,
-        user_contry,
+        user_region,
+        user_country,
         devices_detection,
         filter_start_date: str,
         filter_end_date: str,
@@ -283,7 +290,8 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
             filtered_data,
             visits_summary,
             visits_frequency,
-            user_contry,
+            user_region,
+            user_country,
             devices_detection,
             filter_start_date,
             filter_end_date,
@@ -316,7 +324,8 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
         component_data,
         visits_summary=matomo_visits_summary_task,
         visits_frequency=matomo_visits_frequency_task,
-        user_contry=matomo_user_contry_task,
+        user_region=matomo_user_region_task,
+        user_country=matomo_user_country_task,
         devices_detection=matomo_devices_detection_task,
         filter_start_date=start_date,
         filter_end_date=end_date,

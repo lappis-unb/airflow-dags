@@ -28,13 +28,12 @@
       <li><a href="#contribution-section" class="index-topic bold">Contribuições</a></li>
       <ul class="sublist">
         <li><a href="#contribution-section" class="index-subtopic">Número de contribuições por texto participativo</a></li>
-        <li><a href="#contribution-section" class="index-subtopic">Devolutiva ao cidadão</a></li>
       </ul>
+      <li><a href="#comments-section" class="index-topic bold">Comentários</a></li>
 
       <li><a href="#access-section" class="index-topic bold">Acessos</a></li>
       <ul class="sublist">
         <li><a href="#access-section" class="index-subtopic">Dados de Acesso (Geral)</a></li>
-        <li><a href="#access-section" class="index-subtopic">Visitantes novos e Visitantes de Retorno</a></li>
         <li><a href="#access-section" class="index-subtopic">Mapa com a quantidade de visitas por UF (Geral)</a></li>
         <li><a href="#access-section" class="index-subtopic">Dispositivos</a></li>
       </ul>
@@ -87,11 +86,16 @@
       &emsp;&emsp;&emsp;&emsp;&emsp;Esta análise possibilita ao organizador verificar quais parágrafos/propostas mais receberam contribuições de modo a
        focar os esforços nestes parágrafos/propostas.
     </p>
-    {{ macros.create_svg_element(data.top_dispositivos_graph) }}
-    <br>
+    {{ macros.create_svg_element(data.top_devices_graph) }}
     <br>
     {{ macros.render_participatory_texts(data.participatory_texts) }}
   </section>
+
+  <section id="comments-section" class="pdf-page">
+    <h1 class="title-1 text-center">Comentários</h1>
+    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Neste capítulo, são apresentados os 3 dispositivos com mais contribuições e suas contribuições mais recentes.</p>
+    {{ macros.render_comments_section(data.comments.content) }}
+</section>
 
   <section id="access-section" class="pdf-page">
     <h1 class="title-1 text-center">Acessos</h1>
@@ -110,12 +114,6 @@
     </p>
     <h2  >Dados de Acesso (Geral)</h2>
     {{ macros.create_table_from_list_of_dicts(data.data_access) }}
-    <h2 >Visitantes novos e Visitantes de Retorno</h2>
-    <p class="pdf-page" >&emsp;&emsp;&emsp;&emsp;&emsp;Os gráficos abaixo mostram a quantidade de visitantes novos e visitantes de retorno ao longo do espaço participativo.
-      Visitantes novos são usuários que nunca utilizaram a plataforma e os visitantes de retorno são aqueles que ao menos
-      uma vez interagiram na plataforma. Aqui também é possível verificar se algum evento específico motivou algum pico de
-      visitas (publicação de notícia no site, post nas redes sociais, por exemplo).
-    </p>
 
     <h2>Mapa com a quantidade de visitas por UF (Geral)</h2>
     <p>&emsp;&emsp;&emsp;&emsp;&emsp;Esse mapa explica a quantidade de acessos por Unidade Federativa do Brasil, no período de {{ data.document.date

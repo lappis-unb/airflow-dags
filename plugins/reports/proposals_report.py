@@ -13,12 +13,14 @@ class ProposalsReport(Report):
         bp_df: pd.DataFrame,
         matomo_visits_summary_csv: str,
         matomo_visits_frequency_csv: str,
+        matomo_user_region_csv: str,
         matomo_user_country_csv: str,
         matomo_devices_detection_csv: str,
     ):
         general_data = BrasilParticipativoTables.generate_table_proposals_overview(
             votes_per_proposal=bp_df["proposal_total_votes"],
             total_comments_per_proposal=bp_df["proposal_total_comments"],
+            proposal_states=bp_df["proposal_state"],
         )
 
         return self.template.render(
@@ -36,6 +38,7 @@ class ProposalsReport(Report):
                 "general_data": BrasilParticipativoTables.generate_table_proposals_overview(
                     votes_per_proposal=bp_df["proposal_total_votes"],
                     total_comments_per_proposal=bp_df["proposal_total_comments"],
+                    proposal_states=bp_df["proposal_state"],
                 ),
                 "daily_graph": {
                     "label": "Gráfico Diário",
@@ -78,6 +81,7 @@ class ProposalsReport(Report):
                     "file": self.matomo_graphs.try_build_graph(
                         self.matomo_graphs.generate_brasil_access_map,
                         matomo_user_country_csv,
+                        matomo_user_region_csv,
                     ),
                 },
             }

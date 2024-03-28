@@ -44,6 +44,11 @@ def mock_connection(mocker):
     mocker.patch.dict("os.environ", AIRFLOW_CONN_TELEGRAM_DECIDIM=mock_connection_uri)
 
 
+@pytest.fixture(autouse=True)
+def mock_airflow_home(mocker):
+    mocker.patch.dict("os.environ", AIRFLOW_HOME="/opt/airflow/")
+
+
 @pytest.mark.parametrize(
     "participatory_space,date_key_pattern,expected",
     [

@@ -19,7 +19,7 @@
       <p class="text-center">{{ data.document.date }}</p>
     </div>
   </section>
- 
+
   <section class="pdf-page">
     <h1 class="text-center index-title">Índice</h1>
   <div class="color-black">
@@ -35,7 +35,6 @@
       <li><a href="#access-section" class="index-topic bold">Acessos</a></li>
       <ul class="sublist">
         <li><a href="#access-section" class="index-subtopic">Dados de Acesso (Geral)</a></li>
-        <li><a href="#access-section" class="index-subtopic">Visitantes novos e Visitantes de Retorno</a></li>
         <li><a href="#access-section" class="index-subtopic">Mapa com a quantidade de visitas por UF (Geral)</a></li>
         <li><a href="#access-section" class="index-subtopic">Dispositivos</a></li>
       </ul>
@@ -53,7 +52,7 @@
       O objetivo é fornecer orientações para os organizadores do processo de consulta, auxiliando-os no desenvolvimento
       de estratégias de mobilização e
       na compreensão dos indicadores importantes para a sua condução.</p>
-    
+
     <p class="mb">&emsp;&emsp;&emsp;&emsp;&emsp;Ao todo, foram recebidas {{ data.introduction.num_proposals }} propostas que somam {{
       data.introduction.total_comments }} comentários e {{ data.introduction.total_votes }} votos.
     </p>
@@ -147,13 +146,6 @@
     <h2  >Dados de Acesso (Geral)</h2>
     {{ macros.create_table_from_list_of_dicts(data.data_access) }}
 
-    <h2 >Visitantes novos e Visitantes de Retorno</h2>
-    <p class="pdf-page" >&emsp;&emsp;&emsp;&emsp;&emsp;Os gráficos abaixo mostram a quantidade de visitantes novos e visitantes de retorno ao longo do espaço participativo.
-      Visitantes novos são usuários que nunca utilizaram a plataforma e os visitantes de retorno são aqueles que ao menos
-      uma vez interagiram na plataforma. Aqui também é possível verificar se algum evento específico motivou algum pico de
-      visitas (publicação de notícia no site, post nas redes sociais, por exemplo).
-    </p>
-
     <h2>Mapa com a quantidade de visitas por UF (Geral)</h2>
     <p>&emsp;&emsp;&emsp;&emsp;&emsp;Esse mapa explica a quantidade de acessos por Unidade Federativa do Brasil, no período de {{ data.document.date
       }}. Com a análise do mapa,
@@ -174,22 +166,20 @@
   </section>
 
   <section id="final-consideration" class="pdf-page">
-    <h1>
-      Considerações Finais
-    </h1>
+    <h1 class="title-1 text-center">Considerações Finais</h1>
     <p>
       &emsp;&emsp;&emsp;&emsp;&emsp;A participação da sociedade na gestão de políticas e programas do Governo Federal é uma forma do Estado
       brasileiro reconhecer a importância das contribuições da sociedade civil de modo a fortalecer a democracia,
       fomentar a cidadania e aprimorar a eficácia da Administração Pública. Neste contexto, é fundamental que a
       organização do processo participativo utilize os dados disponíveis para criar estratégias que incentivem
-      uma maior participação dos cidadãos nos seus processos de consulta. 
+      uma maior participação dos cidadãos nos seus processos de consulta.
     </p>
     <p>
       &emsp;&emsp;&emsp;&emsp;&emsp;É primordial também que os órgãos informem aos cidadãos os resultados dessa mobilização.
       Assim, ao término do processo, é crucial que os organizadores compartilhem os resultados finais da consulta
       por meio da plataforma, garantindo transparência e prestação de contas à sociedade.
     </p>
-  
+
 </body>
 
 
