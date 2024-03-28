@@ -134,7 +134,7 @@ def flatten_structure_with_additional_fields(data):
             component_name = extract_text(component.get("name", {}).get("translations", []))
         if "proposals" in component:
             for proposal in component.get("proposals", {}).get("nodes", []):
-                proposal_data = {
+              proposal_data = {
               "main_title": main_title,
               "component_id": component_id,
               "component_name": component_name,
@@ -166,7 +166,7 @@ def flatten_structure_with_additional_fields(data):
               "scope": proposal.get("scope"),
               "state": proposal.get("state")
             }
-            flattened_data.append(proposal_data)                    
+              flattened_data.append(proposal_data)
     return flattened_data
 
 def dict_safe_get(_dict: dict, key: str):
@@ -210,7 +210,7 @@ def _get_minio():
 
 @dag(
     default_args={
-        "owner": "Amoêdo",
+        "owner": "Amoêdo/Nitai",
         "depends_on_past": False,
         "retries": 5,
         "retry_delay": timedelta(minutes=1),
@@ -220,8 +220,9 @@ def _get_minio():
     start_date=datetime(2023, 11, 10),
     description=__doc__,
     tags=["decidim", "minio"],
+    dag_id= "fetch_process_and_clean_proposals"
 )
-def fetch_process_and_clean_proposals_dag():
+def fetch_process_and_clean_proposals():
     """
     DAG que extrai dados de propostas de um GraphQL API e os armazena em um bucket MinIO.
     """
@@ -243,7 +244,7 @@ def fetch_process_and_clean_proposals_dag():
         hook = GraphQLHook(DECIDIM_CONN_ID)
         session = hook.get_session()
         response = session.post(
-          hook.api_url, 
+          hook.api_url,
           json={
             "query": QUERY, 
             "variables": {
@@ -262,20 +263,22 @@ def fetch_process_and_clean_proposals_dag():
           len(json.dumps(dado).encode())
         )
 
-    @task(provide_context=True)
+    @task(provide_context=True, retries=3, retry_delay=timedelta(seconds=5))
     def salva_minio(**context):
         date_file = context['execution_date'].strftime('%Y%m%d')
         minio = _get_minio()
-        dado  = minio.get_object(MINIO_BUCKET, LANDING_ZONE_FILE_NAME.format(date_file=date_file) )
+        dado  = minio.get_object(MINIO_BUCKET, 
+                                 LANDING_ZONE_FILE_NAME
+                                    .format(date_file=date_file) )
         dado = json.loads(dado.read())
         dado = flatten_structure_with_additional_fields(dado)
         df = pd.DataFrame(dado)
         csv_buffer = io.StringIO()
-        df.to_csv(csv_buffer)
+        df.to_csv(csv_buffer, index=False)
         minio.put_object(
-          MINIO_BUCKET, 
-          PROCESSED_FILE_NAME.format(date_file=date_file), 
-          io.BytesIO(csv_buffer.getvalue().encode()), 
+          MINIO_BUCKET,
+          PROCESSED_FILE_NAME.format(date_file=date_file),
+          io.BytesIO(csv_buffer.getvalue().encode()),
           len(csv_buffer.getvalue().encode())
         )
 
@@ -290,4 +293,4 @@ def fetch_process_and_clean_proposals_dag():
     end = EmptyOperator(task_id='end')
     start >> get_data() >> salva_minio() >> delete_landing_zone_file() >> end
 
-fetch_process_and_clean_proposals_dag()
+fetch_process_and_clean_proposals()
