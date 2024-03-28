@@ -1,16 +1,18 @@
 import logging
-import pandas as pd
-from minio import Minio
 from datetime import datetime, timedelta
+
+import pandas as pd
 from airflow.decorators import dag, task
 from airflow.hooks.base_hook import BaseHook
-from airflow.sensors.external_task_sensor import ExternalTaskSensor
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.sensors.external_task_sensor import ExternalTaskSensor
+from minio import Minio
 
-MINIO_BUCKET = 'brasil-participativo-daily-csv'
+MINIO_BUCKET = "brasil-participativo-daily-csv"
 MINIO_CONN_ID = "minio_connection_id"
-TABLE_NAME = 'proposals'
-SCHEMA = 'raw'
+TABLE_NAME = "proposals"
+SCHEMA = "raw"
+
 
 def add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataFrame:
     """
@@ -41,6 +43,7 @@ def add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataF
 
     return df
 
+
 def _get_minio():
     """
     Retorna um cliente S3 configurado para se conectar ao MinIO.
@@ -49,33 +52,38 @@ def _get_minio():
         s3_client (boto3.client): Cliente S3 configurado para se conectar ao MinIO.
     """
     minio_conn = BaseHook.get_connection(MINIO_CONN_ID)
-    minio_host = minio_conn.host.split('//')[1]
+    minio_host = minio_conn.host.split("//")[1]
     minio_access_key = minio_conn.login
     minio_secret_access = minio_conn.password
     client = Minio(
-            minio_host,
-            access_key=minio_access_key,
-            secret_key=minio_secret_access,
-            secure=False,
-            )
+        minio_host,
+        access_key=minio_access_key,
+        secret_key=minio_secret_access,
+        secure=False,
+    )
     return client
+
 
 def check_and_create_schema(engine, schema):
     """
     Check if a schema exists in the database, if not, create it.
 
     Args:
+    ----
     engine (sqlalchemy.engine.Engine): The SQLAlchemy engine instance.
     schema (str): The schema name.
     """
     with engine.connect() as connection:
-        result = connection.execute("SELECT EXISTS(SELECT 1 FROM" /
-                                    "information_schema.schemata" /
-                                    f"WHERE schema_name = '{schema}');")
+        result = connection.execute(
+            "SELECT EXISTS(SELECT 1 FROM"
+            / "information_schema.schemata"
+            / f"WHERE schema_name = '{schema}');"
+        )
         exists = result.scalar()
         if not exists:
             connection.execute(f"CREATE SCHEMA {schema};")
             logging.info("Schema %s created successfully.", schema)
+
 
 @dag(
     default_args={
@@ -91,45 +99,41 @@ def check_and_create_schema(engine, schema):
     tags=["decidim", "minio"],
 )
 def ingest_proposals_proccesses():
-    """
-    DAG que extrai os dados tratados do MinIO e os insere em um banco de dados PostgreSQL.
-    """
+    """DAG que extrai os dados tratados do MinIO e os insere em um banco de dados PostgreSQL."""
     start = ExternalTaskSensor(
-        external_dag_id = 'fetch_process_and_clean_proposals',
-        external_task_id = 'end',
-        task_id = 'start')
-    @task(provide_context=True, 
-          retries=3, 
-          retry_delay=timedelta(minutes=3))
+        external_dag_id="fetch_process_and_clean_proposals", external_task_id="end", task_id="start"
+    )
+
+    @task(provide_context=True, retries=3, retry_delay=timedelta(minutes=3))
     def save_data_potgres(**context):
         """
         Retrieves data from Minio and performs additional processing.
 
         Args:
+        ----
             **context: Additional context provided by Airflow.
 
         Raises:
+        ------
             Exception: If there is an error retrieving or processing the data.
         """
-        data = context['execution_date'].strftime('%Y%m%d')
+        data = context["execution_date"].strftime("%Y%m%d")
         minio = _get_minio()
         # recupera os dados do minio
-        dado = minio.get_object(MINIO_BUCKET, f'processed/proposals{data}.csv')
+        dado = minio.get_object(MINIO_BUCKET, f"processed/proposals{data}.csv")
         df = pd.read_csv(dado)
         if len(df) == 0:
             logging.warning("No data found for %s.", data)
             return
-        df = add_temporal_columns(df, context['execution_date'])
+        df = add_temporal_columns(df, context["execution_date"])
         # Configure the postgres hook and insert the data
-        postgres_hook = PostgresHook(postgres_conn_id='conn_postgres')
+        postgres_hook = PostgresHook(postgres_conn_id="conn_postgres")
         engine = postgres_hook.get_sqlalchemy_engine()
         check_and_create_schema(engine, SCHEMA)
-        df.to_sql(TABLE_NAME, 
-              con=engine,
-              if_exists='append',
-              index=False,
-              schema=SCHEMA)
+        df.to_sql(TABLE_NAME, con=engine, if_exists="append", index=False, schema=SCHEMA)
         # falta adicionar a inserção no banco de dados
+
     start >> save_data_potgres()
+
 
 ingest_proposals_proccesses()
