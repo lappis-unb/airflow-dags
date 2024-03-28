@@ -1,13 +1,16 @@
+import logging
 import pandas as pd
 from minio import Minio
 from datetime import datetime, timedelta
 from airflow.decorators import dag, task
 from airflow.hooks.base_hook import BaseHook
 from airflow.sensors.external_task_sensor import ExternalTaskSensor
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 
-# constante
 MINIO_BUCKET = 'brasil-participativo-daily-csv'
 MINIO_CONN_ID = "minio_connection_id"
+TABLE_NAME = 'proposals'
+SCHEMA = 'raw'
 
 def add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataFrame:
     """
@@ -57,6 +60,23 @@ def _get_minio():
             )
     return client
 
+def check_and_create_schema(engine, schema):
+    """
+    Check if a schema exists in the database, if not, create it.
+
+    Args:
+    engine (sqlalchemy.engine.Engine): The SQLAlchemy engine instance.
+    schema (str): The schema name.
+    """
+    with engine.connect() as connection:
+        result = connection.execute("SELECT EXISTS(SELECT 1 FROM" /
+                                    "information_schema.schemata" /
+                                    f"WHERE schema_name = '{schema}');")
+        exists = result.scalar()
+        if not exists:
+            connection.execute(f"CREATE SCHEMA {schema};")
+            logging.info("Schema %s created successfully.", schema)
+
 @dag(
     default_args={
         "owner": "Amoêdo/Nitai",
@@ -76,10 +96,12 @@ def ingest_proposals_proccesses():
     """
     start = ExternalTaskSensor(
         external_dag_id = 'fetch_process_and_clean_proposals',
-        #external_task_id = 'end',
+        external_task_id = 'end',
         task_id = 'start')
-    @task(provide_context=True, retries=3, retry_delay=timedelta(seconds=5))
-    def get_data_from_minio(**context):
+    @task(provide_context=True, 
+          retries=3, 
+          retry_delay=timedelta(minutes=3))
+    def save_data_potgres(**context):
         """
         Retrieves data from Minio and performs additional processing.
 
@@ -90,14 +112,24 @@ def ingest_proposals_proccesses():
             Exception: If there is an error retrieving or processing the data.
         """
         data = context['execution_date'].strftime('%Y%m%d')
-        # servidor de arquivos
         minio = _get_minio()
-        # pega o dado do minio
+        # recupera os dados do minio
         dado = minio.get_object(MINIO_BUCKET, f'processed/proposals{data}.csv')
         df = pd.read_csv(dado)
+        if len(df) == 0:
+            logging.warning("No data found for %s.", data)
+            return
         df = add_temporal_columns(df, context['execution_date'])
+        # Configure the postgres hook and insert the data
+        postgres_hook = PostgresHook(postgres_conn_id='conn_postgres')
+        engine = postgres_hook.get_sqlalchemy_engine()
+        check_and_create_schema(engine, SCHEMA)
+        df.to_sql(TABLE_NAME, 
+              con=engine,
+              if_exists='append',
+              index=False,
+              schema=SCHEMA)
         # falta adicionar a inserção no banco de dados
-
-    start >> get_data_from_minio()
+    start >> save_data_potgres()
 
 ingest_proposals_proccesses()
