@@ -23,3 +23,4 @@ matplotlib==3.8.3
 plotly==5.19.0
 Faker==23.3.0
 kaleido==0.2.1
+minio==7.2.5
