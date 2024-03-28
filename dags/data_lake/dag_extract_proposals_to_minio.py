@@ -1,84 +1,218 @@
-"""Decidim CSV DAG generator.
-
-This Airflow DAG is responsible for get proposals data by component id, using the
-decidim proposal_hook api and saving it as CSV files to a MinIO bucket.
-This DAG is intended to run daily and fetch the updated data.
-"""
-
-import logging
+import io
+import json
 from datetime import datetime, timedelta
-from pathlib import Path
-
-import boto3
-import numpy as np
 import pandas as pd
+from minio import Minio
 from airflow.decorators import dag, task
 from airflow.hooks.base_hook import BaseHook
-
-from plugins.components.proposals import ProposalsHook
+from airflow.operators.empty import EmptyOperator
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
-from minio import Minio
-import io
 
+
+# Vai ser trocado para salvar em arquivo 
+QUERY = """
+query teste ($start_date: String!, $end_date: String!) {
+  participatoryProcesses  {
+    title{
+      translations{
+        text
+      }
+    }
+    components{
+      id
+      ... on Proposals   {
+        __typename
+        name {
+          translations {
+            text
+          }
+        }
+        proposals (filter:  {publishedSince: $start_date, publishedBefore: $end_date}  ) {
+          nodes {
+            id
+            createdAt
+            publishedAt
+            updatedAt
+            attachments{
+              thumbnail
+              type
+              url
+            }
+            author{
+              id
+              name
+              nickname
+              organizationName              
+            }
+            body{
+              translations{
+                text
+              }
+            }
+            category{
+              id
+              name{
+                translations{
+                  text
+                }
+              }
+            }
+            
+            authorsCount
+            userAllowedToComment
+            endorsementsCount
+            totalCommentsCount
+            versionsCount
+            voteCount
+            commentsHaveAlignment
+            commentsHaveVotes
+            createdInMeeting
+            hasComments
+            official
+            fingerprint{
+              source
+              value
+            }
+            position
+            reference
+            scope{
+              id
+              name{
+                translations{
+                  text
+                }
+              }
+            }
+            state
+            title{
+              translations{
+                text
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+"""
 DECIDIM_CONN_ID = "api_decidim"
 MINIO_CONN_ID = "minio_connection_id"
 MINIO_BUCKET = 'brasil-participativo-daily-csv'
 COMPONENT_TYPE_TO_EXTRACT = "Proposals"
 
-def _get_minio():    
+LANDING_ZONE_FILE_NAME = "landing_zone/proposals{date_file}.json"
+PROCESSED_FILE_NAME = "processed/proposals{date_file}.csv"
+
+def flatten_structure_with_additional_fields(data):
     """
-    Retorna um cliente S3 configurado para se conectar ao MinIO.
+    Flattens the nested structure of the input data and 
+    extracts additional fields for each proposal.
 
-    Retorna:
-        s3_client (boto3.client): Cliente S3 configurado para se conectar ao MinIO.
+    Args:
+      data (dict): The input data containing nested structure.
+
+    Returns:
+      list: A list of dictionaries, where each dictionary 
+      represents a flattened proposal with additional fields.
+
     """
 
+    data = data['data']['participatoryProcesses']
+    # Function to handle the extraction of text from nested translation dictionaries
+    def extract_text(translations):
+        if translations and isinstance(translations, list):
+            return translations[0].get("text")
 
+    flattened_data = []
+    for item in data:
+        main_title = extract_text(item.get("title", {}).get("translations", []))
+        for component in item.get("components", []):
+            component_id = component.get("id", "")
+            component_name = extract_text(component.get("name", {}).get("translations", []))
+        if "proposals" in component:
+            for proposal in component.get("proposals", {}).get("nodes", []):
+                proposal_data = {
+              "main_title": main_title,
+              "component_id": component_id,
+              "component_name": component_name,
+              "proposal_id": proposal["id"],
+              "proposal_createdAt": proposal["createdAt"],
+              "proposal_publishedAt": proposal.get("publishedAt"),
+              "proposal_updatedAt": proposal.get("updatedAt"),
+              "author_name": dict_safe_get(proposal, "author").get("name"),
+              "author_nickname": dict_safe_get(proposal, "author").get("nickname"),
+              "author_organization": dict_safe_get(proposal, "author").get("organizationName"),
+              "proposal_body": extract_text(proposal.get("body", {}).get("translations", [])),
+              "category_name": extract_text(dict_safe_get(
+                dict_safe_get(proposal, "category"), "name").get("translations", [])),
+              "proposal_title": extract_text(proposal.get("title", {}).get("translations", [])),
+              "authorsCount": proposal.get("authorsCount"),
+              "userAllowedToComment": proposal.get("userAllowedToComment"),
+              "endorsementsCount": proposal.get("endorsementsCount"),
+              "totalCommentsCount": proposal.get("totalCommentsCount"),
+              "versionsCount": proposal.get("versionsCount"),
+              "voteCount": proposal.get("voteCount"),
+              "commentsHaveAlignment": proposal.get("commentsHaveAlignment"),
+              "commentsHaveVotes": proposal.get("commentsHaveVotes"),
+              "createdInMeeting": proposal.get("createdInMeeting"),
+              "hasComments": proposal.get("hasComments"),
+              "official": proposal.get("official"),
+              "fingerprint": proposal.get("fingerprint", {}).get("value"),
+              "position": proposal.get("position"),
+              "reference": proposal.get("reference"),
+              "scope": proposal.get("scope"),
+              "state": proposal.get("state")
+            }
+            flattened_data.append(proposal_data)                    
+    return flattened_data
+
+def dict_safe_get(_dict: dict, key: str):
+    """
+    Retorna o valor associado à chave especificada em um dicionário.
+    Se a chave não existir ou o valor for None, retorna um dicionário vazio.
+
+    Args:
+      _dict (dict): O dicionário de onde obter o valor.
+      key (str): A chave do valor desejado.
+
+    Returns:
+      O valor associado à chave especificada, ou um 
+      dicionário vazio se a chave não existir ou o valor for None.
+    """
+    value = _dict.get(key, None)
+    if not value:
+        value = {}
+    return value
+
+def _get_minio():
+    """
+    Retorna uma instância do cliente Minio 
+    configurado com as informações de conexão fornecidas pelo hook Minio.
+
+    Returns:
+      Minio: Uma instância do cliente Minio 
+      configurado com as informações de conexão fornecidas pelo hook Minio.
+    """
     minio_conn = BaseHook.get_connection(MINIO_CONN_ID)
     minio_host = minio_conn.host.split('//')[1]
     minio_access_key = minio_conn.login
     minio_secret_access = minio_conn.password
-    minio_bucket = "brasil-participativo-daily-csv"
-    print(minio_host, ' to aq ')
     client = Minio(
-            minio_host,
-            access_key=minio_access_key,
-            secret_key=minio_secret_access,
-            secure=False,
-            )
+        minio_host,
+        access_key=minio_access_key,
+        secret_key=minio_secret_access,
+        secure=False,
+        )
     return client
-
-def trata_df(df: pd.DataFrame, proposal_hook:ProposalsHook) -> pd.DataFrame:
-    """
-    Função para processar um DataFrame e adicionar informações de 
-    escopo com base no tipo de espaço participativo.
-
-    Parâmetros:
-    - df (pd.DataFrame): O DataFrame a ser processado.
-
-    Retorna:
-    - pd.DataFrame: O DataFrame processado com informações de escopo adicionadas.
-    """
-    participatory_space = proposal_hook.get_participatory_space()
-    if participatory_space["type"] in [
-        "ParticipatoryProcess",
-        "Initiative",
-        "Conference",
-    ]:
-        scope = proposal_hook.get_participatory_escope()
-
-        df["scope_id"] = scope["scope"]["id"]
-        df["scope"] = scope["scope"]["name"]["translation"]
-    else:
-        df["scope_id"] = " "
-        df["scope"] = " "
-    return df
 
 @dag(
     default_args={
-        "owner": "Thais R.",
+        "owner": "Amoêdo",
         "depends_on_past": False,
-        "retries": 0,
+        "retries": 5,
         "retry_delay": timedelta(minutes=1),
     },
     schedule="0 23 * * *",
@@ -87,100 +221,73 @@ def trata_df(df: pd.DataFrame, proposal_hook:ProposalsHook) -> pd.DataFrame:
     description=__doc__,
     tags=["decidim", "minio"],
 )
-def decidim_data_extraction():
-    exec_date = "{{ yesterday_ds }}"
-
-    @task
-    def get_propolsas_components_ids():
-        all_components = GraphQLHook(DECIDIM_CONN_ID).get_components_ids_by_type(COMPONENT_TYPE_TO_EXTRACT)
-        return all_components
-
-    @task
-    def get_proposals(components_ids, filter_date: datetime):
+def fetch_process_and_clean_proposals_dag():
+    """
+    DAG que extrai dados de propostas de um GraphQL API e os armazena em um bucket MinIO.
+    """
+    @task(provide_context=True)
+    def get_data(**context):
         """
-        Tarefa do Airflow que utiliza `proposal_hook` para requisitar propostas na API e tratar os dados.
+        Fetches data from a GraphQL API and stores it in a MinIO bucket.
 
         Args:
-        ----
-            components_ids (list): Lista de IDs de componentes para os quais as propostas serão obtidas.
-            filter_date (datetime): Data para filtrar as propostas.
-
-        Raises:
-        ------
-            Warning: Se nenhuma proposta estiver cadastrada na data especificada.
+          **context: The context dictionary containing the execution date.
 
         Returns:
-        -------
-            None
-
-        Obs:
-        ----
-            A função utiliza a classe `ProposalsHook` para interagir com a API do Dedicim.
+          None
         """
-        proposals_query_directory_path = Path(__file__).parent.joinpath(
-            "./queries/get_proposals_by_component_id.gql"
+        date = context['execution_date'].strftime('%Y-%m-%d')
+        next_date = (context['execution_date'] + timedelta(days=1)).strftime('%Y-%m-%d')
+        date_file = context['execution_date'].strftime('%Y%m%d')
+        # Fetch data from GraphQL API
+        hook = GraphQLHook(DECIDIM_CONN_ID)
+        session = hook.get_session()
+        response = session.post(
+          hook.api_url, 
+          json={
+            "query": QUERY, 
+            "variables": {
+              "start_date": f"{date}", 
+              "end_date": f"{next_date}"
+            }
+          }
         )
-        final_data = None
-        dfs = []
-        for component_id in components_ids:
-            component_id = int(component_id)
-            logging.info("Starting component_id %s.", component_id)
-            proposal_hook = ProposalsHook(DECIDIM_CONN_ID, component_id)
-
-            proposals_query = proposal_hook.graphql.get_graphql_query_from_file(
-                proposals_query_directory_path
-            )
-            proposals_variables = {"id": component_id, "date": filter_date}
-            data_dict = proposal_hook.graphql.run_graphql_paginated_query(
-                proposals_query,
-                variables=proposals_variables,
-            )
-            json_data_list = [data["data"]["component"]["proposals"]["nodes"] for data in data_dict]
-            for json_data in json_data_list:
-                df = pd.json_normalize(json_data)
-                if len(df) == 0:
-                    continue
-                df = trata_df(df, proposal_hook)
-                dfs.append(df)
-
-        return pd.concat(dfs)
-
-    @task.branch(provide_context=True)
-    def verifica_bucket():
-        minio = _get_minio()
-        if minio.bucket_exists(MINIO_BUCKET):
-            return 'salva_no_minio'
-        return 'cria_bucket'
-
-    @task(provide_context=True, trigger_rule='none_failed_min_one_success' )
-    def salva_no_minio(**context):
-        task_instance = context['task_instance']
-        df = task_instance.xcom_pull(task_ids='get_proposals')
-
-        csv_data = df.to_csv(index=False)
-        data = io.BytesIO(csv_data.encode())
-
+        dado = response.json()
+        # Store data in MinIO bucket
         minio = _get_minio()
         minio.put_object(
-            bucket_name=MINIO_BUCKET,
-            object_name='teste.csv',
-            data=data,
-            length=data.getbuffer().nbytes)
+          MINIO_BUCKET,
+          LANDING_ZONE_FILE_NAME.format(date_file=date_file),
+          io.BytesIO(json.dumps(dado).encode()),
+          len(json.dumps(dado).encode())
+        )
 
-    @task
-    def cria_bucket():
+    @task(provide_context=True)
+    def salva_minio(**context):
+        date_file = context['execution_date'].strftime('%Y%m%d')
         minio = _get_minio()
-        minio.make_bucket(MINIO_BUCKET, object_lock=False)
+        dado  = minio.get_object(MINIO_BUCKET, LANDING_ZONE_FILE_NAME.format(date_file=date_file) )
+        dado = json.loads(dado.read())
+        dado = flatten_structure_with_additional_fields(dado)
+        df = pd.DataFrame(dado)
+        csv_buffer = io.StringIO()
+        df.to_csv(csv_buffer)
+        minio.put_object(
+          MINIO_BUCKET, 
+          PROCESSED_FILE_NAME.format(date_file=date_file), 
+          io.BytesIO(csv_buffer.getvalue().encode()), 
+          len(csv_buffer.getvalue().encode())
+        )
 
-    _get_propolsas_components_ids = get_propolsas_components_ids()
-    _get_proposals = get_proposals(_get_propolsas_components_ids, '{{ ds_nodash }}')
-    
-    _save_no_minio = salva_no_minio()
-    _cria_bucket = cria_bucket()
-    _verifica_bucket = verifica_bucket()
+    @task(provide_context=True)
+    def delete_landing_zone_file(**context):
+        date_file = context['execution_date'].strftime('%Y%m%d')
+        minio = _get_minio()
+        minio.remove_object(MINIO_BUCKET, LANDING_ZONE_FILE_NAME.format(date_file=date_file))
 
-    _get_proposals >> _verifica_bucket
-    _verifica_bucket >> [_save_no_minio, _cria_bucket]
-    _cria_bucket >> _save_no_minio
 
-decidim_data_extraction()
+    start = EmptyOperator(task_id='start')
+    end = EmptyOperator(task_id='end')
+    start >> get_data() >> salva_minio() >> delete_landing_zone_file() >> end
+
+fetch_process_and_clean_proposals_dag()
