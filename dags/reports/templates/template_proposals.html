@@ -35,7 +35,7 @@
       <li><a href="#access-section" class="index-topic bold">Acessos</a></li>
       <ul class="sublist">
         <li><a href="#access-section" class="index-subtopic">Dados de Acesso (Geral)</a></li>
-        <li><a href="#access-section" class="index-subtopic">Mapa com a quantidade de visitas por UF (Geral)</a></li>
+        <li><a href="#access-section" class="index-subtopic">Mapa de taxa de proporção de acessos por população</a></li>
         <li><a href="#access-section" class="index-subtopic">Dispositivos</a></li>
       </ul>
 
@@ -146,10 +146,9 @@
     <h2  >Dados de Acesso (Geral)</h2>
     {{ macros.create_table_from_list_of_dicts(data.data_access) }}
 
-    <h2>Mapa com a quantidade de visitas por UF (Geral)</h2>
-    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Esse mapa explica a quantidade de acessos por Unidade Federativa do Brasil, no período de {{ data.document.date
-      }}. Com a análise do mapa,
-      o organizador poderá pensar estratégias para aumentar a mobilização em determinado estado.
+    <h2>Mapa de taxa de proporção de acessos por população</h2>
+    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Esse mapa explica a taxa de proporção de acessos porpopulação recebidas no período de {{ data.document.date
+    }}. Com a análise destes dados, o organizador poderá pensar estratégias para aumentar o engajamento em determinada região/estado, se for o caso.
     </p>
     {{ macros.create_svg_element(data.map_graph) }}
   </section>
