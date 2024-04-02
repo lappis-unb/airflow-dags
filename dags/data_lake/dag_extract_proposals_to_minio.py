@@ -1,18 +1,19 @@
 import io
 import json
+import logging
 from datetime import datetime, timedelta
 
 import pandas as pd
 from airflow.decorators import dag, task, task_group
-from airflow.hooks.base_hook import BaseHook
 from airflow.operators.empty import EmptyOperator
-from minio import Minio
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-from airflow.providers.amazon.aws.operators.s3 import S3CreateBucketOperator
+from airflow.providers.amazon.aws.operators.s3 import (
+    S3CreateBucketOperator,
+)
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-from plugins.graphql.hooks.graphql_hook import GraphQLHook
+from sqlalchemy.exc import ProgrammingError
 
-import logging
+from plugins.graphql.hooks.graphql_hook import GraphQLHook
 
 # Vai ser trocado para salvar em arquivo
 QUERY = """
@@ -104,14 +105,14 @@ query teste ($start_date: String!, $end_date: String!) {
 
 """
 DECIDIM_CONN_ID = "api_decidim"
-MINIO_CONN_ID = "minio_connection_id_test"
+MINIO_CONN_ID = "minio_conn_id_test"
 MINIO_BUCKET = "brasil-participativo-daily-csv"
 COMPONENT_TYPE_TO_EXTRACT = "Proposals"
 TABLE_NAME = "proposals"
 SCHEMA = "raw"
 RETRIES = 0
 LANDING_ZONE_FILE_NAME = "landing_zone/proposals{date_file}.json"
-PROCESSING_FILE_NAME = "processing/proposals{date_file}.json"
+PROCESSING_FILE_NAME = "processing/proposals{date_file}.csv"
 PROCESSED_FILE_NAME = "processed/proposals{date_file}.csv"
 POSTGRES_CONN_ID = "conn_postgres"
 
@@ -257,6 +258,43 @@ def _check_and_create_schema(engine, schema):
             logging.info("Schema %s created successfully.", schema)
 
 
+def _convert_dtype(df: pd.DataFrame) -> pd.DataFrame:
+    dtypes = {
+        "author_name": "str",
+        "author_nickname": "str",
+        "author_organization": "str",
+        "authorsCount": "int",
+        "category_name": "str",
+        "commentsHaveAlignment": "bool",
+        "commentsHaveVotes": "bool",
+        "component_id": "int",
+        "component_name": "str",
+        "createdInMeeting": "bool",
+        "endorsementsCount": "int",
+        "fingerprint": "str",
+        "hasComments": "bool",
+        "main_title": "str",
+        "official": "bool",
+        "position": "str",
+        "proposal_body": "str",
+        "proposal_createdAt": "datetime64[ns]",
+        "proposal_id": "int",
+        "proposal_publishedAt": "datetime64[ns]",
+        "proposal_title": "str",
+        "proposal_updatedAt": "datetime64[ns]",
+        "reference": "str",
+        "scope": "str",
+        "state": "str",
+        "totalCommentsCount": "int",
+        "userAllowedToComment": "bool",
+        "versionsCount": "int",
+        "voteCount": "int",
+    }
+    # remove os dtypes que não estão no df
+    dtypes = {k: v for k, v in dtypes.items() if k in df.columns}
+    return df.astype(dtypes, errors="ignore")
+
+
 @dag(
     default_args={
         "owner": "Amoêdo/Nitai",
@@ -265,7 +303,7 @@ def _check_and_create_schema(engine, schema):
         "retry_delay": timedelta(minutes=1),
     },
     schedule="0 23 * * *",
-    catchup=False,
+    catchup=True,
     start_date=datetime(2023, 11, 10),
     description=__doc__,
     tags=["decidim", "minio"],
@@ -283,10 +321,10 @@ def fetch_process_and_clean_proposals():
             the MinIO server.
 
             Returns:
+            -------
               str: The name of the task to create the bucket if it doesn't exist.
             """
-            if not (S3Hook(aws_conn_id=MINIO_CONN_ID)
-                    .check_for_bucket(bucket_name=MINIO_BUCKET)):
+            if not (S3Hook(aws_conn_id=MINIO_CONN_ID).check_for_bucket(bucket_name=MINIO_BUCKET)):
                 return "minio_tasks.create_bucket"
 
         create_bucket = S3CreateBucketOperator(
@@ -335,9 +373,11 @@ def fetch_process_and_clean_proposals():
             Transforms the data by flattening the structure and saving it as a CSV file in MinIO.
 
             Args:
+            ----
               **context: The context dictionary containing the execution date.
 
             Returns:
+            -------
               None
             """
             date_file = context["execution_date"].strftime("%Y%m%d")
@@ -348,6 +388,9 @@ def fetch_process_and_clean_proposals():
             dado = json.loads(dado)
             dado = flatten_structure_with_additional_fields(dado)
             df = pd.DataFrame(dado)
+            df = _convert_dtype(df)
+            if len(df) > 0:
+              df.columns = df.columns.str.lower()
             csv_buffer = io.StringIO()
             df.to_csv(csv_buffer, index=False)
             minio.load_string(
@@ -363,9 +406,11 @@ def fetch_process_and_clean_proposals():
             Deletes a file from the landing zone in MinIO.
 
             Args:
+            ----
               context (dict): The context dictionary containing the execution date.
 
             Returns:
+            -------
               None
             """
             date_file = context["execution_date"].strftime("%Y%m%d")
@@ -375,19 +420,23 @@ def fetch_process_and_clean_proposals():
 
         transform_data() >> delete_landing_zone_file()
 
-    @task_group(group_id="load")
+    @task_group(
+        group_id="load",
+    )
     def load():
-        empty = EmptyOperator(task_id="empty")
+        empty_file = EmptyOperator(task_id="empty_file")
 
-        @task.branch(provide_context=True)
+        @task.branch(provide_context=True, retries=0)
         def check_empty_file(**context):
             """
             Checks if the file in Minio bucket is empty.
 
             Args:
+            ----
               context (dict): The context dictionary containing execution information.
 
             Returns:
+            -------
               str: The branch to follow based on whether the file is empty or not.
             """
             minio = S3Hook(aws_conn_id=MINIO_CONN_ID)
@@ -397,7 +446,7 @@ def fetch_process_and_clean_proposals():
             )
             if len(dado.strip()) == 0:
                 logging.warning("No data found for %s.", date_file)
-                return "load.empty"
+                return "load.empty_file"
             return "load.check_and_create_schema"
 
         @task(retries=RETRIES, retry_delay=timedelta(minutes=3))
@@ -406,31 +455,46 @@ def fetch_process_and_clean_proposals():
             Checks if the 'proposals' schema exists in the PostgreSQL database and creates it if it doesn't exist.
 
             Returns:
-              None
-            """
-            engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
-            _check_and_create_schema(engine, "proposals")
-
-        @task(retries=RETRIES, retry_delay=timedelta(minutes=3))
-        def check_and_create_table():
-            """
-            Checks if the 'proposals' table exists in the database schema and creates it if it doesn't exist.
-
-            Returns:
+            -------
               None
             """
             engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
             _check_and_create_schema(engine, "proposals")
 
         @task(provide_context=True, retries=RETRIES, retry_delay=timedelta(minutes=3))
-        def save_data_potgres(**context):
+        def get_ids_from_table(**context):
+            """
+            Gets the proposal IDs from the 'proposals' table in the database.
+
+            Args:
+            ----
+              context (dict): The context dictionary containing execution information.
+
+            Returns:
+            -------
+              list: A list of proposal IDs from the table.
+            """
+            engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
+            with engine.connect() as connection:
+                try:
+                    result = connection.execute(f"SELECT proposal_id FROM {SCHEMA}.{TABLE_NAME};")
+                except ProgrammingError as error:
+                    logging.warning("Table does not exist. Error: %s", error)
+                    return []
+                proposal_ids = [row[0] for row in result]
+            return proposal_ids
+
+        @task(provide_context=True, retries=RETRIES, retry_delay=timedelta(minutes=3))
+        def save_data_potgres(proposal_ids: list, **context):
             """
             Task to save data from Minio to PostgreSQL.
 
             Args:
+            ----
               context (dict): The context dictionary containing execution information.
 
             Returns:
+            -------
               None
             """
             date_file = context["execution_date"].strftime("%Y%m%d")
@@ -440,10 +504,14 @@ def fetch_process_and_clean_proposals():
             )
             csv_file = io.StringIO(data)
             df = pd.read_csv(csv_file)
+            print(df.columns)
+            df = df[~df["proposal_id"].isin(proposal_ids)]
             df = add_temporal_columns(df, context["execution_date"])
             ## Configure the postgres hook and insert the data
             engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
-            df.to_sql(TABLE_NAME, con=engine, if_exists="append", index=False, schema=SCHEMA)
+            # df.to_sql(TABLE_NAME, con=engine, if_exists="append", index=False, schema=SCHEMA)
+
+            df.to_sql(TABLE_NAME, con=engine, schema=SCHEMA, if_exists="append", index=False)
 
         @task(retries=RETRIES)
         def check_create_primary_key():
@@ -461,11 +529,42 @@ def fetch_process_and_clean_proposals():
             with engine.connect() as connection:
                 connection.execute(f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY (proposal_id);")
 
-        
+        @task(provide_context=True, trigger_rule="one_success", retries=RETRIES)
+        def move_file_s3(**context):
+            """
+            Moves a file from the source bucket to the destination bucket in MinIO.
+
+            Args:
+            ----
+              context (dict): The context dictionary containing the execution date.
+
+            Returns:
+            -------
+              None
+            """
+            date_file = context["execution_date"].strftime("%Y%m%d")
+            source_filename = PROCESSING_FILE_NAME.format(date_file=date_file)
+            dest_filename = PROCESSED_FILE_NAME.format(date_file=date_file)
+            s3_hook = S3Hook(aws_conn_id=MINIO_CONN_ID)
+
+            s3_hook.copy_object(
+                source_bucket_key=source_filename,
+                dest_bucket_key=dest_filename,
+                source_bucket_name=MINIO_BUCKET,
+                dest_bucket_name=MINIO_BUCKET,
+            )
+            s3_hook.delete_objects(bucket=MINIO_BUCKET, keys=source_filename)
 
         _check_schema = check_and_create_schema()
-        check_empty_file() >> [empty, _check_schema]
-        _check_schema >> save_data_potgres() >> check_create_primary_key()
+        _move_file_s3 = move_file_s3()
+        check_empty_file() >> [empty_file, _check_schema]
+        (
+            _check_schema
+            >> save_data_potgres(get_ids_from_table())
+            >> check_create_primary_key()
+            >> _move_file_s3
+        )
+        empty_file >> _move_file_s3
 
     start = EmptyOperator(task_id="start")
     end = EmptyOperator(task_id="end")
