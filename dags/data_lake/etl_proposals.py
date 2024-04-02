@@ -237,28 +237,6 @@ def dict_safe_get(_dict: dict, key: str):
         value = {}
     return value
 
-
-def _check_and_create_schema(engine, schema):
-    """
-    Check if a schema exists in the database, if not, create it.
-
-    Args:
-    ----
-    engine (sqlalchemy.engine.Engine): The SQLAlchemy engine instance.
-    schema (str): The schema name.
-    """
-    with engine.connect() as connection:
-        result = connection.execute(
-            f"""SELECT EXISTS(SELECT 1 FROM
-             information_schema.schemata
-             WHERE schema_name = '{schema}');"""
-        )
-        exists = result.scalar()
-        if not exists:
-            connection.execute(f"CREATE SCHEMA {schema};")
-            logging.info("Schema %s created successfully.", schema)
-
-
 def _convert_dtype(df: pd.DataFrame) -> pd.DataFrame:
     dtypes = {
         "author_name": "str",
@@ -309,9 +287,9 @@ def _convert_dtype(df: pd.DataFrame) -> pd.DataFrame:
     max_active_runs=10,
     description=__doc__,
     tags=["decidim", "minio"],
-    dag_id="fetch_process_and_clean_proposals",
+    dag_id="etl_proposals",
 )
-def fetch_process_and_clean_proposals():
+def etl_proposals():
     """DAG que extrai dados de propostas de um GraphQL API e os armazena em um bucket MinIO."""
 
     @task_group(group_id="minio_tasks")
@@ -451,59 +429,65 @@ def fetch_process_and_clean_proposals():
                 return "load.empty_file"
             return "load.check_and_create_table"
 
-        @task( retry_delay=timedelta(minutes=3))
+        @task(retry_delay=timedelta(minutes=3))
         def check_and_create_table():
-            """
-            Checks if the table exists in the database and creates it if it doesn't exist.
+          """
+          Check if the table exists in the database and create it if it doesn't exist.
 
-            This function uses the PostgresHook to get the SQLAlchemy engine for the Postgres database.
-            It then checks if the table specified by TABLE_NAME and SCHEMA exists in the database.
-            If the table doesn't exist, it creates the table with the specified columns and primary key.
-            """
+          This task connects to a PostgreSQL database using the PostgresHook and checks if a table with the specified name
+          and schema exists. If the table doesn't exist, it creates a new table with the specified columns and primary key.
 
-            engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
-            has_table = engine.has_table(table_name=TABLE_NAME, schema=SCHEMA)
+          Args:
+          ----
+            None
 
-            if not has_table:
-                engine.execute(f"""
-                CREATE TABLE {SCHEMA}.{TABLE_NAME} (
-                  main_title text NULL,
-                  component_id int8 NULL,
-                  component_name text NULL,
-                  proposal_id int8 NOT NULL,
-                  proposal_createdat timestamp NULL,
-                  proposal_publishedat timestamp NULL,
-                  proposal_updatedat timestamp NULL,
-                  author_name text NULL,
-                  author_nickname text NULL,
-                  author_organization text NULL,
-                  proposal_body text NULL,
-                  category_name text NULL,
-                  proposal_title text NULL,
-                  authorscount int8 NULL,
-                  userallowedtocomment bool NULL,
-                  endorsementscount int8 NULL,
-                  totalcommentscount int8 NULL,
-                  versionscount int8 NULL,
-                  votecount int8 NULL,
-                  commentshavealignment bool NULL,
-                  commentshavevotes bool NULL,
-                  createdinmeeting bool NULL,
-                  hascomments bool NULL,
-                  official bool NULL,
-                  fingerprint text NULL,
-                  "position" int8 NULL,
-                  reference text NULL,
-                  "scope" text NULL,
-                  state text NULL,
-                  event_day_id int8 NULL,
-                  available_day_id int8 NULL,
-                  available_month_id int8 NULL,
-                  available_year_id int8 NULL,
-                  writing_day_id int8 NULL
-                );
-                """)
-                engine.execute(f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY ({PRIMARY_KEY});")
+          Returns:
+          -------
+            None
+          """
+          engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
+          has_table = engine.has_table(table_name=TABLE_NAME, schema=SCHEMA)
+
+          if not has_table:
+            engine.execute(f"""
+            CREATE TABLE {SCHEMA}.{TABLE_NAME} (
+              main_title text NULL,
+              component_id int8 NULL,
+              component_name text NULL,
+              proposal_id int8 NOT NULL,
+              proposal_createdat timestamp NULL,
+              proposal_publishedat timestamp NULL,
+              proposal_updatedat timestamp NULL,
+              author_name text NULL,
+              author_nickname text NULL,
+              author_organization text NULL,
+              proposal_body text NULL,
+              category_name text NULL,
+              proposal_title text NULL,
+              authorscount int8 NULL,
+              userallowedtocomment bool NULL,
+              endorsementscount int8 NULL,
+              totalcommentscount int8 NULL,
+              versionscount int8 NULL,
+              votecount int8 NULL,
+              commentshavealignment bool NULL,
+              commentshavevotes bool NULL,
+              createdinmeeting bool NULL,
+              hascomments bool NULL,
+              official bool NULL,
+              fingerprint text NULL,
+              "position" int8 NULL,
+              reference text NULL,
+              "scope" text NULL,
+              state text NULL,
+              event_day_id int8 NULL,
+              available_day_id int8 NULL,
+              available_month_id int8 NULL,
+              available_year_id int8 NULL,
+              writing_day_id int8 NULL
+            );
+            """)
+            engine.execute(f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY ({PRIMARY_KEY});")
 
         @task(provide_context=True,  retry_delay=timedelta(minutes=3))
         def get_ids_from_table(**context):
@@ -603,4 +587,4 @@ def fetch_process_and_clean_proposals():
     start >> minio_tasks() >> _extract_data >> transform() >> load() >> end
 
 
-fetch_process_and_clean_proposals()
+etl_proposals()
