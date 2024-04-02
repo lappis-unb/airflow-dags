@@ -67,11 +67,7 @@ class MatomoGraphs(ReportGraphs):
         brasil_states_map["access_ratio"].fillna(0, inplace=True)
 
         scale = [
-            (0.0, "red"),
-            (0.45, "yellow"),
-            (0.49, "white"),
-            (0.51, "white"),
-            (0.55, "cyan"),
+            (0.0, "cyan"),
             (1.0, "blue"),
         ]
 
