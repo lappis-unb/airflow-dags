@@ -316,7 +316,7 @@ def fetch_process_and_clean_proposals():
 
     @task_group(group_id="minio_tasks")
     def minio_tasks():
-        @task.branch(retries=0)
+        @task.branch()
         def verify_bucket():
             """
             Verifies if the specified bucket exists in
@@ -334,7 +334,7 @@ def fetch_process_and_clean_proposals():
         )
         verify_bucket() >> create_bucket
 
-    @task(provide_context=True, retries=0, trigger_rule="none_failed")
+    @task(provide_context=True,  trigger_rule="none_failed")
     def extract_data(**context):
         """
         Fetches data from a GraphQL API and stores it in a MinIO bucket.
@@ -369,7 +369,7 @@ def fetch_process_and_clean_proposals():
 
     @task_group
     def transform():
-        @task(provide_context=True, retries=0, retry_delay=timedelta(seconds=5))
+        @task(provide_context=True,  retry_delay=timedelta(seconds=5))
         def transform_data(**context):
             """
             Transforms the data by flattening the structure and saving it as a CSV file in MinIO.
@@ -402,7 +402,7 @@ def fetch_process_and_clean_proposals():
                 replace=True,
             )
 
-        @task(provide_context=True, retries=0)
+        @task(provide_context=True, )
         def delete_landing_zone_file(**context):
             """
             Deletes a file from the landing zone in MinIO.
@@ -428,7 +428,7 @@ def fetch_process_and_clean_proposals():
     def load():
         empty_file = EmptyOperator(task_id="empty_file")
 
-        @task.branch(provide_context=True, retries=0)
+        @task.branch(provide_context=True, )
         def check_empty_file(**context):
             """
             Checks if the file in Minio bucket is empty.
@@ -451,7 +451,7 @@ def fetch_process_and_clean_proposals():
                 return "load.empty_file"
             return "load.check_and_create_table"
 
-        @task(retries=RETRIES, retry_delay=timedelta(minutes=3))
+        @task( retry_delay=timedelta(minutes=3))
         def check_and_create_table():
             """
             Checks if the table exists in the database and creates it if it doesn't exist.
@@ -471,9 +471,9 @@ def fetch_process_and_clean_proposals():
                   component_id int8 NULL,
                   component_name text NULL,
                   proposal_id int8 NOT NULL,
-                  proposal_createdat text NULL,
-                  proposal_publishedat text NULL,
-                  proposal_updatedat text NULL,
+                  proposal_createdat timestamp NULL,
+                  proposal_publishedat timestamp NULL,
+                  proposal_updatedat timestamp NULL,
                   author_name text NULL,
                   author_nickname text NULL,
                   author_organization text NULL,
@@ -505,7 +505,7 @@ def fetch_process_and_clean_proposals():
                 """)
                 engine.execute(f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY ({PRIMARY_KEY});")
 
-        @task(provide_context=True, retries=RETRIES, retry_delay=timedelta(minutes=3))
+        @task(provide_context=True,  retry_delay=timedelta(minutes=3))
         def get_ids_from_table(**context):
             """
             Gets the proposal IDs from the 'proposals' table in the database.
@@ -528,7 +528,7 @@ def fetch_process_and_clean_proposals():
                 proposal_ids = [row[0] for row in result]
             return proposal_ids
 
-        @task(provide_context=True, retries=RETRIES, retry_delay=timedelta(minutes=3))
+        @task(provide_context=True,  retry_delay=timedelta(minutes=3))
         def save_data_potgres(proposal_ids: list, **context):
             """
             Task to save data from Minio to PostgreSQL.
@@ -558,7 +558,7 @@ def fetch_process_and_clean_proposals():
             df.to_sql(TABLE_NAME, con=engine, schema=SCHEMA, if_exists="append", index=False)
 
 
-        @task(provide_context=True, trigger_rule="one_success", retries=RETRIES)
+        @task(provide_context=True, trigger_rule="one_success", )
         def move_file_s3(**context):
             """
             Moves a file from the source bucket to the destination bucket in MinIO.
