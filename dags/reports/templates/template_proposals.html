@@ -4,7 +4,6 @@
 <head>
   <meta charset="utf-8" />
   <meta name="bp-report" content="Relatório de dados" />
-  <title>Relatório de dados</title>
 </head>
 
 <body>
@@ -12,9 +11,9 @@
 
   <section class="pdf-page cinza-escuro-4">
     <div class="cover-content">
-      <h1>RELATÓRIO PARCIAL</h1>
+      <h1 class="text-center index-title">{{ data.document.title }}</h1>
+      <h1></h1>
     </div>
-    <h3 class="bp-title text-center">{{ data.document.title }}</h3>
     <div class="document-date">
       <p class="text-center">{{ data.document.date }}</p>
     </div>
@@ -90,7 +89,7 @@
     </body></html>
 
     <section id="proposals-section" class="pdf-page">
-    <h1>Temas</h1>
+    <h1 class="text-center">Temas</h1>
     <p>
       &emsp;&emsp;&emsp;&emsp;&emsp;As propostas foram classificadas em grandes temas. Abaixo será possível verificar os temas com maior número de
       propostas e as propostas mais votadas.
@@ -103,7 +102,7 @@
   </section>
 
   <section id="proposals-section" class="pdf-page">
-    <h1>
+    <h1 class="text-center">
       Top 20 Propostas
     </h1>
     <p>
@@ -119,7 +118,7 @@
   </section>
 
   <section id="proposals-section" class="pdf-page">
-    <h2>Devolutiva ao cidadão</h2>
+    <h2 class="text-center">Devolutiva ao cidadão</h2>
     <p>&emsp;&emsp;&emsp;&emsp;&emsp;O gráfico abaixo representa o status das propostas em relação à devolutiva ao cidadão. É importante que a
       organização esteja atenta a este dado,
       uma vez que o cidadão que contribui espera uma resposta do órgão consultor e se sentirá estimulado a participar de
@@ -155,7 +154,7 @@
   </section>
 
   <section id="access-section" class="pdf-page">
-    <h2>Dispositivos</h2>
+    <h2 class="text-center">Dispositivos</h2>
     <p>
       &emsp;&emsp;&emsp;&emsp;&emsp;Neste capítulo, exploramos os dados relativos às visitas a um determinado site, analisando o tráfego por
       diferentes tipos de dispositivos.
