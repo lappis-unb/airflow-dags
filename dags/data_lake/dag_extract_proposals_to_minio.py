@@ -146,42 +146,42 @@ def flatten_structure_with_additional_fields(data):
         for component in item.get("components", []):
             component_id = component.get("id", "")
             component_name = extract_text(component.get("name", {}).get("translations", []))
-        if "proposals" in component:
-            for proposal in component.get("proposals", {}).get("nodes", []):
-                proposal_data = {
-                    "main_title": main_title,
-                    "component_id": component_id,
-                    "component_name": component_name,
-                    "proposal_id": proposal["id"],
-                    "proposal_createdAt": proposal["createdAt"],
-                    "proposal_publishedAt": proposal.get("publishedAt"),
-                    "proposal_updatedAt": proposal.get("updatedAt"),
-                    "author_name": dict_safe_get(proposal, "author").get("name"),
-                    "author_nickname": dict_safe_get(proposal, "author").get("nickname"),
-                    "author_organization": dict_safe_get(proposal, "author").get("organizationName"),
-                    "proposal_body": extract_text(proposal.get("body", {}).get("translations", [])),
-                    "category_name": extract_text(
-                        dict_safe_get(dict_safe_get(proposal, "category"), "name").get("translations", [])
-                    ),
-                    "proposal_title": extract_text(proposal.get("title", {}).get("translations", [])),
-                    "authorsCount": proposal.get("authorsCount"),
-                    "userAllowedToComment": proposal.get("userAllowedToComment"),
-                    "endorsementsCount": proposal.get("endorsementsCount"),
-                    "totalCommentsCount": proposal.get("totalCommentsCount"),
-                    "versionsCount": proposal.get("versionsCount"),
-                    "voteCount": proposal.get("voteCount"),
-                    "commentsHaveAlignment": proposal.get("commentsHaveAlignment"),
-                    "commentsHaveVotes": proposal.get("commentsHaveVotes"),
-                    "createdInMeeting": proposal.get("createdInMeeting"),
-                    "hasComments": proposal.get("hasComments"),
-                    "official": proposal.get("official"),
-                    "fingerprint": proposal.get("fingerprint", {}).get("value"),
-                    "position": proposal.get("position"),
-                    "reference": proposal.get("reference"),
-                    "scope": proposal.get("scope"),
-                    "state": proposal.get("state"),
-                }
-                flattened_data.append(proposal_data)
+            if "proposals" in component:
+                for proposal in component.get("proposals", {}).get("nodes", []):
+                    proposal_data = {
+                        "main_title": main_title,
+                        "component_id": component_id,
+                        "component_name": component_name,
+                        "proposal_id": proposal["id"],
+                        "proposal_createdAt": proposal["createdAt"],
+                        "proposal_publishedAt": proposal.get("publishedAt"),
+                        "proposal_updatedAt": proposal.get("updatedAt"),
+                        "author_name": dict_safe_get(proposal, "author").get("name"),
+                        "author_nickname": dict_safe_get(proposal, "author").get("nickname"),
+                        "author_organization": dict_safe_get(proposal, "author").get("organizationName"),
+                        "proposal_body": extract_text(proposal.get("body", {}).get("translations", [])),
+                        "category_name": extract_text(
+                            dict_safe_get(dict_safe_get(proposal, "category"), "name").get("translations", [])
+                        ),
+                        "proposal_title": extract_text(proposal.get("title", {}).get("translations", [])),
+                        "authorsCount": proposal.get("authorsCount"),
+                        "userAllowedToComment": proposal.get("userAllowedToComment"),
+                        "endorsementsCount": proposal.get("endorsementsCount"),
+                        "totalCommentsCount": proposal.get("totalCommentsCount"),
+                        "versionsCount": proposal.get("versionsCount"),
+                        "voteCount": proposal.get("voteCount"),
+                        "commentsHaveAlignment": proposal.get("commentsHaveAlignment"),
+                        "commentsHaveVotes": proposal.get("commentsHaveVotes"),
+                        "createdInMeeting": proposal.get("createdInMeeting"),
+                        "hasComments": proposal.get("hasComments"),
+                        "official": proposal.get("official"),
+                        "fingerprint": proposal.get("fingerprint", {}).get("value"),
+                        "position": proposal.get("position"),
+                        "reference": proposal.get("reference"),
+                        "scope": proposal.get("scope"),
+                        "state": proposal.get("state"),
+                    }
+                    flattened_data.append(proposal_data)
     return flattened_data
 
 
