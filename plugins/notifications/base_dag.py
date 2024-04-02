@@ -1,0 +1,175 @@
+# pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
+
+# pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
+from datetime import datetime, timedelta, timezone
+from typing import Union
+
+import pandas as pd
+from airflow.decorators import dag, task
+from airflow.models import Variable
+from airflow.operators.empty import EmptyOperator
+from airflow.providers.telegram.hooks.telegram import TelegramHook
+
+from plugins.telegram.decorators import telegram_retry
+
+
+class NotifierDAG:
+    def __init__(
+        self,
+        owners: str,
+        notifier_type: str,
+        telegram_config: str,
+        component_id: str,
+        process_id: str,
+        start_date: str,
+        end_date: str,
+    ) -> None:
+        self.notifier_type = notifier_type
+        self.component_id = component_id
+        self.process_id = process_id
+
+        self.telegram_conn_id = telegram_config["telegram_conn_id"]
+        self.telegram_chat_id = telegram_config["telegram_group_id"]
+        self.telegram_topic_id = telegram_config["telegram_moderation_proposals_topic_id"]
+
+        self.most_recent_msg_time = f"most_recent_{self.notifier_type}_time_{process_id}"
+        self.start_date = self._format_date(start_date)
+        self.end_date = self._format_date(end_date)
+
+        self.default_args = {
+            "owner": owners,
+            "start_date": self.start_date,
+            "end_date": self.end_date,
+            "depends_on_past": False,
+            "retries": 0,
+            # "on_failure_callback": send_slack,
+            # "on_retry_callback": send_slack,
+        }
+
+    def _format_date(self, date: Union[str, datetime]):
+        assert isinstance(date, (str, datetime))
+        if isinstance(date, str):
+            return date
+        if isinstance(date, datetime):
+            return date.strftime("%Y-%m-%d")
+
+    def _get_update_date(self, dag_start_date: datetime):
+        assert isinstance(dag_start_date, datetime)
+
+        date_format = "%Y-%m-%d %H:%M:%S%z"
+
+        update_datetime = Variable.get(self.most_recent_msg_time)
+        if update_datetime:
+            assert isinstance(update_datetime, str)
+            return datetime.strptime(update_datetime, date_format)
+
+        tz = timezone(timedelta(hours=-3))
+        return datetime(
+            dag_start_date.year,
+            dag_start_date.month,
+            dag_start_date.day,
+            tzinfo=tz,
+        ).strftime(date_format)
+
+    @telegram_retry(max_retries=20)
+    def _send_telegram_notification(self, telegram_conn_id, telegram_chat_id, telegram_topic_id, message):
+        TelegramHook(
+            telegram_conn_id=telegram_conn_id,
+            chat_id=telegram_chat_id,
+        ).send_message(
+            api_params={
+                "text": message,
+                "message_thread_id": telegram_topic_id,
+            }
+        )
+
+    def _get_data(self, component_id: int, update_date: datetime):
+        raise NotImplementedError
+
+    def _format_telegram_message(self, data_row: pd.Series):
+        raise NotImplementedError
+
+    def _build_telegram_message(self, component_id: int, proposals_json: dict, update_date: datetime):
+        raise NotImplementedError
+
+    def generate_dag(self):
+        @dag(
+            dag_id=f"notify_new_{self.notifier_type.lower()}_{self.process_id}",
+            default_args=self.default_args,
+            schedule="*/3 * * * *",  # every 3 minutes
+            catchup=False,
+            description=__doc__,
+            max_active_runs=1,
+            tags=["notificação", "decidim", self.notifier_type.lower()],
+            is_paused_upon_creation=False,
+        )
+        def notify_dag():
+            @task
+            def get_update_date(dag_start_date: datetime):
+                return self._get_update_date(dag_start_date)
+
+            @task(task_id=f"get_{self.notifier_type.lower()}")
+            def get_data(component_id: int, update_date: datetime):
+                return self._get_data(component_id, update_date)
+
+            @task(multiple_outputs=True)
+            def mount_telegram_messages(component_id, proposals_json: dict, update_date: datetime) -> dict:
+                return self._build_telegram_message(component_id, proposals_json, update_date)
+
+            @task.branch
+            def check_if_new_data(selected_data: list) -> str:
+                """Airflow task branch that check if there is new or updated proposals to send on telegram.
+
+                Args:
+                ----
+                    selected_proposals (list): list of selected proposals
+                        messages to send on telegram.
+
+                Returns:
+                -------
+                    str: next Airflow task to be called
+                """
+                if selected_data["data"]:
+                    return "send_telegram_messages"
+                else:
+                    return "skip_send_message"
+
+            @task
+            def send_telegram_messages(proposals_messages: list):
+                """Airflow task to send telegram messages.
+
+                Args:
+                ----
+                    proposals_messages (list): List of proposals telegram
+                        messages to be send.
+                """
+                for menssage in proposals_messages:
+                    self._send_telegram_notification(
+                        self.telegram_conn_id, self.telegram_chat_id, self.telegram_topic_id, menssage
+                    )
+
+            @task
+            def save_update_date(max_datetime: str):
+                """Airflow task to update last proposal datetime saved on airflow variables.
+
+                Args:
+                ----
+                    max_datetime (str): last proposal datetime
+                """
+                Variable.set(self.most_recent_msg_time, max_datetime)
+
+            # Instantiation
+            update_date = get_update_date(self.start_date)
+            proposals_json = get_data(self.component_id, update_date)
+            selected_proposals = mount_telegram_messages(self.component_id, proposals_json, update_date)
+            check_if_new_proposals_task = check_if_new_data(selected_proposals)
+
+            # Orchestration
+            check_if_new_proposals_task >> EmptyOperator(task_id="skip_send_message")
+            (
+                check_if_new_proposals_task
+                >> send_telegram_messages(selected_proposals["proposals_messages"])
+                >> save_update_date(selected_proposals["max_datetime"])
+            )
+
+        return notify_dag()
