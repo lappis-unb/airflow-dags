@@ -147,7 +147,9 @@ def flatten_structure_with_additional_fields(data):
         main_title = extract_text(item.get("title", {}).get("translations", []))
         for component in item.get("components", []):
             component_id = component.get("id", "")
-            component_name = extract_text(component.get("name", {}).get("translations", []))
+            component_name = extract_text(
+                component.get("name", {}).get("translations", [])
+            )
             if "proposals" in component:
                 for proposal in component.get("proposals", {}).get("nodes", []):
                     proposal_data = {
@@ -159,13 +161,23 @@ def flatten_structure_with_additional_fields(data):
                         "proposal_publishedAt": proposal.get("publishedAt"),
                         "proposal_updatedAt": proposal.get("updatedAt"),
                         "author_name": dict_safe_get(proposal, "author").get("name"),
-                        "author_nickname": dict_safe_get(proposal, "author").get("nickname"),
-                        "author_organization": dict_safe_get(proposal, "author").get("organizationName"),
-                        "proposal_body": extract_text(proposal.get("body", {}).get("translations", [])),
-                        "category_name": extract_text(
-                            dict_safe_get(dict_safe_get(proposal, "category"), "name").get("translations", [])
+                        "author_nickname": dict_safe_get(proposal, "author").get(
+                            "nickname"
                         ),
-                        "proposal_title": extract_text(proposal.get("title", {}).get("translations", [])),
+                        "author_organization": dict_safe_get(proposal, "author").get(
+                            "organizationName"
+                        ),
+                        "proposal_body": extract_text(
+                            proposal.get("body", {}).get("translations", [])
+                        ),
+                        "category_name": extract_text(
+                            dict_safe_get(
+                                dict_safe_get(proposal, "category"), "name"
+                            ).get("translations", [])
+                        ),
+                        "proposal_title": extract_text(
+                            proposal.get("title", {}).get("translations", [])
+                        ),
                         "authorsCount": proposal.get("authorsCount"),
                         "userAllowedToComment": proposal.get("userAllowedToComment"),
                         "endorsementsCount": proposal.get("endorsementsCount"),
@@ -185,6 +197,7 @@ def flatten_structure_with_additional_fields(data):
                     }
                     flattened_data.append(proposal_data)
     return flattened_data
+
 
 def add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataFrame:
     """
@@ -215,6 +228,7 @@ def add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataF
 
     return df
 
+
 def dict_safe_get(_dict: dict, key: str):
     """
     Retorna o valor associado à chave especificada em um dicionário.
@@ -235,6 +249,7 @@ def dict_safe_get(_dict: dict, key: str):
     if not value:
         value = {}
     return value
+
 
 def _convert_dtype(df: pd.DataFrame) -> pd.DataFrame:
     dtypes = {
@@ -272,10 +287,36 @@ def _convert_dtype(df: pd.DataFrame) -> pd.DataFrame:
     dtypes = {k: v for k, v in dtypes.items() if k in df.columns}
     return df.astype(dtypes, errors="ignore")
 
+
 def _verify_bucket(hook: S3Hook, bucket_name: str) -> str:
 
     if not hook.check_for_bucket(bucket_name=bucket_name):
         return "minio_tasks.create_bucket"
+
+def _task_extract_data(**context):
+      date = context["execution_date"].strftime("%Y-%m-%d")
+      next_date = (context["execution_date"] + timedelta(days=1)).strftime("%Y-%m-%d")
+      date_file = context["execution_date"].strftime("%Y%m%d")
+      # Fetch data from GraphQL API
+      hook = GraphQLHook(DECIDIM_CONN_ID)
+      session = hook.get_session()
+      response = session.post(
+          hook.api_url,
+          json={
+              "query": QUERY,
+              "variables": {"start_date": f"{date}", "end_date": f"{next_date}"},
+          },
+      )
+      # dado = response.json()
+      dado = response.text
+      # Store data in MinIO bucket
+      S3Hook(aws_conn_id=MINIO_CONN_ID).load_string(
+          string_data=dado,
+          bucket_name=MINIO_BUCKET,
+          key=LANDING_ZONE_FILE_NAME.format(date_file=date_file),
+          replace=True,
+      )
+
 
 
 @dag(
@@ -298,7 +339,7 @@ def etl_proposals():
 
     @task_group(group_id="minio_tasks")
     def minio_tasks():
-        
+
         @task.branch()
         def verify_bucket():
             """
@@ -330,25 +371,7 @@ def etl_proposals():
         -------
           None
         """
-        date = context["execution_date"].strftime("%Y-%m-%d")
-        next_date = (context["execution_date"] + timedelta(days=1)).strftime("%Y-%m-%d")
-        date_file = context["execution_date"].strftime("%Y%m%d")
-        # Fetch data from GraphQL API
-        hook = GraphQLHook(DECIDIM_CONN_ID)
-        session = hook.get_session()
-        response = session.post(
-            hook.api_url,
-            json={"query": QUERY, "variables": {"start_date": f"{date}", "end_date": f"{next_date}"}},
-        )
-        # dado = response.json()
-        dado = response.text
-        # Store data in MinIO bucket
-        S3Hook(aws_conn_id=MINIO_CONN_ID).load_string(
-            string_data=dado,
-            bucket_name=MINIO_BUCKET,
-            key=LANDING_ZONE_FILE_NAME.format(date_file=date_file),
-            replace=True,
-        )
+        _task_extract_data(**context)
 
     @task_group
     def transform():
@@ -368,7 +391,8 @@ def etl_proposals():
             date_file = context["execution_date"].strftime("%Y%m%d")
             minio = S3Hook(aws_conn_id=MINIO_CONN_ID)
             dado = minio.read_key(
-                key=LANDING_ZONE_FILE_NAME.format(date_file=date_file), bucket_name=MINIO_BUCKET
+                key=LANDING_ZONE_FILE_NAME.format(date_file=date_file),
+                bucket_name=MINIO_BUCKET,
             )
             dado = json.loads(dado)
             dado = flatten_structure_with_additional_fields(dado)
@@ -403,7 +427,10 @@ def etl_proposals():
             date_file = context["execution_date"].strftime("%Y%m%d")
             minio = S3Hook(aws_conn_id=MINIO_CONN_ID)
             print(dir(minio))
-            minio.delete_objects(bucket=MINIO_BUCKET, keys=LANDING_ZONE_FILE_NAME.format(date_file=date_file))
+            minio.delete_objects(
+                bucket=MINIO_BUCKET,
+                keys=LANDING_ZONE_FILE_NAME.format(date_file=date_file),
+            )
 
         transform_data() >> delete_landing_zone_file()
 
@@ -431,7 +458,8 @@ def etl_proposals():
             minio = S3Hook(aws_conn_id=MINIO_CONN_ID)
             date_file = context["execution_date"].strftime("%Y%m%d")
             dado = minio.read_key(
-                key=PROCESSING_FILE_NAME.format(date_file=date_file), bucket_name=MINIO_BUCKET
+                key=PROCESSING_FILE_NAME.format(date_file=date_file),
+                bucket_name=MINIO_BUCKET,
             )
             if len(dado.strip()) == 0:
                 logging.warning("No data found for %s.", date_file)
@@ -454,7 +482,9 @@ def etl_proposals():
             -------
               None
             """
-            engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
+            engine = PostgresHook(
+                postgres_conn_id=POSTGRES_CONN_ID
+            ).get_sqlalchemy_engine()
             has_table = engine.has_table(table_name=TABLE_NAME, schema=SCHEMA)
 
             if not has_table:
@@ -498,7 +528,9 @@ def etl_proposals():
             );
             """
                 )
-                engine.execute(f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY ({PRIMARY_KEY});")
+                engine.execute(
+                    f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY ({PRIMARY_KEY});"
+                )
 
         @task(provide_context=True, retry_delay=timedelta(minutes=3))
         def get_ids_from_table(**context):
@@ -513,10 +545,14 @@ def etl_proposals():
             -------
               list: A list of proposal IDs from the table.
             """
-            engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
+            engine = PostgresHook(
+                postgres_conn_id=POSTGRES_CONN_ID
+            ).get_sqlalchemy_engine()
             with engine.connect() as connection:
                 try:
-                    result = connection.execute(f"SELECT proposal_id FROM {SCHEMA}.{TABLE_NAME};")
+                    result = connection.execute(
+                        f"SELECT proposal_id FROM {SCHEMA}.{TABLE_NAME};"
+                    )
                 except ProgrammingError as error:
                     logging.warning("Table does not exist. Error: %s", error)
                     return []
@@ -539,7 +575,8 @@ def etl_proposals():
             date_file = context["execution_date"].strftime("%Y%m%d")
             minio = S3Hook(aws_conn_id=MINIO_CONN_ID)
             data = minio.read_key(
-                key=PROCESSING_FILE_NAME.format(date_file=date_file), bucket_name=MINIO_BUCKET
+                key=PROCESSING_FILE_NAME.format(date_file=date_file),
+                bucket_name=MINIO_BUCKET,
             )
             csv_file = io.StringIO(data)
             df = pd.read_csv(csv_file)
@@ -547,10 +584,14 @@ def etl_proposals():
             df = df[~df["proposal_id"].isin(proposal_ids)]
             df = add_temporal_columns(df, context["execution_date"])
             ## Configure the postgres hook and insert the data
-            engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
+            engine = PostgresHook(
+                postgres_conn_id=POSTGRES_CONN_ID
+            ).get_sqlalchemy_engine()
             # df.to_sql(TABLE_NAME, con=engine, if_exists="append", index=False, schema=SCHEMA)
 
-            df.to_sql(TABLE_NAME, con=engine, schema=SCHEMA, if_exists="append", index=False)
+            df.to_sql(
+                TABLE_NAME, con=engine, schema=SCHEMA, if_exists="append", index=False
+            )
 
         @task(
             provide_context=True,
@@ -585,7 +626,12 @@ def etl_proposals():
         _move_file_s3 = move_file_s3()
         _get_ids_from_table = get_ids_from_table()
         check_empty_file() >> [empty_file, _create_table]
-        (_create_table >> _get_ids_from_table >> save_data_potgres(_get_ids_from_table) >> _move_file_s3)
+        (
+            _create_table
+            >> _get_ids_from_table
+            >> save_data_potgres(_get_ids_from_table)
+            >> _move_file_s3
+        )
         empty_file >> _move_file_s3
 
     start = EmptyOperator(task_id="start")
