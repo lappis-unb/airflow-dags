@@ -12,10 +12,11 @@ from airflow.providers.amazon.aws.operators.s3 import (
 )
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from sqlalchemy.exc import ProgrammingError
-
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 
 # Vai ser trocado para salvar em arquivo
+
+
 QUERY = """
 query teste ($start_date: String!, $end_date: String!) {
   participatoryProcesses  {
@@ -110,7 +111,7 @@ MINIO_BUCKET = "brasil-participativo-daily-csv"
 COMPONENT_TYPE_TO_EXTRACT = "Proposals"
 TABLE_NAME = "proposals"
 SCHEMA = "raw"
-PRIMARY_KEY = 'proposal_id'
+PRIMARY_KEY = "proposal_id"
 RETRIES = 0
 LANDING_ZONE_FILE_NAME = "landing_zone/proposals{date_file}.json"
 PROCESSING_FILE_NAME = "processing/proposals{date_file}.csv"
@@ -185,7 +186,6 @@ def flatten_structure_with_additional_fields(data):
                     flattened_data.append(proposal_data)
     return flattened_data
 
-
 def add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataFrame:
     """
     Adds temporal columns to the DataFrame based on the execution date.
@@ -214,7 +214,6 @@ def add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataF
     df["writing_day_id"] = writing_day_id
 
     return df
-
 
 def dict_safe_get(_dict: dict, key: str):
     """
@@ -273,6 +272,11 @@ def _convert_dtype(df: pd.DataFrame) -> pd.DataFrame:
     dtypes = {k: v for k, v in dtypes.items() if k in df.columns}
     return df.astype(dtypes, errors="ignore")
 
+def _verify_bucket(hook: S3Hook, bucket_name: str) -> str:
+
+    if not hook.check_for_bucket(bucket_name=bucket_name):
+        return "minio_tasks.create_bucket"
+
 
 @dag(
     default_args={
@@ -294,6 +298,7 @@ def etl_proposals():
 
     @task_group(group_id="minio_tasks")
     def minio_tasks():
+        
         @task.branch()
         def verify_bucket():
             """
@@ -304,15 +309,15 @@ def etl_proposals():
             -------
               str: The name of the task to create the bucket if it doesn't exist.
             """
-            if not (S3Hook(aws_conn_id=MINIO_CONN_ID).check_for_bucket(bucket_name=MINIO_BUCKET)):
-                return "minio_tasks.create_bucket"
+            hook = S3Hook(aws_conn_id=MINIO_CONN_ID)
+            return _verify_bucket(hook=hook, bucket_name=MINIO_BUCKET)
 
         create_bucket = S3CreateBucketOperator(
             task_id="create_bucket", bucket_name=MINIO_BUCKET, aws_conn_id=MINIO_CONN_ID
         )
         verify_bucket() >> create_bucket
 
-    @task(provide_context=True,  trigger_rule="none_failed")
+    @task(provide_context=True, trigger_rule="none_failed")
     def extract_data(**context):
         """
         Fetches data from a GraphQL API and stores it in a MinIO bucket.
@@ -347,7 +352,7 @@ def etl_proposals():
 
     @task_group
     def transform():
-        @task(provide_context=True,  retry_delay=timedelta(seconds=5))
+        @task(provide_context=True, retry_delay=timedelta(seconds=5))
         def transform_data(**context):
             """
             Transforms the data by flattening the structure and saving it as a CSV file in MinIO.
@@ -370,7 +375,7 @@ def etl_proposals():
             df = pd.DataFrame(dado)
             df = _convert_dtype(df)
             if len(df) > 0:
-              df.columns = df.columns.str.lower()
+                df.columns = df.columns.str.lower()
             csv_buffer = io.StringIO()
             df.to_csv(csv_buffer, index=False)
             minio.load_string(
@@ -380,7 +385,9 @@ def etl_proposals():
                 replace=True,
             )
 
-        @task(provide_context=True, )
+        @task(
+            provide_context=True,
+        )
         def delete_landing_zone_file(**context):
             """
             Deletes a file from the landing zone in MinIO.
@@ -406,7 +413,9 @@ def etl_proposals():
     def load():
         empty_file = EmptyOperator(task_id="empty_file")
 
-        @task.branch(provide_context=True, )
+        @task.branch(
+            provide_context=True,
+        )
         def check_empty_file(**context):
             """
             Checks if the file in Minio bucket is empty.
@@ -431,25 +440,26 @@ def etl_proposals():
 
         @task(retry_delay=timedelta(minutes=3))
         def check_and_create_table():
-          """
-          Check if the table exists in the database and create it if it doesn't exist.
+            """
+            Check if the table exists in the database and create it if it doesn't exist.
 
-          This task connects to a PostgreSQL database using the PostgresHook and checks if a table with the specified name
-          and schema exists. If the table doesn't exist, it creates a new table with the specified columns and primary key.
+            This task connects to a PostgreSQL database using the PostgresHook and checks if a table with the specified name
+            and schema exists. If the table doesn't exist, it creates a new table with the specified columns and primary key.
 
-          Args:
-          ----
-            None
+            Args:
+            ----
+              None
 
-          Returns:
-          -------
-            None
-          """
-          engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
-          has_table = engine.has_table(table_name=TABLE_NAME, schema=SCHEMA)
+            Returns:
+            -------
+              None
+            """
+            engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
+            has_table = engine.has_table(table_name=TABLE_NAME, schema=SCHEMA)
 
-          if not has_table:
-            engine.execute(f"""
+            if not has_table:
+                engine.execute(
+                    f"""
             CREATE TABLE {SCHEMA}.{TABLE_NAME} (
               main_title text NULL,
               component_id int8 NULL,
@@ -486,10 +496,11 @@ def etl_proposals():
               available_year_id int8 NULL,
               writing_day_id int8 NULL
             );
-            """)
-            engine.execute(f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY ({PRIMARY_KEY});")
+            """
+                )
+                engine.execute(f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY ({PRIMARY_KEY});")
 
-        @task(provide_context=True,  retry_delay=timedelta(minutes=3))
+        @task(provide_context=True, retry_delay=timedelta(minutes=3))
         def get_ids_from_table(**context):
             """
             Gets the proposal IDs from the 'proposals' table in the database.
@@ -512,7 +523,7 @@ def etl_proposals():
                 proposal_ids = [row[0] for row in result]
             return proposal_ids
 
-        @task(provide_context=True,  retry_delay=timedelta(minutes=3))
+        @task(provide_context=True, retry_delay=timedelta(minutes=3))
         def save_data_potgres(proposal_ids: list, **context):
             """
             Task to save data from Minio to PostgreSQL.
@@ -541,8 +552,10 @@ def etl_proposals():
 
             df.to_sql(TABLE_NAME, con=engine, schema=SCHEMA, if_exists="append", index=False)
 
-
-        @task(provide_context=True, trigger_rule="one_success", )
+        @task(
+            provide_context=True,
+            trigger_rule="one_success",
+        )
         def move_file_s3(**context):
             """
             Moves a file from the source bucket to the destination bucket in MinIO.
@@ -572,12 +585,7 @@ def etl_proposals():
         _move_file_s3 = move_file_s3()
         _get_ids_from_table = get_ids_from_table()
         check_empty_file() >> [empty_file, _create_table]
-        (
-            _create_table
-            >> _get_ids_from_table
-            >> save_data_potgres(_get_ids_from_table)
-            >> _move_file_s3
-        )
+        (_create_table >> _get_ids_from_table >> save_data_potgres(_get_ids_from_table) >> _move_file_s3)
         empty_file >> _move_file_s3
 
     start = EmptyOperator(task_id="start")
