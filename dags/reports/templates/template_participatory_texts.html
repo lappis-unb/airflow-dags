@@ -11,9 +11,6 @@
   {% import "./jinja/macros.html" as macros %}
 
   <section class="pdf-page cinza-escuro-4">
-    <div class="cover-content">
-      <h1>RELATÓRIO PARCIAL</h1>
-    </div>
     <h3 class="bp-title text-center">{{ data.document.title }}</h3>
     <div class="document-date">
       <p class="text-center">{{ data.document.date }}</p>
@@ -82,7 +79,7 @@
     </body></html>
 
     <section id="contribution-section" class="pdf-page">
-    <h2>Número de contribuições por parágrafo</h2>
+    <h2 class="text-center">Número de contribuições por parágrafo</h2>
     <p>
       &emsp;&emsp;&emsp;&emsp;&emsp;Esta análise possibilita ao organizador verificar quais parágrafos/propostas mais receberam contribuições de modo a
        focar os esforços nestes parágrafos/propostas.
@@ -125,7 +122,7 @@
   </section>
 
   <section id="access-section" class="pdf-page">
-    <h2>Dispositivos</h2>
+    <h2 class="text-center">Dispositivos</h2>
     <p>
       &emsp;&emsp;&emsp;&emsp;&emsp;Neste capítulo, exploramos os dados relativos às visitas a um determinado site, analisando o tráfego por
       diferentes tipos de dispositivos.
