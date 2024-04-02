@@ -110,6 +110,7 @@ MINIO_BUCKET = "brasil-participativo-daily-csv"
 COMPONENT_TYPE_TO_EXTRACT = "Proposals"
 TABLE_NAME = "proposals"
 SCHEMA = "raw"
+PRIMARY_KEY = 'proposal_id'
 RETRIES = 0
 LANDING_ZONE_FILE_NAME = "landing_zone/proposals{date_file}.json"
 PROCESSING_FILE_NAME = "processing/proposals{date_file}.csv"
@@ -305,6 +306,7 @@ def _convert_dtype(df: pd.DataFrame) -> pd.DataFrame:
     schedule="0 23 * * *",
     catchup=True,
     start_date=datetime(2023, 11, 10),
+    max_active_runs=10,
     description=__doc__,
     tags=["decidim", "minio"],
     dag_id="fetch_process_and_clean_proposals",
@@ -447,19 +449,61 @@ def fetch_process_and_clean_proposals():
             if len(dado.strip()) == 0:
                 logging.warning("No data found for %s.", date_file)
                 return "load.empty_file"
-            return "load.check_and_create_schema"
+            return "load.check_and_create_table"
 
         @task(retries=RETRIES, retry_delay=timedelta(minutes=3))
-        def check_and_create_schema():
+        def check_and_create_table():
             """
-            Checks if the 'proposals' schema exists in the PostgreSQL database and creates it if it doesn't exist.
+            Checks if the table exists in the database and creates it if it doesn't exist.
 
-            Returns:
-            -------
-              None
+            This function uses the PostgresHook to get the SQLAlchemy engine for the Postgres database.
+            It then checks if the table specified by TABLE_NAME and SCHEMA exists in the database.
+            If the table doesn't exist, it creates the table with the specified columns and primary key.
             """
+
             engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
-            _check_and_create_schema(engine, "proposals")
+            has_table = engine.has_table(table_name=TABLE_NAME, schema=SCHEMA)
+
+            if not has_table:
+                engine.execute(f"""
+                CREATE TABLE {SCHEMA}.{TABLE_NAME} (
+                  main_title text NULL,
+                  component_id int8 NULL,
+                  component_name text NULL,
+                  proposal_id int8 NOT NULL,
+                  proposal_createdat text NULL,
+                  proposal_publishedat text NULL,
+                  proposal_updatedat text NULL,
+                  author_name text NULL,
+                  author_nickname text NULL,
+                  author_organization text NULL,
+                  proposal_body text NULL,
+                  category_name text NULL,
+                  proposal_title text NULL,
+                  authorscount int8 NULL,
+                  userallowedtocomment bool NULL,
+                  endorsementscount int8 NULL,
+                  totalcommentscount int8 NULL,
+                  versionscount int8 NULL,
+                  votecount int8 NULL,
+                  commentshavealignment bool NULL,
+                  commentshavevotes bool NULL,
+                  createdinmeeting bool NULL,
+                  hascomments bool NULL,
+                  official bool NULL,
+                  fingerprint text NULL,
+                  "position" int8 NULL,
+                  reference text NULL,
+                  "scope" text NULL,
+                  state text NULL,
+                  event_day_id int8 NULL,
+                  available_day_id int8 NULL,
+                  available_month_id int8 NULL,
+                  available_year_id int8 NULL,
+                  writing_day_id int8 NULL
+                );
+                """)
+                engine.execute(f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY ({PRIMARY_KEY});")
 
         @task(provide_context=True, retries=RETRIES, retry_delay=timedelta(minutes=3))
         def get_ids_from_table(**context):
@@ -513,21 +557,6 @@ def fetch_process_and_clean_proposals():
 
             df.to_sql(TABLE_NAME, con=engine, schema=SCHEMA, if_exists="append", index=False)
 
-        @task(retries=RETRIES)
-        def check_create_primary_key():
-            """
-            This function checks if a primary key exists for the table.
-            If not, it creates a new primary key.
-            """
-            primary_keys = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_table_primary_key(
-                table=TABLE_NAME, schema=SCHEMA
-            )
-            if primary_keys:
-                return
-
-            engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
-            with engine.connect() as connection:
-                connection.execute(f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY (proposal_id);")
 
         @task(provide_context=True, trigger_rule="one_success", retries=RETRIES)
         def move_file_s3(**context):
@@ -555,13 +584,14 @@ def fetch_process_and_clean_proposals():
             )
             s3_hook.delete_objects(bucket=MINIO_BUCKET, keys=source_filename)
 
-        _check_schema = check_and_create_schema()
+        _create_table = check_and_create_table()
         _move_file_s3 = move_file_s3()
-        check_empty_file() >> [empty_file, _check_schema]
+        _get_ids_from_table = get_ids_from_table()
+        check_empty_file() >> [empty_file, _create_table]
         (
-            _check_schema
-            >> save_data_potgres(get_ids_from_table())
-            >> check_create_primary_key()
+            _create_table
+            >> _get_ids_from_table
+            >> save_data_potgres(_get_ids_from_table)
             >> _move_file_s3
         )
         empty_file >> _move_file_s3
