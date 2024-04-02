@@ -28,9 +28,9 @@ from pathlib import Path
 from typing import Union
 
 import pandas as pd
-from plugins.notifications.base_dag import NotifierDAG
 
 from plugins.decidim_hook import DecidimHook
+from plugins.notifications.base_dag import NotifierDAG
 from plugins.yaml.config_reader import read_yaml_files_from_directory
 
 DECIDIM_CONN_ID = "api_decidim"
@@ -83,14 +83,14 @@ class NotifyNewProposals(NotifierDAG):  # noqa: D101
 
         Returns:
         -------
-            dict: "proposals_messages" (list): new/updated proposals to
+            dict: "data" (list): new/updated proposals to
                     send on telegram.
                 "max_datetime" (str): max proposal date (new or update).
 
         """
         logging.info("Recived proposals %s", proposals_json)
         result: dict[str, Union[list, datetime, None]] = {
-            "proposals_messages": [],
+            "data": [],
             "max_datetime": None,
         }
 
@@ -103,12 +103,11 @@ class NotifyNewProposals(NotifierDAG):  # noqa: D101
             (proposals_df["publishedAt"] > update_date) | (proposals_df["updatedAt"] > update_date)
         ].copy()
 
-        proposals_df_new["telegram_msgs"] = proposals_df_new.apply(self._format_telegram_message, axis=1)
-
+        result["data"] = proposals_df_new.apply(self._format_telegram_message, axis=1)
         result["max_datetime"] = proposals_df_new["date"].max()
 
-        logging.info("Built %s menssages.", len(proposals_df_new["telegram_msgs"]))
-        return proposals_df_new["telegram_msgs"]
+        logging.info("Built %s menssages.", len(result["data"]))
+        return result
 
 
 CONFIG_FOLDER = Path(os.environ["AIRFLOW_HOME"] / Path("dags-data/Notifications-Configs"))

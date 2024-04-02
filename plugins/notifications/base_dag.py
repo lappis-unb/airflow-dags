@@ -1,10 +1,11 @@
 # pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
 
 # pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from typing import Union
 
 import pandas as pd
+import pendulum
 from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.operators.empty import EmptyOperator
@@ -47,29 +48,25 @@ class NotifierDAG:
         }
 
     def _format_date(self, date: Union[str, datetime]):
-        assert isinstance(date, (str, datetime))
+        print(type(date))
+        # assert isinstance(date, (str, datetime))
         if isinstance(date, str):
             return date
-        if isinstance(date, datetime):
+        if isinstance(date, (datetime)):
             return date.strftime("%Y-%m-%d")
 
-    def _get_update_date(self, dag_start_date: datetime):
-        assert isinstance(dag_start_date, datetime)
+    def _get_update_date(self, dag_start_date: str):
+        assert isinstance(dag_start_date, str)
 
-        date_format = "%Y-%m-%d %H:%M:%S%z"
+        date_format = "YYYY-MM-DD H:mm:ssZ"
 
-        update_datetime = Variable.get(self.most_recent_msg_time)
+        update_datetime = Variable.get(self.most_recent_msg_time, None)
         if update_datetime:
             assert isinstance(update_datetime, str)
-            return datetime.strptime(update_datetime, date_format)
+            return pendulum.from_format(dag_start_date, date_format, tz="America/Sao_Paulo")
 
-        tz = timezone(timedelta(hours=-3))
-        return datetime(
-            dag_start_date.year,
-            dag_start_date.month,
-            dag_start_date.day,
-            tzinfo=tz,
-        ).strftime(date_format)
+        date = pendulum.from_format(dag_start_date, "YYYY-MM-DD", tz="America/Sao_Paulo")
+        return date
 
     @telegram_retry(max_retries=20)
     def _send_telegram_notification(self, telegram_conn_id, telegram_chat_id, telegram_topic_id, message):
@@ -117,7 +114,7 @@ class NotifierDAG:
                 return self._build_telegram_message(component_id, proposals_json, update_date)
 
             @task.branch
-            def check_if_new_data(selected_data: list) -> str:
+            def check_if_new_data(selected_data: pd.Series) -> str:
                 """Airflow task branch that check if there is new or updated proposals to send on telegram.
 
                 Args:
@@ -129,10 +126,9 @@ class NotifierDAG:
                 -------
                     str: next Airflow task to be called
                 """
-                if selected_data["data"]:
+                if selected_data:
                     return "send_telegram_messages"
-                else:
-                    return "skip_send_message"
+                return "skip_send_message"
 
             @task
             def send_telegram_messages(proposals_messages: list):
@@ -168,7 +164,7 @@ class NotifierDAG:
             check_if_new_proposals_task >> EmptyOperator(task_id="skip_send_message")
             (
                 check_if_new_proposals_task
-                >> send_telegram_messages(selected_proposals["proposals_messages"])
+                >> send_telegram_messages(selected_proposals["data"])
                 >> save_update_date(selected_proposals["max_datetime"])
             )
 
