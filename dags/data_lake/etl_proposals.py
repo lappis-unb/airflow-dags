@@ -289,34 +289,151 @@ def _convert_dtype(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _verify_bucket(hook: S3Hook, bucket_name: str) -> str:
+    """
+    Verifies if the specified bucket exists in the S3 storage.
+
+    Args:
+      hook (S3Hook): The S3Hook object used to interact with the S3 storage.
+      bucket_name (str): The name of the bucket to verify.
+
+    Returns:
+      str: The name of the task to create the bucket if it doesn't exist.
+    """
 
     if not hook.check_for_bucket(bucket_name=bucket_name):
-        return "minio_tasks.create_bucket"
+      return "minio_tasks.create_bucket"
+
 
 def _task_extract_data(**context):
-      date = context["execution_date"].strftime("%Y-%m-%d")
-      next_date = (context["execution_date"] + timedelta(days=1)).strftime("%Y-%m-%d")
-      date_file = context["execution_date"].strftime("%Y%m%d")
-      # Fetch data from GraphQL API
-      hook = GraphQLHook(DECIDIM_CONN_ID)
-      session = hook.get_session()
-      response = session.post(
-          hook.api_url,
-          json={
-              "query": QUERY,
-              "variables": {"start_date": f"{date}", "end_date": f"{next_date}"},
-          },
-      )
-      # dado = response.json()
-      dado = response.text
-      # Store data in MinIO bucket
-      S3Hook(aws_conn_id=MINIO_CONN_ID).load_string(
-          string_data=dado,
-          bucket_name=MINIO_BUCKET,
-          key=LANDING_ZONE_FILE_NAME.format(date_file=date_file),
-          replace=True,
-      )
+    """
+    Extracts data from a GraphQL API and stores it in a MinIO bucket.
 
+    Args:
+      **context: A dictionary containing the context variables.
+
+    Returns:
+      None
+    """
+    date, next_date, date_file = _get_dates(context)
+    # Fetch data from GraphQL API
+    dado = _get_response_graphql(date, next_date)
+    # Store data in MinIO bucket
+    S3Hook(aws_conn_id=MINIO_CONN_ID).load_string(
+      string_data=dado,
+      bucket_name=MINIO_BUCKET,
+      key=LANDING_ZONE_FILE_NAME.format(date_file=date_file),
+      replace=True,
+    )
+
+def _get_response_graphql(date, next_date):
+    """
+    Retrieves the response from a GraphQL API for a given date range.
+
+    Args:
+      date (str): The start date of the range.
+      next_date (str): The end date of the range.
+
+    Returns:
+      str: The response from the GraphQL API.
+    """
+    hook = GraphQLHook(DECIDIM_CONN_ID)
+    session = hook.get_session()
+    response = session.post(
+      hook.api_url,
+      json={
+        "query": QUERY,
+        "variables": {"start_date": f"{date}", "end_date": f"{next_date}"},
+      },
+    )
+    # dado = response.json()
+    dado = response.text
+    return dado
+
+def _get_dates(context):
+    """
+    Get the dates related to the execution context.
+
+    Args:
+      context (dict): The execution context containing the "execution_date" key.
+
+    Returns:
+      tuple: A tuple containing the date, next_date, and date_file.
+
+    Example:
+      >>> context = {"execution_date": datetime.datetime(2022, 1, 1)}
+      >>> _get_dates(context)
+      ('2022-01-01', '2022-01-02', '20220101')
+    """
+    date = context["execution_date"].strftime("%Y-%m-%d")
+    next_date = (context["execution_date"] + timedelta(days=1)).strftime("%Y-%m-%d")
+    date_file = context["execution_date"].strftime("%Y%m%d")
+    return date, next_date, date_file
+
+def _delete_landing_zone_file(context):
+    date_file = context["execution_date"].strftime("%Y%m%d")
+    minio = S3Hook(aws_conn_id=MINIO_CONN_ID)
+    minio.delete_objects(
+        bucket=MINIO_BUCKET,
+        keys=LANDING_ZONE_FILE_NAME.format(date_file=date_file),
+    )
+
+def _task_transform_data(**context):
+    """
+    Transform the data from the landing zone and save it to MinIO.
+
+    Parameters:
+    - context: A dictionary containing the execution context.
+
+    Returns:
+    None
+    """
+    date_file = context["execution_date"].strftime("%Y%m%d")
+    minio = S3Hook(aws_conn_id=MINIO_CONN_ID)
+    # Read the data from the landing zone
+    data = json.loads(minio.read_key(
+      key=LANDING_ZONE_FILE_NAME.format(date_file=date_file),
+      bucket_name=MINIO_BUCKET,
+    ))
+    df = _get_df_transform_data(data)
+    _save_minio_processing(date_file, minio, df)
+
+def _save_minio_processing(date_file, minio, df):
+    """
+    Save the DataFrame as a CSV file in MinIO.
+
+    Args:
+      date_file (str): The date of the file.
+      minio (MinioClient): The MinIO client object.
+      df (pandas.DataFrame): The DataFrame to be saved.
+
+    Returns:
+      None
+    """
+    csv_buffer = io.StringIO()
+    df.to_csv(csv_buffer, index=False)
+    minio.load_string(
+      string_data=csv_buffer.getvalue(),
+      bucket_name=MINIO_BUCKET,
+      key=PROCESSING_FILE_NAME.format(date_file=date_file),
+      replace=True,
+    )
+
+def _get_df_transform_data(data):
+    """
+    Transforms the input data into a pandas DataFrame.
+
+    Args:
+      data (dict): The input data to be transformed.
+
+    Returns:
+      pandas.DataFrame: The transformed DataFrame.
+    """
+    data = flatten_structure_with_additional_fields(data)
+    df = pd.DataFrame(data)
+    df = _convert_dtype(df)
+    if len(df) > 0:
+      df.columns = df.columns.str.lower()
+    return df
 
 
 @dag(
@@ -388,26 +505,7 @@ def etl_proposals():
             -------
               None
             """
-            date_file = context["execution_date"].strftime("%Y%m%d")
-            minio = S3Hook(aws_conn_id=MINIO_CONN_ID)
-            dado = minio.read_key(
-                key=LANDING_ZONE_FILE_NAME.format(date_file=date_file),
-                bucket_name=MINIO_BUCKET,
-            )
-            dado = json.loads(dado)
-            dado = flatten_structure_with_additional_fields(dado)
-            df = pd.DataFrame(dado)
-            df = _convert_dtype(df)
-            if len(df) > 0:
-                df.columns = df.columns.str.lower()
-            csv_buffer = io.StringIO()
-            df.to_csv(csv_buffer, index=False)
-            minio.load_string(
-                string_data=csv_buffer.getvalue(),
-                bucket_name=MINIO_BUCKET,
-                key=PROCESSING_FILE_NAME.format(date_file=date_file),
-                replace=True,
-            )
+            _task_transform_data(**context)
 
         @task(
             provide_context=True,
@@ -424,13 +522,8 @@ def etl_proposals():
             -------
               None
             """
-            date_file = context["execution_date"].strftime("%Y%m%d")
-            minio = S3Hook(aws_conn_id=MINIO_CONN_ID)
-            print(dir(minio))
-            minio.delete_objects(
-                bucket=MINIO_BUCKET,
-                keys=LANDING_ZONE_FILE_NAME.format(date_file=date_file),
-            )
+            _delete_landing_zone_file(context)
+
 
         transform_data() >> delete_landing_zone_file()
 
