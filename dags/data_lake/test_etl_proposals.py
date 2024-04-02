@@ -10,10 +10,22 @@ from etl_proposals import (
     _convert_dtype,
     _verify_bucket,
     _task_extract_data,
+    _delete_landing_zone_file
     MINIO_CONN_ID,
 )
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from unittest import mock
+import json
+
+from etl_proposals import (
+    _get_df_transform_data,
+    _save_minio_processing,
+    PROCESSING_FILE_NAME,
+    MINIO_BUCKET,
+    LANDING_ZONE_FILE_NAME,
+)
+
+import io
 
 
 def test_add_temporal_columns():
@@ -185,8 +197,9 @@ def test__task_extract_data():
     mock_s3hook = mock.MagicMock()
 
     # Patch the GraphQLHook and S3Hook
-    with mock.patch("etl_proposals.GraphQLHook", return_value=mock_hook), \
-            mock.patch("etl_proposals.S3Hook", return_value=mock_s3hook):
+    with mock.patch("etl_proposals.GraphQLHook", return_value=mock_hook), mock.patch(
+        "etl_proposals.S3Hook", return_value=mock_s3hook
+    ):
         # Call the function
         _task_extract_data(**context)
 
@@ -204,4 +217,47 @@ def test__task_extract_data():
         bucket_name=mock.ANY,
         key=mock.ANY,
         replace=True,
+    )
+
+
+def test__save_minio_processing():
+    # Mock the MinioClient
+    mock_minio = mock.MagicMock()
+
+    # Create a sample DataFrame
+    df = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+
+    # Call the function
+    _save_minio_processing("20220101", mock_minio, df)
+
+    # Assert the expected function calls
+    csv_buffer = io.StringIO()
+    df.to_csv(csv_buffer, index=False)
+    mock_minio.load_string.assert_called_once_with(
+        string_data=csv_buffer.getvalue(),
+        bucket_name=MINIO_BUCKET,
+        key=PROCESSING_FILE_NAME.format(date_file="20220101"),
+        replace=True,
+    )
+
+
+def test__delete_landing_zone_file():
+    # Mock the context
+    context = {
+        "execution_date": datetime(2022, 1, 1),
+    }
+
+    # Mock the S3Hook
+    mock_s3hook = mock.MagicMock()
+
+    # Patch the S3Hook
+    with mock.patch("etl_proposals.S3Hook", return_value=mock_s3hook):
+        # Call the function
+        _delete_landing_zone_file(context)
+
+    # Assert the expected function calls
+    date_file = context["execution_date"].strftime("%Y%m%d")
+    mock_s3hook.delete_objects.assert_called_once_with(
+        bucket=MINIO_BUCKET,
+        keys=LANDING_ZONE_FILE_NAME.format(date_file=date_file),
     )
