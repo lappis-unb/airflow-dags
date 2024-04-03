@@ -13,98 +13,25 @@ from airflow.providers.amazon.aws.operators.s3 import (
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from sqlalchemy.exc import ProgrammingError
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
+import os
 
 # Vai ser trocado para salvar em arquivo
 
 
-QUERY = """
-query teste ($start_date: String!, $end_date: String!) {
-  participatoryProcesses  {
-    title{
-      translations{
-        text
-      }
-    }
-    components{
-      id
-      ... on Proposals   {
-        __typename
-        name {
-          translations {
-            text
-          }
-        }
-        proposals (filter:  {publishedSince: $start_date, publishedBefore: $end_date}  ) {
-          nodes {
-            id
-            createdAt
-            publishedAt
-            updatedAt
-            attachments{
-              thumbnail
-              type
-              url
-            }
-            author{
-              id
-              name
-              nickname
-              organizationName
-            }
-            body{
-              translations{
-                text
-              }
-            }
-            category{
-              id
-              name{
-                translations{
-                  text
-                }
-              }
-            }
+def _get_query() -> str:
+    """
+    Retorna a query GraphQL para extrair os dados de propostas de um participatory process.
 
-            authorsCount
-            userAllowedToComment
-            endorsementsCount
-            totalCommentsCount
-            versionsCount
-            voteCount
-            commentsHaveAlignment
-            commentsHaveVotes
-            createdInMeeting
-            hasComments
-            official
-            fingerprint{
-              source
-              value
-            }
-            position
-            reference
-            scope{
-              id
-              name{
-                translations{
-                  text
-                }
-              }
-            }
-            state
-            title{
-              translations{
-                text
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
+    Returns:
+    -------
+    str: A query GraphQL para extrair os dados de propostas de um participatory process.
+    """
+    with open(
+        "./dags/airflow-dags/data_lake/queries/get_proposals_processes_participative.gql",
+        "r",
+    ) as file:
+        return file.read()
 
-
-"""
 DECIDIM_CONN_ID = "api_decidim"
 MINIO_CONN_ID = "minio_conn_id_test"
 MINIO_BUCKET = "brasil-participativo-daily-csv"
@@ -117,6 +44,7 @@ LANDING_ZONE_FILE_NAME = "landing_zone/proposals{date_file}.json"
 PROCESSING_FILE_NAME = "processing/proposals{date_file}.csv"
 PROCESSED_FILE_NAME = "processed/proposals{date_file}.csv"
 POSTGRES_CONN_ID = "conn_postgres"
+QUERY = _get_query()
 
 
 def flatten_structure_with_additional_fields(data):
