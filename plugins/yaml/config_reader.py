@@ -5,11 +5,19 @@ from typing import Any, Dict, Generator, Union
 
 import yaml
 
-
+from contextlib import closing
 class IsAFileError(Exception):
     """Exceção indicando que um diretório era esperado, mas um arquivo foi fornecido."""
 
     pass
+
+def load_yaml(file_path):
+    with closing(open(file_path)) as file:
+        return yaml.safe_load(file)
+
+def dump_yaml(data, file_path):
+    with closing(open(file_path, mode="w")) as file:
+        yaml.safe_dump(data, file)
 
 
 def read_yaml_files_from_directory(
@@ -40,11 +48,10 @@ def read_yaml_files_from_directory(
     for entry in os.scandir(path_to_directory):
         # Check if the file is a YAML file
         if entry.name.endswith(".yaml") or entry.name.endswith(".yml"):
-            with open(entry.path) as file:
-                try:
-                    yield yaml.safe_load(file)
-                except yaml.YAMLError as e:
-                    logging.error("Error reading %s: %s", entry.name, e)
-                    raise e
+            try:
+                yield load_yaml(entry.path)
+            except yaml.YAMLError as e:
+                logging.error("Error reading %s: %s", entry.name, e)
+                raise e
         elif entry.is_dir():
             yield from read_yaml_files_from_directory(entry.path)
