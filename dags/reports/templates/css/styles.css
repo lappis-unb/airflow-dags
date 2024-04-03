@@ -168,7 +168,7 @@ a{
 table {
   width: 100%;
   border-collapse: collapse;
-  
+
 }
 thead,
 th {
@@ -222,7 +222,7 @@ img {
   font-weight: bold;
 }
 .text-center{
-  text-align: justify;
+  text-align: center;
   text-justify: inter-word;
 }
 .mb-1{
