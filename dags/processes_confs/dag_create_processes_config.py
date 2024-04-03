@@ -2,12 +2,10 @@ import asyncio
 import logging
 import os
 import re
-from contextlib import closing
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-import yaml
 from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.providers.telegram.hooks.telegram import TelegramHook
@@ -15,7 +13,7 @@ from unidecode import unidecode
 
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 from plugins.telegram.decorators import telegram_retry
-from plugins.yaml.config_reader import read_yaml_files_from_directory
+from plugins.yaml.config_reader import dump_yaml, load_yaml, read_yaml_files_from_directory
 
 DECIDIM_CONN_ID = "api_decidim"
 TELEGRAM_CONN_ID = "telegram_decidim"
@@ -81,19 +79,6 @@ def _create_telegram_topic(chat_id: int, name: str):
     logging.info(type(new_telegram_topic))
 
     return new_telegram_topic.message_thread_id
-
-
-def _configure_telegram_topics(component_config):
-    telegram_topics = {}
-    if component_config["__typename"] == "Proposals":
-        name = " ".join(str(component_config["process_id"]).split("_")).title().strip()
-        telegram_topics = {
-            topic: _create_telegram_topic(
-                component_config["telegram_config"]["telegram_group_id"], get_chat_name(name)
-            )
-            for topic, get_chat_name in TOPICS_TO_CREATE
-        }
-    return telegram_topics
 
 
 def _configure_base_yaml_in_participatory_spaces(participatory_space):
@@ -220,7 +205,7 @@ def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
     return {**component["telegram_config"], **old_config["telegram_config"]}
 
 
-def _update_old_config(new_config:dict, old_config:dict):
+def _update_old_config(new_config: dict, old_config: dict):
 
     assert isinstance(new_config, dict)
     assert isinstance(old_config, dict)
