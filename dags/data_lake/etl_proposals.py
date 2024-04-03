@@ -12,6 +12,7 @@ from airflow.providers.amazon.aws.operators.s3 import (
 )
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from sqlalchemy.exc import ProgrammingError
+
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 
 # Vai ser trocado para salvar em arquivo
@@ -27,7 +28,6 @@ def _get_query() -> str:
     """
     with open(
         "./dags/airflow-dags/data_lake/queries/get_proposals_processes_participative.gql",
-        "r",
     ) as file:
         return file.read()
 
@@ -75,9 +75,7 @@ def flatten_structure_with_additional_fields(data):
         main_title = extract_text(item.get("title", {}).get("translations", []))
         for component in item.get("components", []):
             component_id = component.get("id", "")
-            component_name = extract_text(
-                component.get("name", {}).get("translations", [])
-            )
+            component_name = extract_text(component.get("name", {}).get("translations", []))
             if "proposals" in component:
                 for proposal in component.get("proposals", {}).get("nodes", []):
                     proposal_data = {
@@ -89,23 +87,13 @@ def flatten_structure_with_additional_fields(data):
                         "proposal_publishedAt": proposal.get("publishedAt"),
                         "proposal_updatedAt": proposal.get("updatedAt"),
                         "author_name": dict_safe_get(proposal, "author").get("name"),
-                        "author_nickname": dict_safe_get(proposal, "author").get(
-                            "nickname"
-                        ),
-                        "author_organization": dict_safe_get(proposal, "author").get(
-                            "organizationName"
-                        ),
-                        "proposal_body": extract_text(
-                            proposal.get("body", {}).get("translations", [])
-                        ),
+                        "author_nickname": dict_safe_get(proposal, "author").get("nickname"),
+                        "author_organization": dict_safe_get(proposal, "author").get("organizationName"),
+                        "proposal_body": extract_text(proposal.get("body", {}).get("translations", [])),
                         "category_name": extract_text(
-                            dict_safe_get(
-                                dict_safe_get(proposal, "category"), "name"
-                            ).get("translations", [])
+                            dict_safe_get(dict_safe_get(proposal, "category"), "name").get("translations", [])
                         ),
-                        "proposal_title": extract_text(
-                            proposal.get("title", {}).get("translations", [])
-                        ),
+                        "proposal_title": extract_text(proposal.get("title", {}).get("translations", [])),
                         "authorsCount": proposal.get("authorsCount"),
                         "userAllowedToComment": proposal.get("userAllowedToComment"),
                         "endorsementsCount": proposal.get("endorsementsCount"),
@@ -221,13 +209,14 @@ def _verify_bucket(hook: S3Hook, bucket_name: str) -> str:
     Verifies if the specified bucket exists in the S3 storage.
 
     Args:
+    ----
       hook (S3Hook): The S3Hook object used to interact with the S3 storage.
       bucket_name (str): The name of the bucket to verify.
 
     Returns:
+    -------
       str: The name of the task to create the bucket if it doesn't exist.
     """
-
     if not hook.check_for_bucket(bucket_name=bucket_name):
         return "minio_tasks.create_bucket"
 
@@ -237,9 +226,11 @@ def _task_extract_data(**context):
     Extracts data from a GraphQL API and stores it in a MinIO bucket.
 
     Args:
+    ----
       **context: A dictionary containing the context variables.
 
     Returns:
+    -------
       None
     """
     date, next_date, date_file = _get_dates(context)
@@ -259,10 +250,12 @@ def _get_response_graphql(date, next_date):
     Retrieves the response from a GraphQL API for a given date range.
 
     Args:
+    ----
       date (str): The start date of the range.
       next_date (str): The end date of the range.
 
     Returns:
+    -------
       str: The response from the GraphQL API.
     """
     hook = GraphQLHook(DECIDIM_CONN_ID)
@@ -284,12 +277,15 @@ def _get_dates(context):
     Get the dates related to the execution context.
 
     Args:
+    ----
       context (dict): The execution context containing the "execution_date" key.
 
     Returns:
+    -------
       tuple: A tuple containing the date, next_date, and date_file.
 
     Example:
+    -------
       >>> context = {"execution_date": datetime.datetime(2022, 1, 1)}
       >>> _get_dates(context)
       ('2022-01-01', '2022-01-02', '20220101')
@@ -305,9 +301,11 @@ def _task_transform_data(**context):
     Transform the data from the landing zone and save it to MinIO.
 
     Parameters:
+    ----------
     - context: A dictionary containing the execution context.
 
     Returns:
+    -------
     None
     """
     date_file = context["execution_date"].strftime("%Y%m%d")
@@ -328,11 +326,13 @@ def _save_minio_processing(date_file, minio, df):
     Save the DataFrame as a CSV file in MinIO.
 
     Args:
+    ----
       date_file (str): The date of the file.
       minio (MinioClient): The MinIO client object.
       df (pandas.DataFrame): The DataFrame to be saved.
 
     Returns:
+    -------
       None
     """
     csv_buffer = io.StringIO()
@@ -350,9 +350,11 @@ def _get_df_transform_data(data):
     Transforms the input data into a pandas DataFrame.
 
     Args:
+    ----
       data (dict): The input data to be transformed.
 
     Returns:
+    -------
       pandas.DataFrame: The transformed DataFrame.
     """
     data = flatten_structure_with_additional_fields(data)
@@ -368,9 +370,11 @@ def _delete_landing_zone_file(context):
     Deletes the landing zone file for a given execution date.
 
     Args:
+    ----
       context (dict): The context object containing the execution date.
 
     Returns:
+    -------
       None
     """
     date_file = context["execution_date"].strftime("%Y%m%d")
@@ -386,9 +390,11 @@ def _check_empty_file(**context):
     Checks if the file is empty.
 
     Args:
+    ----
       context (dict): The context dictionary containing the execution date.
 
     Returns:
+    -------
       str: The task ID to be executed next based on whether the file is empty or not.
     """
     minio = S3Hook(aws_conn_id=MINIO_CONN_ID)
@@ -408,9 +414,11 @@ def _check_and_create_table(engine):
     Check if the table exists in the database and create it if it doesn't exist.
 
     Args:
+    ----
       engine (sqlalchemy.engine.Engine): The SQLAlchemy engine object.
 
     Returns:
+    -------
       None
     """
     has_table = engine.has_table(table_name=TABLE_NAME, schema=SCHEMA)
@@ -456,9 +464,7 @@ def _check_and_create_table(engine):
     );
     """
         )
-        engine.execute(
-            f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY ({PRIMARY_KEY});"
-        )
+        engine.execute(f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY ({PRIMARY_KEY});")
 
 
 def _task_get_ids_from_table(engine):
@@ -466,20 +472,21 @@ def _task_get_ids_from_table(engine):
     Retrieves the proposal IDs from a specified table in the database.
 
     Args:
+    ----
       engine (sqlalchemy.engine.Engine): The SQLAlchemy engine object used to connect to the database.
 
     Returns:
+    -------
       list: A list of proposal IDs retrieved from the table.
 
     Raises:
+    ------
       None
 
     """
     with engine.connect() as connection:
         try:
-            result = connection.execute(
-                f"SELECT proposal_id FROM {SCHEMA}.{TABLE_NAME};"
-            )
+            result = connection.execute(f"SELECT proposal_id FROM {SCHEMA}.{TABLE_NAME};")
         except ProgrammingError as error:
             logging.warning("Table does not exist. Error: %s", error)
             return []
@@ -499,9 +506,11 @@ def _save_table_save_data_postgres(df):
     Saves the given DataFrame to a PostgreSQL table.
 
     Args:
+    ----
       df (pandas.DataFrame): The DataFrame to be saved.
 
     Returns:
+    -------
       None
     """
     engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
@@ -511,17 +520,17 @@ def _save_table_save_data_postgres(df):
 
 def _transform_data_save_data_postgres(proposal_ids, context, df):
     """
-    Transforms the data by removing rows with proposal_ids in the given list,
-    adds temporal columns to the DataFrame using the execution_date from the context,
-    and returns the transformed DataFrame.
+    Transform df removing the proposal_ids and adding temporal columns.
 
     Args:
+    ----
       proposal_ids (list): A list of proposal_ids to filter out from the DataFrame.
-      context (dict): A dictionary containing the execution context.
+      context (dict): A dictionary containing the execution context of the function.
       df (pandas.DataFrame): The input DataFrame to be transformed.
 
     Returns:
-      pandas.DataFrame: The transformed DataFrame.
+    -------
+      pandas.DataFrame: The transformed DataFrame after removing rows and adding temporal columns.
     """
     df = df[~df["proposal_id"].isin(proposal_ids)]
     df = add_temporal_columns(df, context["execution_date"])
@@ -533,9 +542,11 @@ def _get_df_save_data_postgres(context):
     Reads a CSV file from an S3 bucket and returns a pandas DataFrame.
 
     Args:
+    ----
       context (dict): The context object containing execution information.
 
     Returns:
+    -------
       pandas.DataFrame: The DataFrame containing the data from the CSV file.
     """
     date_file = context["execution_date"].strftime("%Y%m%d")
@@ -554,9 +565,11 @@ def _task_move_file_s3(context):
     Move a file from the source bucket to the destination bucket in S3.
 
     Args:
+    ----
       context (dict): The context dictionary containing the execution date.
 
     Returns:
+    -------
       None
     """
     date_file = context["execution_date"].strftime("%Y%m%d")
@@ -597,8 +610,7 @@ def etl_proposals():
         @task.branch()
         def verify_bucket():
             """
-            Verifies if the specified bucket exists in
-            the MinIO server.
+            Verifies if the specified bucket exists in the MinIO server.
 
             Returns:
             -------
@@ -674,13 +686,16 @@ def etl_proposals():
             """
             Checks if the file is empty.
 
-            This function takes in the context as input and checks if the file specified in the context is empty or not.
+            This function takes in the context as input and checks if the
+            file specified in the context is empty or not.
             It returns the result of the check.
 
             Parameters:
+            ----------
             - context: A dictionary containing the context variables.
 
             Returns:
+            -------
             - bool: True if the file is empty, False otherwise.
             """
             return _check_empty_file(**context)
@@ -690,8 +705,10 @@ def etl_proposals():
             """
             Check if the table exists in the database and create it if it doesn't exist.
 
-            This task connects to a PostgreSQL database using the PostgresHook and checks if a table with the specified name
-            and schema exists. If the table doesn't exist, it creates a new table with the specified columns and primary key.
+            This task connects to a PostgreSQL database using
+            the PostgresHook and checks if a table with the specified name
+            and schema exists. If the table doesn't exist, it
+            creates a new table with the specified columns and primary key.
 
             Args:
             ----
@@ -729,10 +746,12 @@ def etl_proposals():
             Save data to PostgreSQL.
 
             Args:
+            ----
               proposal_ids (list): A list of proposal IDs to save.
               context (dict): Additional context information.
 
             Returns:
+            -------
               None
             """
             _save_data_postgres(proposal_ids, **context)
@@ -759,12 +778,7 @@ def etl_proposals():
         _move_file_s3 = move_file_s3()
         _get_ids_from_table = get_ids_from_table()
         check_empty_file() >> [empty_file, _create_table]
-        (
-            _create_table
-            >> _get_ids_from_table
-            >> save_data_postgres(_get_ids_from_table)
-            >> _move_file_s3
-        )
+        (_create_table >> _get_ids_from_table >> save_data_postgres(_get_ids_from_table) >> _move_file_s3)
         empty_file >> _move_file_s3
 
     start = EmptyOperator(task_id="start")
