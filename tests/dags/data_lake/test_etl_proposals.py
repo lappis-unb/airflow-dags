@@ -1,39 +1,57 @@
-import os
 import io
+import os
 import sys
-import pandas as pd
 from datetime import datetime
 from unittest import mock
+
+import pandas as pd
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from dags.data_lake.etl_proposals import (
-    add_temporal_columns,
-    dict_safe_get,
-    _convert_dtype,
-    _verify_bucket,
-    _task_extract_data,
-    _delete_landing_zone_file,
-    _check_empty_file,
-    _task_get_ids_from_table,
-    _save_minio_processing,
-    _check_and_create_table,
-    _get_df_save_data_postgres,
-    _transform_data_save_data_postgres,
-    _task_move_file_s3,
-    MINIO_CONN_ID,
-    MINIO_BUCKET,
     LANDING_ZONE_FILE_NAME,
-    PROCESSING_FILE_NAME,
-    TABLE_NAME,
-    SCHEMA,
+    MINIO_BUCKET,
+    MINIO_CONN_ID,
     PRIMARY_KEY,
     PROCESSED_FILE_NAME,
+    PROCESSING_FILE_NAME,
+    SCHEMA,
+    TABLE_NAME,
+    _check_and_create_table,
+    _check_empty_file,
+    _convert_dtype,
+    _delete_landing_zone_file,
+    _get_df_save_data_postgres,
+    _save_minio_processing,
+    _task_extract_data,
+    _task_get_ids_from_table,
+    _task_move_file_s3,
+    _transform_data_save_data_postgres,
+    _verify_bucket,
+    add_temporal_columns,
+    dict_safe_get,
 )
 
 
 def test_add_temporal_columns():
+    """
+    Test case for the add_temporal_columns function.
+
+    This test case verifies that the add_temporal_columns function correctly adds temporal columns.
+
+    Steps:
+    1. Create a sample DataFrame.
+    2. Set the execution date.
+    3. Call the add_temporal_columns function with the DataFrame and execution date.
+    4. Assert the expected values of the temporal columns in the result DataFrame.
+
+    Expected behavior:
+    - The event_day_id column should contain the execution date in the format YYYYMMDD.
+    - The available_day_id column should contain the day after the execution date in the format YYYYMMDD.
+    - The available_month_id column should contain the execution date in the format YYYYMM.
+    - The available_year_id column should contain the execution year in the format YYYY.
+    """
     # Create a sample DataFrame
     df = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     execution_date = datetime(2022, 1, 1)
@@ -49,25 +67,32 @@ def test_add_temporal_columns():
 
 
 def test_dict_safe_get():
-    # Test case 1: Key exists in the dictionary
+    """
+    Test the dict_safe_get function.
+
+    This function tests the behavior of the dict_safe_get function by
+    providing different test cases.
+
+    Test case 1: Key exists in the dictionary
+    Test case 2: Key does not exist in the dictionary
+    Test case 3: Value associated with the key is None
+    Test case 4: Empty dictionary
+    """
     _dict = {"key1": "value1", "key2": "value2"}
     key = "key1"
     expected_result = "value1"
     assert dict_safe_get(_dict, key) == expected_result
 
-    # Test case 2: Key does not exist in the dictionary
     _dict = {"key1": "value1", "key2": "value2"}
     key = "key3"
     expected_result = {}
     assert dict_safe_get(_dict, key) == expected_result
 
-    # Test case 3: Value associated with the key is None
     _dict = {"key1": None, "key2": "value2"}
     key = "key1"
     expected_result = {}
     assert dict_safe_get(_dict, key) == expected_result
 
-    # Test case 4: Empty dictionary
     _dict = {}
     key = "key1"
     expected_result = {}
@@ -75,6 +100,17 @@ def test_dict_safe_get():
 
 
 def test__convert_dtype():
+    """
+    Test the _convert_dtype function to ensure correct data type conversion.
+
+    This test function creates a sample DataFrame with various columns and data types.
+    It then calls the _convert_dtype function and asserts that the resulting DataFrame
+    has the expected data types for each column.
+
+    Returns:
+    -------
+        None
+    """
     # Create a sample DataFrame
     df = pd.DataFrame(
         {
@@ -154,6 +190,17 @@ def test__convert_dtype():
 
 @mock.patch("airflow.providers.amazon.aws.hooks.s3.S3Hook.check_for_bucket")
 def test__verify_bucket_true(mock_check_for_bucket):
+    """
+    Test case for _verify_bucket function when the bucket exists.
+
+    Args:
+    ----
+        mock_check_for_bucket (MagicMock): Mock object for S3Hook.check_for_bucket.
+
+    Returns:
+    -------
+        None: This function does not return anything.
+    """
     # Mock the return value of check_for_bucket
     mock_check_for_bucket.return_value = True
 
@@ -170,6 +217,17 @@ def test__verify_bucket_true(mock_check_for_bucket):
 
 @mock.patch("airflow.providers.amazon.aws.hooks.s3.S3Hook.check_for_bucket")
 def test__verify_bucket_false(mock_check_for_bucket):
+    """
+    Test case for the _verify_bucket function when check_for_bucket returns False.
+
+    Args:
+    ----
+        mock_check_for_bucket (Mock): The mocked check_for_bucket function.
+
+    Returns:
+    -------
+        str: The expected return value "minio_tasks.create_bucket".
+    """
     # Mock the return value of check_for_bucket
     mock_check_for_bucket.return_value = False
 
@@ -187,6 +245,20 @@ def test__verify_bucket_false(mock_check_for_bucket):
 
 
 def test__task_extract_data():
+    """
+    Test function for _task_extract_data.
+
+    This function tests the behavior of the _task_extract_data function by mocking the necessary dependencies
+    and asserting the expected function calls.
+
+    Args:
+    ----
+        None
+
+    Returns:
+    -------
+        None
+    """
     # Mock the context
     context = {
         "execution_date": datetime(2022, 1, 1),
@@ -226,6 +298,18 @@ def test__task_extract_data():
 
 
 def test__save_minio_processing():
+    """
+    Test case for the _save_minio_processing function.
+
+    This test case verifies that the _save_minio_processing function correctly saves a DataFrame to Minio.
+
+    Steps:
+    1. Mock the MinioClient.
+    2. Create a sample DataFrame.
+    3. Call the _save_minio_processing function with the sample DataFrame.
+    4. Assert that the expected function calls were made to save the DataFrame to Minio.
+
+    """
     # Mock the MinioClient
     mock_minio = mock.MagicMock()
 
@@ -247,6 +331,20 @@ def test__save_minio_processing():
 
 
 def test__delete_landing_zone_file():
+    """
+    Test case for the _delete_landing_zone_file function.
+
+    This function tests the behavior of the _delete_landing_zone_file function by mocking the context,
+    the S3Hook, and patching the S3Hook. It then calls the _delete_landing_zone_file function and
+    asserts the expected function calls.
+
+    The _delete_landing_zone_file function is responsible for deleting a file from the landing zone
+    in an S3 bucket. It takes a context object as input, which should contain the execution date.
+
+    Returns:
+    -------
+        None
+    """
     # Mock the context
     context = {
         "execution_date": datetime(2022, 1, 1),
@@ -269,6 +367,16 @@ def test__delete_landing_zone_file():
 
 
 def test__check_empty_file():
+    """
+    Test case for the _check_empty_file function.
+
+    This function tests the behavior of the _check_empty_file function by mocking the context,
+    the S3Hook, and patching the S3Hook. It asserts the expected function calls and return value.
+
+    Returns:
+    -------
+        None
+    """
     # Mock the context
     context = {
         "execution_date": datetime(2022, 1, 1),
@@ -293,6 +401,17 @@ def test__check_empty_file():
 
 
 def test__check_empty_file_non_empty():
+    """
+    Test case for the _check_empty_file function when the file is non-empty.
+
+    This test case mocks the context and the S3Hook, and patches the S3Hook to simulate
+    reading a non-empty file from S3. It then calls the _check_empty_file function and
+    asserts the expected function calls and return value.
+
+    Returns:
+    -------
+        None
+    """
     # Mock the context
     context = {
         "execution_date": datetime(2022, 1, 1),
@@ -317,6 +436,16 @@ def test__check_empty_file_non_empty():
 
 
 def test__check_and_create_table():
+    """
+    Test function for checking and creating a table.
+
+    This function tests the behavior of the _check_and_create_table function by mocking the engine,
+    calling the function with different scenarios, and asserting the expected function calls.
+
+    Returns:
+    -------
+        None
+    """
     # Mock the engine
     mock_engine = mock.MagicMock()
 
@@ -370,9 +499,7 @@ def test__check_and_create_table():
     );
     """
             ),
-            mock.call(
-                f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY ({PRIMARY_KEY});"
-            ),
+            mock.call(f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY ({PRIMARY_KEY});"),
         ]
     )
 
@@ -391,6 +518,13 @@ def test__check_and_create_table():
 
 
 def test__task_get_ids_from_empty_table():
+    """
+    Test case for the _task_get_ids_from_table function when the table is empty.
+
+    This test case mocks the engine and connection, and sets up a mock result of an empty SQL query.
+    It then calls the _task_get_ids_from_table function and asserts that the result is an empty list.
+
+    """
     # Mock the engine and connection
     mock_connection = mock.MagicMock()
     mock_engine = mock.MagicMock()
@@ -410,6 +544,16 @@ def test__task_get_ids_from_empty_table():
 
 
 def test__get_df_save_data_postgres():
+    """
+    Test case for the _get_df_save_data_postgres function.
+
+    This test case mocks the context and the S3Hook to simulate reading data from S3.
+    It then calls the _get_df_save_data_postgres function and asserts the expected DataFrame.
+
+    Returns:
+    -------
+        None
+    """
     # Mock the context
     context = {
         "execution_date": datetime(2022, 1, 1),
@@ -430,6 +574,21 @@ def test__get_df_save_data_postgres():
 
 
 def test__transform_data_save_data_postgres():
+    """
+    Test function for _transform_data_save_data_postgres.
+
+    This function tests the transformation and saving of data to PostgreSQL
+    by calling the _transform_data_save_data_postgres function with sample data.
+
+    It creates a sample DataFrame, defines the proposal_ids to exclude,
+    and calls the _transform_data_save_data_postgres function with these inputs.
+    The expected result is compared with the actual result using the
+    pd.testing.assert_frame_equal function.
+
+    Returns:
+    -------
+        None
+    """
     # Mock the context
     context = {
         "execution_date": datetime(2022, 1, 1),
@@ -477,7 +636,8 @@ def test__task_move_file_s3():
     function calls made to the mock S3Hook.
 
     Returns:
-        None
+    -------
+    None
     """
     # Mock the context
     context = {
