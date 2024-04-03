@@ -19,7 +19,6 @@
     </div>
   </section>
 
-  {% if data.document.title != "Relatório de Mobilização" %}
   <section class="pdf-page">
     <h1 class="text-center index-title">Índice</h1>
   <div class="color-black">
@@ -147,7 +146,7 @@
     {{ macros.create_table_from_list_of_dicts(data.data_access) }}
 
     <h2>Mapa de taxa de proporção de acessos por população</h2>
-    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Esse mapa explica a taxa de proporção de acessos porpopulação recebidas no período de {{ data.document.date
+    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Esse mapa explica a taxa de proporção de acessos por população recebidas no período de {{ data.document.date
     }}. Com a análise destes dados, o organizador poderá pensar estratégias para aumentar o engajamento em determinada região/estado, se for o caso.
     </p>
     {{ macros.create_svg_element(data.map_graph) }}
@@ -178,13 +177,7 @@
       Assim, ao término do processo, é crucial que os organizadores compartilhem os resultados finais da consulta
       por meio da plataforma, garantindo transparência e prestação de contas à sociedade.
     </p>
-  {% else %}
-  <section class="pdf-page">
-    <div class="error-message">
-      <h2 class="text-center">Não foi possível gerar um relatório no momento.</h2>
-    </div>
-  </section>
-  {% endif %}
+
 </body>
 
 
