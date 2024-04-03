@@ -220,9 +220,24 @@ def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
     return {**component["telegram_config"], **old_config["telegram_config"]}
 
 
+def _update_old_config(new_config:dict, old_config:dict):
+
+    assert isinstance(new_config, dict)
+    assert isinstance(old_config, dict)
+
+    if "__typename" in new_config:
+        new_config.pop("__typename")
+    if "__typename" in old_config:
+        old_config.pop("__typename")
+
+    old_config["start_date"] = _str_to_datetime(new_config["start_date"])
+    old_config["end_date"] = _str_to_datetime(new_config["end_date"]) if new_config["end_date"] else None
+
+    return old_config
+
 
 DEFAULT_ARGS = {
-    "owner": "Paulo",
+    "owner": "Paulo G.",
     "depends_on_past": False,
     "email_on_failure": True,
     "email_on_retry": False,
