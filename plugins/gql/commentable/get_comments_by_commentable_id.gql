@@ -11,6 +11,7 @@ query Comments($id: String!) {
       body
       createdAt
       updatedAt
+      status
       author {
         id
         name
