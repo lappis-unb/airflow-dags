@@ -7,7 +7,7 @@ from typing import Union
 from pandas import Series
 
 from plugins.decidim_hook import DecidimHook
-from plugins.notifications.base_dag import NotifierDAG
+from plugins.notifications.base_dag import NotifierDAG, NotifierTypes
 from plugins.yaml.config_reader import read_yaml_files_from_directory
 
 DECIDIM_CONN_ID = "api_decidim"
@@ -98,4 +98,6 @@ for config in read_yaml_files_from_directory(CONFIG_FOLDER):
     if not config["telegram_config"]["telegram_group_id"]:
         continue
     config.pop("decidim_url")
-    NotifyNewProposals(notifier_type="Proposals", owners="Paulo G./Thais R.", **config).generate_dag()
+    NotifyNewProposals(
+        notifier_type=NotifierTypes.PROPOSALS, owners="Paulo G./Thais R.", **config
+    ).generate_dag()

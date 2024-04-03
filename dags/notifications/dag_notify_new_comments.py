@@ -7,7 +7,7 @@ from typing import Union
 import pandas as pd
 
 from plugins.decidim_hook import DecidimHook
-from plugins.notifications.base_dag import NotifierDAG
+from plugins.notifications.base_dag import NotifierDAG, NotifierTypes
 from plugins.yaml.config_reader import read_yaml_files_from_directory
 
 DECIDIM_CONN_ID = "api_decidim"
@@ -24,14 +24,12 @@ class NotifyNewComments(NotifierDAG):
     """  # noqa: E501
 
     def _get_data(self, component_id: int, update_date: datetime):
-
         logging.info("Start date for comments: %s", update_date)
         msgs_dict = DecidimHook(DECIDIM_CONN_ID, component_id).get_comments(start_date=update_date)
 
         return msgs_dict
 
     def _format_telegram_message(self, data_row: pd.Series):
-
         state_map = {
             "update": {"label": "Comentario atualizado", "emoji": "🔄 🔄 🔄"},
             "new": {"label": "Novo comentario", "emoji": "💬"},
@@ -89,4 +87,4 @@ for config in read_yaml_files_from_directory(CONFIG_FOLDER):
     if not config["telegram_config"]["telegram_group_id"]:
         continue
     config.pop("decidim_url")
-    NotifyNewComments(notifier_type="Comments", owners="Paulo G.", **config).generate_dag()
+    NotifyNewComments(notifier_type=NotifierTypes.COMMENTS, owners="Paulo G.", **config).generate_dag()
