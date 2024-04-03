@@ -1,19 +1,22 @@
 import logging
 import os
+from contextlib import closing
 from pathlib import Path
 from typing import Any, Dict, Generator, Union
 
 import yaml
 
-from contextlib import closing
+
 class IsAFileError(Exception):
     """Exceção indicando que um diretório era esperado, mas um arquivo foi fornecido."""
 
     pass
 
+
 def load_yaml(file_path):
     with closing(open(file_path)) as file:
         return yaml.safe_load(file)
+
 
 def dump_yaml(data, file_path):
     with closing(open(file_path, mode="w")) as file:
