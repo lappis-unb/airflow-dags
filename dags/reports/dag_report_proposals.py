@@ -122,7 +122,7 @@ def _generate_report(
 
     bp_df = pd.DataFrame(bp_data)
 
-    report_name = "Relatório de Mobilização" if bp_df.empty else bp_df.iloc[0]["page_component_name"]
+    report_name = bp_df.iloc[0]["page_component_name"]
 
     template_path = Path(__file__).parent.joinpath("./templates/template_proposals.html")
 
