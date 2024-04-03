@@ -8,7 +8,7 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from etl_proposals import (
+from dags.data_lake.etl_proposals import (
     add_temporal_columns,
     dict_safe_get,
     _convert_dtype,
