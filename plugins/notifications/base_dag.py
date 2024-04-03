@@ -56,7 +56,7 @@ class NotifierDAG:
         self,
         owners: str,
         notifier_type: NotifierTypes,
-        telegram_config: str,
+        telegram_config: dict,
         component_id: str,
         process_id: str,
         start_date: str,
@@ -279,7 +279,7 @@ class NotifierDAG:
                 -------
                     str: The next Airflow task to be called.
                 """
-                if selected_data["data"]:
+                if len(selected_data["data"]):
                     return "send_telegram_messages"
                 return "skip_send_message"
 
