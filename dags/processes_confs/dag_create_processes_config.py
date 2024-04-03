@@ -26,10 +26,12 @@ CONFIG_FOLDER = Path(
 ACCEPTED_COMPONENTS_TYPES = ["Proposals"]
 TELEGRAM_MAX_RETRIES = 10
 
-TOPICS_TO_CREATE = [
-    ("telegram_moderation_proposals_topic_id", lambda name: f"{name}/Propostas"),
-    ("telegram_moderation_comments_topic_id", lambda name: f"{name}/Comentarios Em Propostas"),
-]
+PROPOSALS_TOPICS_TO_CREATE = {
+    "telegram_moderation_proposals_topic_id": lambda name: f"{name}/Propostas",
+    "telegram_moderation_comments_topic_id": lambda name: f"{name}/Comentarios Em Propostas",
+    "telegram_moderation_pre_moderation_topic_id": lambda name: f"{name}/Denuncias",
+    "telegram_moderation_teste_de_criar_novo_topico_topic_id": lambda name: f"{name}/NovoTopicoTeste",
+}
 
 
 def _get_participatory_space_mapped_to_query_file(participatory_spaces: List[str]):
