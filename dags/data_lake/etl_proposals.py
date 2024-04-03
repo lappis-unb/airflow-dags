@@ -13,7 +13,6 @@ from airflow.providers.amazon.aws.operators.s3 import (
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from sqlalchemy.exc import ProgrammingError
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
-import os
 
 # Vai ser trocado para salvar em arquivo
 
@@ -32,17 +31,18 @@ def _get_query() -> str:
     ) as file:
         return file.read()
 
+
 DECIDIM_CONN_ID = "api_decidim"
-MINIO_CONN_ID = "minio_conn_id_test"
+MINIO_CONN_ID = "minio_conn_id"
 MINIO_BUCKET = "brasil-participativo-daily-csv"
 COMPONENT_TYPE_TO_EXTRACT = "Proposals"
 TABLE_NAME = "proposals"
 SCHEMA = "raw"
 PRIMARY_KEY = "proposal_id"
 RETRIES = 0
-LANDING_ZONE_FILE_NAME = "landing_zone/proposals{date_file}.json"
-PROCESSING_FILE_NAME = "processing/proposals{date_file}.csv"
-PROCESSED_FILE_NAME = "processed/proposals{date_file}.csv"
+LANDING_ZONE_FILE_NAME = "landing_zone/proposals_{date_file}.json"
+PROCESSING_FILE_NAME = "processing/proposals_{date_file}.csv"
+PROCESSED_FILE_NAME = "processed/proposals_{date_file}.csv"
 POSTGRES_CONN_ID = "conn_postgres"
 QUERY = _get_query()
 
