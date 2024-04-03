@@ -44,8 +44,16 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
         participatory_space_id = component.get("participatorySpace", {}).get("id")
         participatory_space_type = component.get("participatorySpace", {}).get("type", "").split("::")[-1]
         page_component_name = component.get("name", {}).get("translation", "-")
-        page_proposals = component.get("proposals", {}).get("nodes", [])
+        result_proposals_data.append(
+            {
+                "page_component_id": page_component_id,
+                "participatory_space_id": participatory_space_id,
+                "participatory_space_type": participatory_space_type,
+                "page_component_name": page_component_name,
+            }
+        )
 
+        page_proposals = component.get("proposals", {}).get("nodes", [])
         for proposal in page_proposals:
             proposal_id = proposal.get("id")
             proposal_title = proposal.get("title", {}).get("translation", "-")
