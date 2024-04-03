@@ -80,37 +80,37 @@ def flatten_structure_with_additional_fields(data):
             if "proposals" in component:
                 for proposal in component.get("proposals", {}).get("nodes", []):
                     proposal_data = {
-                        "main_title": main_title,
-                        "component_id": component_id,
-                        "component_name": component_name,
-                        "proposal_id": proposal["id"],
-                        "proposal_createdAt": proposal["createdAt"],
-                        "proposal_publishedAt": proposal.get("publishedAt"),
-                        "proposal_updatedAt": proposal.get("updatedAt"),
-                        "author_name": dict_safe_get(proposal, "author").get("name"),
-                        "author_nickname": dict_safe_get(proposal, "author").get("nickname"),
-                        "author_organization": dict_safe_get(proposal, "author").get("organizationName"),
-                        "proposal_body": extract_text(proposal.get("body", {}).get("translations", [])),
-                        "category_name": extract_text(
-                            dict_safe_get(dict_safe_get(proposal, "category"), "name").get("translations", [])
-                        ),
-                        "proposal_title": extract_text(proposal.get("title", {}).get("translations", [])),
-                        "authorsCount": proposal.get("authorsCount"),
-                        "userAllowedToComment": proposal.get("userAllowedToComment"),
-                        "endorsementsCount": proposal.get("endorsementsCount"),
-                        "totalCommentsCount": proposal.get("totalCommentsCount"),
-                        "versionsCount": proposal.get("versionsCount"),
-                        "voteCount": proposal.get("voteCount"),
-                        "commentsHaveAlignment": proposal.get("commentsHaveAlignment"),
-                        "commentsHaveVotes": proposal.get("commentsHaveVotes"),
-                        "createdInMeeting": proposal.get("createdInMeeting"),
-                        "hasComments": proposal.get("hasComments"),
-                        "official": proposal.get("official"),
-                        "fingerprint": proposal.get("fingerprint", {}).get("value"),
-                        "position": proposal.get("position"),
-                        "reference": proposal.get("reference"),
-                        "scope": proposal.get("scope"),
-                        "state": proposal.get("state"),
+                      "main_title": main_title,
+                      "component_id": component_id,
+                      "component_name": component_name,
+                      "proposal_id": proposal["id"],
+                      "proposal_created_at": proposal["createdAt"],
+                      "proposal_published_at": proposal.get("publishedAt"),
+                      "proposal_updated_at": proposal.get("updatedAt"),
+                      "author_name": dict_safe_get(proposal, "author").get("name"),
+                      "author_nickname": dict_safe_get(proposal, "author").get("nickname"),
+                      "author_organization": dict_safe_get(proposal, "author").get("organizationName"),
+                      "proposal_body": extract_text(proposal.get("body", {}).get("translations", [])),
+                      "category_name": extract_text(
+                        dict_safe_get(dict_safe_get(proposal, "category"), "name").get("translations", [])
+                      ),
+                      "proposal_title": extract_text(proposal.get("title", {}).get("translations", [])),
+                      "authors_count": proposal.get("authorsCount"),
+                      "user_allowed_to_comment": proposal.get("userAllowedToComment"),
+                      "endorsements_count": proposal.get("endorsementsCount"),
+                      "total_comments_count": proposal.get("totalCommentsCount"),
+                      "versions_count": proposal.get("versionsCount"),
+                      "vote_count": proposal.get("voteCount"),
+                      "comments_have_alignment": proposal.get("commentsHaveAlignment"),
+                      "comments_have_votes": proposal.get("commentsHaveVotes"),
+                      "created_in_meeting": proposal.get("createdInMeeting"),
+                      "has_comments": proposal.get("hasComments"),
+                      "official": proposal.get("official"),
+                      "fingerprint": proposal.get("fingerprint", {}).get("value"),
+                      "position": proposal.get("position"),
+                      "reference": proposal.get("reference"),
+                      "scope": proposal.get("scope"),
+                      "state": proposal.get("state"),
                     }
                     flattened_data.append(proposal_data)
     return flattened_data
@@ -170,35 +170,35 @@ def dict_safe_get(_dict: dict, key: str):
 
 def _convert_dtype(df: pd.DataFrame) -> pd.DataFrame:
     dtypes = {
-        "author_name": "str",
-        "author_nickname": "str",
-        "author_organization": "str",
-        "authorsCount": "int",
-        "category_name": "str",
-        "commentsHaveAlignment": "bool",
-        "commentsHaveVotes": "bool",
-        "component_id": "int",
-        "component_name": "str",
-        "createdInMeeting": "bool",
-        "endorsementsCount": "int",
-        "fingerprint": "str",
-        "hasComments": "bool",
-        "main_title": "str",
-        "official": "bool",
-        "position": "str",
-        "proposal_body": "str",
-        "proposal_createdAt": "datetime64[ns]",
-        "proposal_id": "int",
-        "proposal_publishedAt": "datetime64[ns]",
-        "proposal_title": "str",
-        "proposal_updatedAt": "datetime64[ns]",
-        "reference": "str",
-        "scope": "str",
-        "state": "str",
-        "totalCommentsCount": "int",
-        "userAllowedToComment": "bool",
-        "versionsCount": "int",
-        "voteCount": "int",
+      "author_name": "str",
+      "author_nickname": "str",
+      "author_organization": "str",
+      "authors_count": "int",
+      "category_name": "str",
+      "comments_have_alignment": "bool",
+      "comments_have_votes": "bool",
+      "component_id": "int",
+      "component_name": "str",
+      "created_in_meeting": "bool",
+      "endorsements_count": "int",
+      "fingerprint": "str",
+      "has_comments": "bool",
+      "main_title": "str",
+      "official": "bool",
+      "position": "str",
+      "proposal_body": "str",
+      "proposal_created_at": "datetime64[ns]",
+      "proposal_id": "int",
+      "proposal_published_at": "datetime64[ns]",
+      "proposal_title": "str",
+      "proposal_updated_at": "datetime64[ns]",
+      "reference": "str",
+      "scope": "str",
+      "state": "str",
+      "total_comments_count": "int",
+      "user_allowed_to_comment": "bool",
+      "versions_count": "int",
+      "vote_count": "int",
     }
     # remove os dtypes que não estão no df
     dtypes = {k: v for k, v in dtypes.items() if k in df.columns}
@@ -410,6 +410,25 @@ def _check_empty_file(**context):
     return "load.check_and_create_table"
 
 
+
+def _check_and_create_schema(engine, schema):
+  """
+  Check if the schema exists in the database and create it if it doesn't exist.
+
+  Args:
+  ----
+    engine (sqlalchemy.engine.Engine): The SQLAlchemy engine object.
+
+  Returns:
+  -------
+    None
+  """
+  with engine.connect() as connection:
+    try:
+      connection.execute(f"CREATE SCHEMA IF NOT EXISTS {schema}")
+    except ProgrammingError as e:
+      logging.error(f"Error creating schema: {e}")
+
 def _check_and_create_table(engine):
     """
     Check if the table exists in the database and create it if it doesn't exist.
@@ -422,48 +441,50 @@ def _check_and_create_table(engine):
     -------
       None
     """
+
+    
     has_table = engine.has_table(table_name=TABLE_NAME, schema=SCHEMA)
 
     if not has_table:
         engine.execute(
             f"""
-    CREATE TABLE {SCHEMA}.{TABLE_NAME} (
-      main_title text NULL,
-      component_id int8 NULL,
-      component_name text NULL,
-      proposal_id int8 NOT NULL,
-      proposal_createdat timestamp NULL,
-      proposal_publishedat timestamp NULL,
-      proposal_updatedat timestamp NULL,
-      author_name text NULL,
-      author_nickname text NULL,
-      author_organization text NULL,
-      proposal_body text NULL,
-      category_name text NULL,
-      proposal_title text NULL,
-      authorscount int8 NULL,
-      userallowedtocomment bool NULL,
-      endorsementscount int8 NULL,
-      totalcommentscount int8 NULL,
-      versionscount int8 NULL,
-      votecount int8 NULL,
-      commentshavealignment bool NULL,
-      commentshavevotes bool NULL,
-      createdinmeeting bool NULL,
-      hascomments bool NULL,
-      official bool NULL,
-      fingerprint text NULL,
-      "position" int8 NULL,
-      reference text NULL,
-      "scope" text NULL,
-      state text NULL,
-      event_day_id int8 NULL,
-      available_day_id int8 NULL,
-      available_month_id int8 NULL,
-      available_year_id int8 NULL,
-      writing_day_id int8 NULL
-    );
-    """
+          CREATE TABLE {SCHEMA}.{TABLE_NAME} (
+            main_title text NULL,
+            component_id int8 NULL,
+            component_name text NULL,
+            proposal_id int8 NOT NULL,
+            proposal_created_at timestamp NULL,
+            proposal_published_at timestamp NULL,
+            proposal_updated_at timestamp NULL,
+            author_name text NULL,
+            author_nickname text NULL,
+            author_organization text NULL,
+            proposal_body text NULL,
+            category_name text NULL,
+            proposal_title text NULL,
+            authors_count int8 NULL,
+            user_allowed_to_comment bool NULL,
+            endorsements_count int8 NULL,
+            total_comments_count int8 NULL,
+            versions_count int8 NULL,
+            vote_count int8 NULL,
+            comments_have_alignment bool NULL,
+            comments_have_votes bool NULL,
+            created_in_meeting bool NULL,
+            has_comments bool NULL,
+            official bool NULL,
+            fingerprint text NULL,
+            position int8 NULL,
+            reference text NULL,
+            scope text NULL,
+            state text NULL,
+            event_day_id int8 NULL,
+            available_day_id int8 NULL,
+            available_month_id int8 NULL,
+            available_year_id int8 NULL,
+            writing_day_id int8 NULL
+          );
+          """
         )
         engine.execute(f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY ({PRIMARY_KEY});")
 
@@ -722,6 +743,7 @@ def etl_proposals():
             hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
             engine = hook.get_sqlalchemy_engine()
 
+            _check_and_create_schema(engine, SCHEMA)
             _check_and_create_table(engine)
 
         @task(provide_context=True, retry_delay=timedelta(minutes=3))
@@ -741,7 +763,7 @@ def etl_proposals():
             engine = hook.get_sqlalchemy_engine()
             return _task_get_ids_from_table(engine)
 
-        @task(provide_context=True, retry_delay=timedelta(minutes=3), retries=0)
+        @task(provide_context=True, retry_delay=timedelta(minutes=3))
         def save_data_postgres(proposal_ids: list, **context):
             """
             Save data to PostgreSQL.
