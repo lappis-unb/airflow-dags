@@ -1,33 +1,10 @@
-"""DAG to query Decidim software recent proposals and send result to telegram chat.
-
-The DAG flow is:
-1. [task: get_update_date] Get the last telegram message proposal date.
-This variable is used to query the API and to filter the results.
-The API only accepts filter on format YYYY-MM-DD but the DAG runs on
-minutes interval.
-2. [task: get_proposals] Use the last_date to query the day's proposals.
-3. [task: mount_telegram_messages] Parse the API json response and select
-only the proposals that are newer (or updated) than the value get on
-step 1. It consider HH:MM not filtered by the API.
-4. [task: check_if_new_proposals] If there's no new messages to send,
-call EmptyOperator and finish the DAG.
-If there's new messages to send, call [send_telegram_messages].
-5. [task: send_telegram_messages] Send messages.
-6. [task: save_update_date] Save last telegram message on Airflow Variable.
-"""
-
-# pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
-
-# pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
-
-# pylint: disable=import-error, pointless-statement, expression-not-assigned, invalid-name
 import logging
 import os
 from datetime import datetime
 from pathlib import Path
 from typing import Union
 
-import pandas as pd
+from pandas import Series
 
 from plugins.decidim_hook import DecidimHook
 from plugins.notifications.base_dag import NotifierDAG
@@ -38,18 +15,26 @@ MESSAGE_COOLDOWN_DELAY = 30
 MESSAGE_COOLDOWN_RETRIES = 10
 
 
-class NotifyNewProposals(NotifierDAG):  # noqa: D101
+class NotifyNewProposals(NotifierDAG):
+    """
+    A class to create a DAG for notifying about new or updated proposals via Telegram.
+
+    Inherits from NotifierDAG.
+
+    """
+
     def _get_data(self, component_id: int, update_date: datetime):
-        """Airflow task that uses variable `graphql` to request proposals on dedicim API.
+        """
+        Retrieves data from Decidim API for the specified component and update date.
 
         Args:
         ----
-            component_id (int): id of the component to get updates from.
-            update_date (datetime): last proposals update date.
+            component_id (int): The ID of the component to get updates from.
+            update_date (datetime): The last update date.
 
         Returns:
         -------
-            dict: result of decidim API query on proposals.
+            dict: The data retrieved from the Decidim API.
         """
         component_dict = DecidimHook(DECIDIM_CONN_ID, component_id=component_id).get_component(
             update_date_filter=update_date
@@ -57,7 +42,7 @@ class NotifyNewProposals(NotifierDAG):  # noqa: D101
 
         return component_dict
 
-    def _format_telegram_message(self, data_row: pd.Series):
+    def _format_telegram_message(self, data_row: Series):
         state = data_row["state"]
         organization_name = data_row.get("author.organizationName", "")
         author_name = data_row.get("author.name", "-")
@@ -73,20 +58,18 @@ class NotifyNewProposals(NotifierDAG):  # noqa: D101
         )
 
     def _build_telegram_message(self, component_id: int, proposals_json: dict, update_date: datetime):
-        """Airflow task that parse proposals json, to mount telegram messages.
+        """
+        Build Telegram messages based on proposals JSON.
 
         Args:
         ----
-            proposals (dict): list of proposals received on function
-                `get_proposals`.
-            update_date (datetime): last proposals update date.
+            component_id (int): The ID of the component.
+            proposals_json (dict): The JSON data of proposals.
+            update_date (datetime): The update date.
 
         Returns:
         -------
-            dict: "data" (list): new/updated proposals to
-                    send on telegram.
-                "max_datetime" (str): max proposal date (new or update).
-
+            dict: The built Telegram message.
         """
         logging.info("Recived proposals %s", proposals_json)
         result: dict[str, Union[list, datetime, None]] = {
@@ -115,4 +98,4 @@ for config in read_yaml_files_from_directory(CONFIG_FOLDER):
     if not config["telegram_config"]["telegram_group_id"]:
         continue
     config.pop("decidim_url")
-    NotifyNewProposals(notifier_type="Proposals", owners="Paulo/Thais G.", **config).generate_dag()
+    NotifyNewProposals(notifier_type="Proposals", owners="Paulo G./Thais R.", **config).generate_dag()
