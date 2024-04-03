@@ -12,46 +12,36 @@ lint.typing-modules = ["airflow.typing_compat"]
 line-length = 110
 
 lint.extend-select = [
-    "I", # Missing required import (auto-fixable)
-    "UP", # Pyupgrade
+    "I",      # Missing required import (auto-fixable)
+    "UP",     # Pyupgrade
     "RUF100", # Unused noqa (auto-fixable)
-    # pycodestyle
-    "E",
-    # Pyflakes
-    "F",
-    # pyupgrade
-    "UP",
-    "W",
-    # flake8-bugbear
-    "B",
-    # flake8-simplify
-    "SIM",
+    "E",      # pycodestyle
+    "F",      # Pyflakes
+    "W",      # pyupgrade
+    "B",      # flake8-bugbear
+    "SIM",    # flake8-simplify
     "N",
     "G",
     "ISC",
-    # isort
-    "I",
     "RUF",
     "B",
-    # We ignore more pydocstyle than we enable, so be more selective at what we enable
     "D101",
     "D106",
     "D2",
     "D3",
     "D400",
-    # "D401", # Not enabled by ruff, but we don't want it
     "D402",
     "D403",
     "D407",
     "D408",
     "D412",
     "D419",
-    "TCH",  # Rules around TYPE_CHECKING blocks
-    "TID251",  # Specific modules or module members that may not be imported or accessed
-    "TID253",  # Ban certain modules from being imported at module level
-    "ISC",  # Checks for implicit literal string concatenation (auto-fixable)
-    "B006", # Checks for uses of mutable objects as function argument defaults.
+    "TCH",
+    "TID251",
+    "TID253",
+    "B006",   # Checks for uses of mutable objects as function argument defaults.
 ]
+
 lint.ignore = [
     "D203",
     "D212",
