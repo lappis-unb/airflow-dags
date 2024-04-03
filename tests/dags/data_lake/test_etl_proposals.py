@@ -1,13 +1,9 @@
 import io
-import os
-import sys
 from datetime import datetime
 from unittest import mock
 
 import pandas as pd
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from dags.data_lake.etl_proposals import (
     LANDING_ZONE_FILE_NAME,
@@ -274,8 +270,8 @@ def test__task_extract_data():
     mock_s3hook = mock.MagicMock()
 
     # Patch the GraphQLHook and S3Hook
-    with mock.patch("etl_proposals.GraphQLHook", return_value=mock_hook), mock.patch(
-        "etl_proposals.S3Hook", return_value=mock_s3hook
+    with mock.patch("dags.data_lake.etl_proposals.GraphQLHook", return_value=mock_hook), mock.patch(
+        "dags.data_lake.etl_proposals.S3Hook", return_value=mock_s3hook
     ):
         # Call the function
         _task_extract_data(**context)
@@ -354,7 +350,7 @@ def test__delete_landing_zone_file():
     mock_s3hook = mock.MagicMock()
 
     # Patch the S3Hook
-    with mock.patch("etl_proposals.S3Hook", return_value=mock_s3hook):
+    with mock.patch("dags.data_lake.etl_proposals.S3Hook", return_value=mock_s3hook):
         # Call the function
         _delete_landing_zone_file(context)
 
@@ -387,7 +383,7 @@ def test__check_empty_file():
     mock_s3hook.read_key.return_value = ""
 
     # Patch the S3Hook
-    with mock.patch("etl_proposals.S3Hook", return_value=mock_s3hook):
+    with mock.patch("dags.data_lake.etl_proposals.S3Hook", return_value=mock_s3hook):
         # Call the function
         result = _check_empty_file(**context)
 
@@ -422,7 +418,7 @@ def test__check_empty_file_non_empty():
     mock_s3hook.read_key.return_value = "some data"
 
     # Patch the S3Hook
-    with mock.patch("etl_proposals.S3Hook", return_value=mock_s3hook):
+    with mock.patch("dags.data_lake.etl_proposals.S3Hook", return_value=mock_s3hook):
         # Call the function
         result = _check_empty_file(**context)
 
@@ -564,7 +560,7 @@ def test__get_df_save_data_postgres():
     mock_s3hook.read_key.return_value = "col1,col2\n1,a\n2,b\n3,c\n"
 
     # Patch the S3Hook
-    with mock.patch("etl_proposals.S3Hook", return_value=mock_s3hook):
+    with mock.patch("dags.data_lake.etl_proposals.S3Hook", return_value=mock_s3hook):
         # Call the function
         result = _get_df_save_data_postgres(context)
 
@@ -648,7 +644,7 @@ def test__task_move_file_s3():
     mock_s3hook = mock.MagicMock()
 
     # Patch the S3Hook
-    with mock.patch("etl_proposals.S3Hook", return_value=mock_s3hook):
+    with mock.patch("dags.data_lake.etl_proposals.S3Hook", return_value=mock_s3hook):
         # Call the function
         _task_move_file_s3(context)
 
