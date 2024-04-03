@@ -80,37 +80,37 @@ def flatten_structure_with_additional_fields(data):
             if "proposals" in component:
                 for proposal in component.get("proposals", {}).get("nodes", []):
                     proposal_data = {
-                      "main_title": main_title,
-                      "component_id": component_id,
-                      "component_name": component_name,
-                      "proposal_id": proposal["id"],
-                      "proposal_created_at": proposal["createdAt"],
-                      "proposal_published_at": proposal.get("publishedAt"),
-                      "proposal_updated_at": proposal.get("updatedAt"),
-                      "author_name": dict_safe_get(proposal, "author").get("name"),
-                      "author_nickname": dict_safe_get(proposal, "author").get("nickname"),
-                      "author_organization": dict_safe_get(proposal, "author").get("organizationName"),
-                      "proposal_body": extract_text(proposal.get("body", {}).get("translations", [])),
-                      "category_name": extract_text(
-                        dict_safe_get(dict_safe_get(proposal, "category"), "name").get("translations", [])
-                      ),
-                      "proposal_title": extract_text(proposal.get("title", {}).get("translations", [])),
-                      "authors_count": proposal.get("authorsCount"),
-                      "user_allowed_to_comment": proposal.get("userAllowedToComment"),
-                      "endorsements_count": proposal.get("endorsementsCount"),
-                      "total_comments_count": proposal.get("totalCommentsCount"),
-                      "versions_count": proposal.get("versionsCount"),
-                      "vote_count": proposal.get("voteCount"),
-                      "comments_have_alignment": proposal.get("commentsHaveAlignment"),
-                      "comments_have_votes": proposal.get("commentsHaveVotes"),
-                      "created_in_meeting": proposal.get("createdInMeeting"),
-                      "has_comments": proposal.get("hasComments"),
-                      "official": proposal.get("official"),
-                      "fingerprint": proposal.get("fingerprint", {}).get("value"),
-                      "position": proposal.get("position"),
-                      "reference": proposal.get("reference"),
-                      "scope": proposal.get("scope"),
-                      "state": proposal.get("state"),
+                        "main_title": main_title,
+                        "component_id": component_id,
+                        "component_name": component_name,
+                        "proposal_id": proposal["id"],
+                        "proposal_created_at": proposal["createdAt"],
+                        "proposal_published_at": proposal.get("publishedAt"),
+                        "proposal_updated_at": proposal.get("updatedAt"),
+                        "author_name": dict_safe_get(proposal, "author").get("name"),
+                        "author_nickname": dict_safe_get(proposal, "author").get("nickname"),
+                        "author_organization": dict_safe_get(proposal, "author").get("organizationName"),
+                        "proposal_body": extract_text(proposal.get("body", {}).get("translations", [])),
+                        "category_name": extract_text(
+                            dict_safe_get(dict_safe_get(proposal, "category"), "name").get("translations", [])
+                        ),
+                        "proposal_title": extract_text(proposal.get("title", {}).get("translations", [])),
+                        "authors_count": proposal.get("authorsCount"),
+                        "user_allowed_to_comment": proposal.get("userAllowedToComment"),
+                        "endorsements_count": proposal.get("endorsementsCount"),
+                        "total_comments_count": proposal.get("totalCommentsCount"),
+                        "versions_count": proposal.get("versionsCount"),
+                        "vote_count": proposal.get("voteCount"),
+                        "comments_have_alignment": proposal.get("commentsHaveAlignment"),
+                        "comments_have_votes": proposal.get("commentsHaveVotes"),
+                        "created_in_meeting": proposal.get("createdInMeeting"),
+                        "has_comments": proposal.get("hasComments"),
+                        "official": proposal.get("official"),
+                        "fingerprint": proposal.get("fingerprint", {}).get("value"),
+                        "position": proposal.get("position"),
+                        "reference": proposal.get("reference"),
+                        "scope": proposal.get("scope"),
+                        "state": proposal.get("state"),
                     }
                     flattened_data.append(proposal_data)
     return flattened_data
@@ -170,35 +170,35 @@ def dict_safe_get(_dict: dict, key: str):
 
 def _convert_dtype(df: pd.DataFrame) -> pd.DataFrame:
     dtypes = {
-      "author_name": "str",
-      "author_nickname": "str",
-      "author_organization": "str",
-      "authors_count": "int",
-      "category_name": "str",
-      "comments_have_alignment": "bool",
-      "comments_have_votes": "bool",
-      "component_id": "int",
-      "component_name": "str",
-      "created_in_meeting": "bool",
-      "endorsements_count": "int",
-      "fingerprint": "str",
-      "has_comments": "bool",
-      "main_title": "str",
-      "official": "bool",
-      "position": "str",
-      "proposal_body": "str",
-      "proposal_created_at": "datetime64[ns]",
-      "proposal_id": "int",
-      "proposal_published_at": "datetime64[ns]",
-      "proposal_title": "str",
-      "proposal_updated_at": "datetime64[ns]",
-      "reference": "str",
-      "scope": "str",
-      "state": "str",
-      "total_comments_count": "int",
-      "user_allowed_to_comment": "bool",
-      "versions_count": "int",
-      "vote_count": "int",
+        "author_name": "str",
+        "author_nickname": "str",
+        "author_organization": "str",
+        "authors_count": "int",
+        "category_name": "str",
+        "comments_have_alignment": "bool",
+        "comments_have_votes": "bool",
+        "component_id": "int",
+        "component_name": "str",
+        "created_in_meeting": "bool",
+        "endorsements_count": "int",
+        "fingerprint": "str",
+        "has_comments": "bool",
+        "main_title": "str",
+        "official": "bool",
+        "position": "str",
+        "proposal_body": "str",
+        "proposal_created_at": "datetime64[ns]",
+        "proposal_id": "int",
+        "proposal_published_at": "datetime64[ns]",
+        "proposal_title": "str",
+        "proposal_updated_at": "datetime64[ns]",
+        "reference": "str",
+        "scope": "str",
+        "state": "str",
+        "total_comments_count": "int",
+        "user_allowed_to_comment": "bool",
+        "versions_count": "int",
+        "vote_count": "int",
     }
     # remove os dtypes que não estão no df
     dtypes = {k: v for k, v in dtypes.items() if k in df.columns}
@@ -410,24 +410,24 @@ def _check_empty_file(**context):
     return "load.check_and_create_table"
 
 
-
 def _check_and_create_schema(engine, schema):
-  """
-  Check if the schema exists in the database and create it if it doesn't exist.
+    """
+    Check if the schema exists in the database and create it if it doesn't exist.
 
-  Args:
-  ----
-    engine (sqlalchemy.engine.Engine): The SQLAlchemy engine object.
+    Args:
+    ----
+      engine (sqlalchemy.engine.Engine): The SQLAlchemy engine object.
 
-  Returns:
-  -------
-    None
-  """
-  with engine.connect() as connection:
-    try:
-      connection.execute(f"CREATE SCHEMA IF NOT EXISTS {schema}")
-    except ProgrammingError as e:
-      logging.error(f"Error creating schema: {e}")
+    Returns:
+    -------
+      None
+    """
+    with engine.connect() as connection:
+        try:
+            connection.execute(f"CREATE SCHEMA IF NOT EXISTS {schema}")
+        except ProgrammingError as e:
+            logging.error("Error creating schema: %s", e)
+
 
 def _check_and_create_table(engine):
     """
@@ -441,8 +441,6 @@ def _check_and_create_table(engine):
     -------
       None
     """
-
-    
     has_table = engine.has_table(table_name=TABLE_NAME, schema=SCHEMA)
 
     if not has_table:

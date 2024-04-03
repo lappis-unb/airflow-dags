@@ -494,7 +494,6 @@ def test__check_and_create_table():
             writing_day_id int8 NULL
           );
           """
-
             ),
             mock.call(f"ALTER TABLE {SCHEMA}.{TABLE_NAME} ADD PRIMARY KEY ({PRIMARY_KEY});"),
         ]
