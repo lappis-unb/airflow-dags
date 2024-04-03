@@ -44,6 +44,7 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
         participatory_space_id = component.get("participatorySpace", {}).get("id")
         participatory_space_type = component.get("participatorySpace", {}).get("type", "").split("::")[-1]
         page_component_name = component.get("name", {}).get("translation", "-")
+
         result_proposals_data.append(
             {
                 "page_component_id": page_component_id,
@@ -52,8 +53,8 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
                 "page_component_name": page_component_name,
             }
         )
-
         page_proposals = component.get("proposals", {}).get("nodes", [])
+
         for proposal in page_proposals:
             proposal_id = proposal.get("id")
             proposal_title = proposal.get("title", {}).get("translation", "-")
@@ -70,10 +71,6 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
 
             result_proposals_data.append(
                 {
-                    "page_component_id": page_component_id,
-                    "participatory_space_id": participatory_space_id,
-                    "participatory_space_type": participatory_space_type,
-                    "page_component_name": page_component_name,
                     "proposal_id": proposal_id,
                     "proposal_title": proposal_title,
                     "proposal_published_at": proposal_published_at,
@@ -84,6 +81,8 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
                     "proposal_category_title": proposal_category_title,
                 }
             )
+
+    print(result_proposals_data)
     return result_proposals_data
 
 
@@ -128,17 +127,12 @@ def _generate_report(
     start_date = datetime.strptime(start_date, "%Y-%m-%d")
     end_date = datetime.strptime(end_date, "%Y-%m-%d")
 
-    bp_df = pd.DataFrame(bp_data)
-
-    report_name = bp_df.iloc[0]["page_component_name"]
+    report_title = bp_data[0]["page_component_name"]
 
     template_path = Path(__file__).parent.joinpath("./templates/template_proposals.html")
-
-    report_generator = ProposalsReport(
-        report_name=report_name, template_path=template_path, start_date=start_date, end_date=end_date
-    )
+    report_generator = ProposalsReport(report_title, template_path, start_date, end_date)
     pdf_bytes = report_generator.create_report_pdf(
-        bp_df=bp_df,
+        bp_df=pd.DataFrame(bp_data),
         matomo_visits_summary_csv=visits_summary,
         matomo_visits_frequency_csv=visits_frequency,
         matomo_user_region_csv=user_region,

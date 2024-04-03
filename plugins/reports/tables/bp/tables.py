@@ -26,20 +26,10 @@ class BrasilParticipativoTables:
     ):
         assert len(votes_per_proposal) == len(total_comments_per_proposal) == len(proposal_states)
 
-        filtered_indices = [
-            i
-            for i, state in enumerate(proposal_states)
-            if state != "withdrawn"
-            and (votes_per_proposal[i] is not None or total_comments_per_proposal[i] is not None)
-        ]
+        filtered_indices = [i for i, state in enumerate(proposal_states) if state != "withdrawn"]
 
-        filtered_votes = [
-            votes_per_proposal[i] if votes_per_proposal[i] is not None else 0 for i in filtered_indices
-        ]
-        filtered_comments = [
-            total_comments_per_proposal[i] if total_comments_per_proposal[i] is not None else 0
-            for i in filtered_indices
-        ]
+        filtered_votes = [votes_per_proposal[i] for i in filtered_indices]
+        filtered_comments = [total_comments_per_proposal[i] for i in filtered_indices]
 
         num_proposals = len(filtered_indices)
 
