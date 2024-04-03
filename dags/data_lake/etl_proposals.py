@@ -2,6 +2,7 @@ import io
 import json
 import logging
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import pandas as pd
 from airflow.decorators import dag, task, task_group
@@ -18,18 +19,18 @@ from plugins.graphql.hooks.graphql_hook import GraphQLHook
 # Vai ser trocado para salvar em arquivo
 
 
-def _get_query() -> str:
+def _get_query():
     """
-    Retorna a query GraphQL para extrair os dados de propostas de um participatory process.
+    Retrieves the query from the specified file and returns it.
 
     Returns:
     -------
-    str: A query GraphQL para extrair os dados de propostas de um participatory process.
+      str: The query string.
     """
-    with open(
-        "./dags/airflow-dags/data_lake/queries/get_proposals_processes_participative.gql",
-    ) as file:
-        return file.read()
+    query = (
+        Path(__file__).parent.joinpath("./queries/get_proposals_processes_participative.gql").open().read()
+    )
+    return query
 
 
 DECIDIM_CONN_ID = "api_decidim"
