@@ -77,6 +77,10 @@ class ParticipatoryTextsReport(Report):
                     "title": f"Relatório {self.report_name}",
                     "date": f"{self.start_date} até {self.end_date}",
                 },
+                "introduction": {
+                    "total_comments" : report_data["total_comments"],
+                    "total_unique_participants" : report_data["total_unique_participants"],
+                },
                 "participation_graph": {
                     "label": "Gráfico De Participação",
                     "file": self.bp_graphs.generate_participation_graph(
