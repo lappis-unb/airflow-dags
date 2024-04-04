@@ -23,6 +23,7 @@ query comments_in_proposals($id: ID!, $page: String) {
             body
             upVotes
             downVotes
+            status
           }
         }
       }

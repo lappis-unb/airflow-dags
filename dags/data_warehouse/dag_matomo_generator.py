@@ -70,7 +70,7 @@ class MatomoDagGenerator:  # noqa: D101
         ("UserCountry", "getRegion"),
     ]
     default_dag_args: ClassVar[Dict] = {
-        "owner": "nitai",
+        "owner": "Nitai",
         "depends_on_past": False,
         "email_on_failure": False,
         "email_on_retry": False,

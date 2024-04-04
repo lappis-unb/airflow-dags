@@ -41,7 +41,7 @@ QUERIES = _get_participatory_space_mapped_to_query_file(PARTICIPATORY_SPACES)
 
 
 DEFAULT_ARGS = {
-    "owner": "Paulo/Isaque",
+    "owner": "Paulo G./Isaque",
     "depends_on_past": False,
     "email_on_failure": True,
     "email_on_retry": False,

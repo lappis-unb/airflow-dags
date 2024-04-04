@@ -24,7 +24,7 @@ from urllib.parse import urljoin
 import inflect
 import numpy as np
 import pandas as pd
-import pytz
+import pendulum
 from inflection import underscore
 
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
@@ -270,19 +270,18 @@ class ComponentBaseHook:
             )
             return df
 
-        df["creation_date"] = pd.to_datetime(df["creation_date"])
-        df["update_date"] = pd.to_datetime(df["update_date"])
+        parse_date = lambda date: pendulum.parse(str(date), strict=False)
+
+        df["creation_date"] = df["creation_date"].apply(parse_date)
+        df["update_date"] = df["update_date"].apply(parse_date)
 
         df["date_filter"] = df[["creation_date", "update_date"]].max(axis=1)
+        df["date_filter"] = df["date_filter"].apply(parse_date)
 
         if start_date_filter:
-            start_date_filter = pd.to_datetime(start_date_filter)
-            start_date_filter = start_date_filter.replace(tzinfo=pytz.timezone("America/Sao_Paulo"))
-            df = df[df["date_filter"] > start_date_filter]
+            df = df[df["date_filter"] > parse_date(start_date_filter)]
         if end_date_filter:
-            end_date_filter = pd.to_datetime(end_date_filter)
-            end_date_filter = end_date_filter.replace(tzinfo=pytz.timezone("America/Sao_Paulo"))
-            df = df[df["date_filter"] < end_date_filter]
+            df = df[df["date_filter"] < parse_date(end_date_filter)]
 
         logging.info(df["date_filter"].max())
         link_base = self.get_component_link().rstrip("/")
