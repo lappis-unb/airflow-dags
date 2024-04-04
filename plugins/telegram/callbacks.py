@@ -18,6 +18,5 @@ def send_telegram(_context):
 <b>Exception:</b>
     <pre><code class="language-log">{_context['exception']}</code></pre>
 """,
-            # "message_thread_id": self.telegram_topic_id,
         }
     )
