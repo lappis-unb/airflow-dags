@@ -58,22 +58,15 @@ class ParticipatoryTextsReport(Report):
                 proposal["total_comments"] for proposal in report_data["proposals"]
             ]
 
-        top_devices_graph = self.bp_graphs.generate_top_devices(
-            titles=proposals_titles,
-            total_comments=total_comments_per_proposal,
-            statuses=[
-                comment.get("status")
-                for proposal in report_data["proposals"]
-                for comment in proposal.get("comments", [])
-            ],
-        )
-
-        participatory_texts_file = self.bp_tables.generate_participatory_texts_proposals(
-            proposals_ids,
-            proposals_titles,
-            votes_per_proposal,
-            total_comments_per_proposal,
-        )
+            top_devices_graph = self.bp_graphs.generate_top_devices(
+                titles=proposals_titles, total_comments=total_comments_per_proposal
+            )
+            participatory_texts_file = self.bp_tables.generate_participatory_texts_proposals(
+                proposals_ids,
+                proposals_titles,
+                votes_per_proposal,
+                total_comments_per_proposal,
+            )
 
             participatory_texts_ids = [text["ID"] for text in participatory_texts_file]
             participatory_texts_title = [text["Dispositivo"] for text in participatory_texts_file]
@@ -82,67 +75,10 @@ class ParticipatoryTextsReport(Report):
 
             participatory_texts = report_data["proposals"]
 
-        state_rename = {
-            "accepted": "Aceita",
-            "withdrawn": "Retirada",
-            "rejected": "Rejeitada",
-        }
-
-        rename_state = lambda comments: [
-            {**comment, "status": state_rename.get(comment["status"], "Avaliando")} for comment in comments
-        ]
-
-        comments_data = [
-            {"title": text["title"], "comments": rename_state(text["comments"])}
-            for text in participatory_texts
-        ]
-
-        return self.template.render(
-            data={
-                "document": {
-                    "title": f"Relatório {self.report_name}",
-                    "date": f"{self.start_date} até {self.end_date}",
-                },
-                "introduction": {
-                    "total_comments": report_data["total_comments"],
-                    "total_unique_participants": report_data["total_unique_participants"],
-                },
-                "participation_graph": {
-                    "label": "Gráfico De Participação",
-                    "file": self.bp_graphs.generate_participation_graph(
-                        report_data["total_comments"],
-                        report_data["total_unique_participants"],
-                    ),
-                },
-                "participatory_texts": {
-                    "ID": participatory_texts_ids,
-                    "Dispositivo": participatory_texts_title,
-                    "Nº de comentários": participatory_texts_comments,
-                    "Nº de votos": participatory_texts_votes,
-                },
-                "top_devices_graph": {
-                    "label": "Dispositivos mais utilizados",
-                    "file": top_devices_graph,
-                },
-                "data_access": MatotmoTables.generate_table_access_data_overview(
-                    matomo_visits_summary_csv, matomo_visits_frequency_csv
-                ),
-                "device_graph": {
-                    "label": "Detecção de Dispositivos",
-                    "file": self.matomo_graphs.try_build_graph(
-                        self.matomo_graphs.generate_device_graph,
-                        matomo_devices_detection_csv,
-                    ),
-                },
-                "map_graph": {
-                    "label": "Acesso por Estado",
-                    "file": self.matomo_graphs.try_build_graph(
-                        self.matomo_graphs.generate_brasil_access_map,
-                        matomo_user_country_csv,
-                        matomo_user_region_csv,
-                    ),
-                },
-                "comments": {"content": comments_data},
+            state_rename = {
+                "accepted": "Aceita",
+                "withdrawn": "Retirada",
+                "rejected": "Rejeitada",
             }
 
             rename_state = lambda comments: [
@@ -160,6 +96,10 @@ class ParticipatoryTextsReport(Report):
                     "document": {
                         "title": f"Relatório {self.report_name}",
                         "date": f"{self.start_date} até {self.end_date}",
+                    },
+                    "introduction": {
+                        "total_comments": report_data["total_comments"],
+                        "total_unique_participants": report_data["total_unique_participants"],
                     },
                     "participation_graph": {
                         "label": "Gráfico De Participação",
