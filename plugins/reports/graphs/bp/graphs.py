@@ -5,7 +5,6 @@ import plotly.graph_objects as go
 from plugins.reports.graphs.base.graphs import ReportGraphs
 
 
-
 class BrasilParticipativoGraphs(ReportGraphs):
     """Provides methods to generate specific graphs for the Brasil Participativo report."""
 
@@ -148,6 +147,7 @@ class BrasilParticipativoGraphs(ReportGraphs):
 
     def generate_top_devices(self, titles: list, total_comments: list, status_list_of_lists: list):
         assert len(titles) == len(total_comments) == len(status_list_of_lists)
+
         def limit_title(title, max_length=15):
             if len(title) > max_length:
                 return title[:max_length] + "..."
@@ -167,25 +167,25 @@ class BrasilParticipativoGraphs(ReportGraphs):
                     status_counts[status][i] += 1
 
         for status, counts in status_counts.items():
-            fig.add_trace(go.Bar(
-                y=titles_limited,
-                x=counts,
-                name=status,
-                orientation='h',
-                marker=dict(
-                    line=dict(width=0.5)
+            fig.add_trace(
+                go.Bar(
+                    y=titles_limited,
+                    x=counts,
+                    name=status,
+                    orientation="h",
+                    marker=dict(line=dict(width=0.5)),
                 )
-            ))
+            )
 
         fig.update_layout(
-            barmode='stack',
-            yaxis={'categoryorder': 'total ascending'},
+            barmode="stack",
+            yaxis={"categoryorder": "total ascending"},
             xaxis_title=None,
             yaxis_title=None,
-            title='Dispositivos mais comentados',
+            title="Dispositivos mais comentados",
             title_x=0.5,
             uniformtext_minsize=8,
-            uniformtext_mode='hide',
+            uniformtext_mode="hide",
         )
 
         return self.b64_encode_graph(fig)

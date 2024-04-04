@@ -57,16 +57,16 @@ class ParticipatoryTextsReport(Report):
             total_comments_per_proposal = [
                 proposal["total_comments"] for proposal in report_data["proposals"]
             ]
-            
+
             status_per_proposal = [
-                [comment['status'] for comment in proposal['comments'] if 'status' in comment]
+                [comment["status"] for comment in proposal["comments"] if "status" in comment]
                 for proposal in report_data["proposals"]
             ]
 
             top_devices_graph = self.bp_graphs.generate_top_devices(
                 titles=proposals_titles,
                 total_comments=total_comments_per_proposal,
-                status_list_of_lists=status_per_proposal
+                status_list_of_lists=status_per_proposal,
             )
 
             participatory_texts_file = self.bp_tables.generate_participatory_texts_proposals(
