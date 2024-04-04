@@ -40,8 +40,15 @@ class ParticipatoryTextsReport(Report):
         total_comments_per_proposal = [proposal["total_comments"] for proposal in report_data["proposals"]]
 
         top_devices_graph = self.bp_graphs.generate_top_devices(
-            titles=proposals_titles, total_comments=total_comments_per_proposal
+            titles=proposals_titles,
+            total_comments=total_comments_per_proposal,
+            statuses=[
+                comment.get("status")
+                for proposal in report_data["proposals"]
+                for comment in proposal.get("comments", [])
+            ],
         )
+
         participatory_texts_file = self.bp_tables.generate_participatory_texts_proposals(
             proposals_ids,
             proposals_titles,
@@ -78,8 +85,8 @@ class ParticipatoryTextsReport(Report):
                     "date": f"{self.start_date} até {self.end_date}",
                 },
                 "introduction": {
-                    "total_comments" : report_data["total_comments"],
-                    "total_unique_participants" : report_data["total_unique_participants"],
+                    "total_comments": report_data["total_comments"],
+                    "total_unique_participants": report_data["total_unique_participants"],
                 },
                 "participation_graph": {
                     "label": "Gráfico De Participação",

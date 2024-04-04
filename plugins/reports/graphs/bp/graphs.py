@@ -1,5 +1,6 @@
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 from plugins.reports.graphs.base.graphs import ReportGraphs
 
@@ -144,27 +145,45 @@ class BrasilParticipativoGraphs(ReportGraphs):
 
         return self.b64_encode_graph(fig)
 
-    def generate_top_devices(self, titles: list, total_comments: list):
-        assert len(titles) == len(total_comments)
+    def generate_top_devices(self, titles: list, total_comments: list, statuses: list):
+        max_title_length = 15
 
-        df = pd.DataFrame({"title": titles, "total_comments": total_comments})
+        truncated_titles = []
+        for title in titles:
+            truncated_title = title[:max_title_length] + "..." if len(title) > max_title_length else title
+            truncated_titles.append(truncated_title)
 
-        df_sorted = df.sort_values(by="total_comments", ascending=False).head(10)
+        # Certifique-se de que todas as listas tenham o mesmo comprimento
+        min_length = min(len(truncated_titles), len(total_comments), len(statuses))
+        truncated_titles = truncated_titles[:min_length]
+        total_comments = total_comments[:min_length]
+        statuses = statuses[:min_length]
 
-        fig = px.bar(
-            df_sorted,
-            y="title",
-            x="total_comments",
-            orientation="h",
-            title="Dispositivos mais comentados",
-            text="total_comments",
-        )
+        df = pd.DataFrame({"title": truncated_titles, "total_comments": total_comments, "status": statuses})
 
+        df_sorted = df.sort_values(by=["total_comments", "status"], ascending=[False, True]).head(10)
+
+        traces = []
+        colors = ["rgba(246, 78, 139, 0.6)"]  # Adicione outras cores conforme necessário
+        for i, col in enumerate(df_sorted.columns[1:]):
+            trace = go.Bar(
+                y=df_sorted["title"],
+                x=df_sorted[col],
+                name=col,
+                orientation="h",
+                marker=dict(color=colors[i], line=dict(color="rgba(0, 0, 0, 1.0)", width=1)),
+            )
+            traces.append(trace)
+
+        # Criar a figura e adicionar as barras
+        fig = go.Figure(data=traces)
         fig.update_layout(
+            title="Dispositivos mais comentados",
+            barmode="stack",
             yaxis={"categoryorder": "total ascending"},
-            xaxis_title=None,
+            xaxis_title="Total de Comentários",
             yaxis_title=None,
-            showlegend=False,
+            showlegend=True,
             title_x=0.5,
             uniformtext_minsize=8,
             uniformtext_mode="hide",
