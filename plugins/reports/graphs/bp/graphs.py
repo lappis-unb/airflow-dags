@@ -1,7 +1,9 @@
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 from plugins.reports.graphs.base.graphs import ReportGraphs
+
 
 
 class BrasilParticipativoGraphs(ReportGraphs):
@@ -144,9 +146,8 @@ class BrasilParticipativoGraphs(ReportGraphs):
 
         return self.b64_encode_graph(fig)
 
-    def generate_top_devices(self, titles: list, total_comments: list):
-        assert len(titles) == len(total_comments)
-
+    def generate_top_devices(self, titles: list, total_comments: list, status_list_of_lists: list):
+        assert len(titles) == len(total_comments) == len(status_list_of_lists)
         def limit_title(title, max_length=15):
             if len(title) > max_length:
                 return title[:max_length] + "..."
@@ -155,27 +156,36 @@ class BrasilParticipativoGraphs(ReportGraphs):
 
         titles_limited = [limit_title(title) for title in titles]
 
-        df = pd.DataFrame({"title": titles_limited, "total_comments": total_comments})
+        fig = go.Figure()
 
-        df_sorted = df.sort_values(by="total_comments", ascending=False).head(10)
+        unique_statuses = set(status for sublist in status_list_of_lists for status in sublist)
+        status_counts = {status: [0] * len(titles_limited) for status in unique_statuses}
 
-        fig = px.bar(
-            df_sorted,
-            y="title",
-            x="total_comments",
-            orientation="h",
-            title="Dispositivos mais comentados",
-            text="total_comments",
-        )
+        for i, statuses in enumerate(status_list_of_lists):
+            for status in statuses:
+                if status in status_counts:
+                    status_counts[status][i] += 1
+
+        for status, counts in status_counts.items():
+            fig.add_trace(go.Bar(
+                y=titles_limited,
+                x=counts,
+                name=status,
+                orientation='h',
+                marker=dict(
+                    line=dict(width=0.5)
+                )
+            ))
 
         fig.update_layout(
-            yaxis={"categoryorder": "total ascending"},
+            barmode='stack',
+            yaxis={'categoryorder': 'total ascending'},
             xaxis_title=None,
             yaxis_title=None,
-            showlegend=False,
+            title='Dispositivos mais comentados',
             title_x=0.5,
             uniformtext_minsize=8,
-            uniformtext_mode="hide",
+            uniformtext_mode='hide',
         )
 
         return self.b64_encode_graph(fig)
