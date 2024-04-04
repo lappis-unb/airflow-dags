@@ -59,7 +59,8 @@ class ParticipatoryTextsReport(Report):
             ]
 
             top_devices_graph = self.bp_graphs.generate_top_devices(
-                titles=proposals_titles, total_comments=total_comments_per_proposal
+                titles=proposals_titles,
+                total_comments=total_comments_per_proposal,
             )
             participatory_texts_file = self.bp_tables.generate_participatory_texts_proposals(
                 proposals_ids,
@@ -69,7 +70,7 @@ class ParticipatoryTextsReport(Report):
             )
 
             participatory_texts_ids = [text["ID"] for text in participatory_texts_file]
-            participatory_texts_title = [text["Dispositivo"] for text in participatory_texts_file]
+            participatory_texts_title = [text["Parágrafos"] for text in participatory_texts_file]
             participatory_texts_comments = [text["Nº de comentários"] for text in participatory_texts_file]
             participatory_texts_votes = [text["Nº de votos"] for text in participatory_texts_file]
 

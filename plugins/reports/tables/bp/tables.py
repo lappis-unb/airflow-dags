@@ -152,11 +152,11 @@ class BrasilParticipativoTables:
             },
             index=range(len(proposals_ids)),
         )
-        df_ranking = df.sort_values(by="total_comments", ascending=False)
+        df_ranking = df.sort_values(by="total_comments", ascending=False).head(5)
 
         df_ranking = df_ranking.rename(
             columns={
-                "title": "Dispositivo",
+                "title": "Parágrafos",
                 "id": "ID",
                 "total_comments": "Nº de comentários",
                 "proposal_total_votes": "Nº de votos",
