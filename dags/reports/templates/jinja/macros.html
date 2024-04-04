@@ -1,4 +1,9 @@
 {% macro create_dict_section(data_list) %}
+{% if data_lista is none %}
+<p>
+  Esses dados ainda não estão disponíveis.
+</p>
+{% else %}
 <div>
   {% for item in data_list %}
   <h2>{{ item.proposal_title }}</h2>
@@ -7,6 +12,7 @@
   {% endfor %}
   {% endfor %}
 </div>
+{% endif %}
 {% endmacro %}
 
 {% macro create_table_from_dict(table) %}
@@ -118,7 +124,7 @@
 
 {% macro create_svg_element(img) %}
 
-{% if img.file is none %}
+{% if img is none %}
 
 <p>
   Os dados para a gráfico ainda não estão disponíveis.
@@ -140,6 +146,13 @@
 {% endmacro %}
 
 {% macro render_participatory_texts(participatory_texts) %}
+{% if participatory_texts is none %}
+
+<p>
+  Esses dados ainda não estão disponíveis.
+</p>
+
+{% else %}
 <div class="table-element">
   <span>
     <table>
@@ -168,9 +181,16 @@
     </table>
   </span>
 </div>
+{% endif %}
 {% endmacro %}
 
 {% macro render_comments_section(comments) %}
+{% if comments is none%}
+
+<p>
+  Esses dados ainda não estão disponíveis.
+</p>
+{% else %}
 <div class="comments-section">
     {% for proposal in comments %}
         <div class="proposal">
@@ -186,4 +206,5 @@
         </div>
     {% endfor %}
 </div>
+{% endif %}
 {% endmacro %}

@@ -44,6 +44,15 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
         participatory_space_id = component.get("participatorySpace", {}).get("id")
         participatory_space_type = component.get("participatorySpace", {}).get("type", "").split("::")[-1]
         page_component_name = component.get("name", {}).get("translation", "-")
+
+        result_proposals_data.append(
+            {
+                "page_component_id": page_component_id,
+                "participatory_space_id": participatory_space_id,
+                "participatory_space_type": participatory_space_type,
+                "page_component_name": page_component_name,
+            }
+        )
         page_proposals = component.get("proposals", {}).get("nodes", [])
 
         for proposal in page_proposals:
@@ -62,10 +71,6 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
 
             result_proposals_data.append(
                 {
-                    "page_component_id": page_component_id,
-                    "participatory_space_id": participatory_space_id,
-                    "participatory_space_type": participatory_space_type,
-                    "page_component_name": page_component_name,
                     "proposal_id": proposal_id,
                     "proposal_title": proposal_title,
                     "proposal_published_at": proposal_published_at,
@@ -76,6 +81,8 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
                     "proposal_category_title": proposal_category_title,
                 }
             )
+
+    print(result_proposals_data)
     return result_proposals_data
 
 

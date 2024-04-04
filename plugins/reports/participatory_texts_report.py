@@ -34,10 +34,29 @@ class ParticipatoryTextsReport(Report):
         matomo_devices_detection_csv: str,
     ):
 
-        proposals_ids = [proposal["id"] for proposal in report_data["proposals"]]
-        proposals_titles = [proposal["title"] for proposal in report_data["proposals"]]
-        votes_per_proposal = [proposal["vote_count"] for proposal in report_data["proposals"]]
-        total_comments_per_proposal = [proposal["total_comments"] for proposal in report_data["proposals"]]
+        if not report_data:
+            return self.template.render(
+                data={
+                    "document": {
+                        "title": f"Relatório {self.report_name}",
+                        "date": f"{self.start_date} até {self.end_date}",
+                    },
+                    "participation_graph": None,
+                    "participatory_texts": None,
+                    "top_devices_graph": None,
+                    "data_access": None,
+                    "device_graph": None,
+                    "map_graph": None,
+                    "comments": None,
+                }
+            )
+        else:
+            proposals_ids = [proposal["id"] for proposal in report_data["proposals"]]
+            proposals_titles = [proposal["title"] for proposal in report_data["proposals"]]
+            votes_per_proposal = [proposal["vote_count"] for proposal in report_data["proposals"]]
+            total_comments_per_proposal = [
+                proposal["total_comments"] for proposal in report_data["proposals"]
+            ]
 
         top_devices_graph = self.bp_graphs.generate_top_devices(
             titles=proposals_titles,
@@ -56,12 +75,12 @@ class ParticipatoryTextsReport(Report):
             total_comments_per_proposal,
         )
 
-        participatory_texts_ids = [text["ID"] for text in participatory_texts_file]
-        participatory_texts_title = [text["Dispositivo"] for text in participatory_texts_file]
-        participatory_texts_comments = [text["Nº de comentários"] for text in participatory_texts_file]
-        participatory_texts_votes = [text["Nº de votos"] for text in participatory_texts_file]
+            participatory_texts_ids = [text["ID"] for text in participatory_texts_file]
+            participatory_texts_title = [text["Dispositivo"] for text in participatory_texts_file]
+            participatory_texts_comments = [text["Nº de comentários"] for text in participatory_texts_file]
+            participatory_texts_votes = [text["Nº de votos"] for text in participatory_texts_file]
 
-        participatory_texts = report_data["proposals"]
+            participatory_texts = report_data["proposals"]
 
         state_rename = {
             "accepted": "Aceita",
@@ -125,4 +144,58 @@ class ParticipatoryTextsReport(Report):
                 },
                 "comments": {"content": comments_data},
             }
-        )
+
+            rename_state = lambda comments: [
+                {**comment, "status": state_rename.get(comment["status"], "Avaliando")}
+                for comment in comments
+            ]
+
+            comments_data = [
+                {"title": text["title"], "comments": rename_state(text["comments"])}
+                for text in participatory_texts
+            ]
+
+            return self.template.render(
+                data={
+                    "document": {
+                        "title": f"Relatório {self.report_name}",
+                        "date": f"{self.start_date} até {self.end_date}",
+                    },
+                    "participation_graph": {
+                        "label": "Gráfico De Participação",
+                        "file": self.bp_graphs.generate_participation_graph(
+                            report_data["total_comments"],
+                            report_data["total_unique_participants"],
+                        ),
+                    },
+                    "participatory_texts": {
+                        "ID": participatory_texts_ids,
+                        "Dispositivo": participatory_texts_title,
+                        "Nº de comentários": participatory_texts_comments,
+                        "Nº de votos": participatory_texts_votes,
+                    },
+                    "top_devices_graph": {
+                        "label": "Dispositivos mais utilizados",
+                        "file": top_devices_graph,
+                    },
+                    "data_access": MatotmoTables.generate_table_access_data_overview(
+                        matomo_visits_summary_csv, matomo_visits_frequency_csv
+                    ),
+                    "device_graph": {
+                        "label": "Detecção de Dispositivos",
+                        "file": self.matomo_graphs.try_build_graph(
+                            self.matomo_graphs.generate_device_graph,
+                            matomo_devices_detection_csv,
+                        ),
+                    },
+                    "map_graph": {
+                        "label": "Acesso por Estado",
+                        "file": self.matomo_graphs.try_build_graph(
+                            self.matomo_graphs.generate_brasil_access_map,
+                            matomo_user_country_csv,
+                            matomo_user_region_csv,
+                        ),
+                    },
+                    "comments": {"content": comments_data},
+                }
+            )
