@@ -2,12 +2,10 @@ import asyncio
 import logging
 import os
 import re
-from contextlib import closing
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-import yaml
 from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.providers.telegram.hooks.telegram import TelegramHook
@@ -15,7 +13,7 @@ from unidecode import unidecode
 
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 from plugins.telegram.decorators import telegram_retry
-from plugins.yaml.config_reader import read_yaml_files_from_directory
+from plugins.yaml.config_reader import dump_yaml, load_yaml, read_yaml_files_from_directory
 
 DECIDIM_CONN_ID = "api_decidim"
 TELEGRAM_CONN_ID = "telegram_decidim"
@@ -26,10 +24,12 @@ CONFIG_FOLDER = Path(
 ACCEPTED_COMPONENTS_TYPES = ["Proposals"]
 TELEGRAM_MAX_RETRIES = 10
 
-TOPICS_TO_CREATE = [
-    ("telegram_moderation_proposals_topic_id", lambda name: f"{name}/Propostas"),
-    ("telegram_moderation_comments_topic_id", lambda name: f"{name}/Comentarios Em Propostas"),
-]
+PROPOSALS_TOPICS_TO_CREATE = {
+    "telegram_moderation_proposals_topic_id": lambda name: f"{name}/Propostas",
+    "telegram_moderation_comments_topic_id": lambda name: f"{name}/Comentarios Em Propostas",
+    "telegram_moderation_pre_moderation_topic_id": lambda name: f"{name}/Denuncias",
+    "telegram_moderation_teste_de_criar_novo_topico_topic_id": lambda name: f"{name}/NovoTopicoTeste",
+}
 
 
 def _get_participatory_space_mapped_to_query_file(participatory_spaces: List[str]):
@@ -79,19 +79,6 @@ def _create_telegram_topic(chat_id: int, name: str):
     logging.info(type(new_telegram_topic))
 
     return new_telegram_topic.message_thread_id
-
-
-def _configure_telegram_topics(component_config):
-    telegram_topics = {}
-    if component_config["__typename"] == "Proposals":
-        name = " ".join(str(component_config["process_id"]).split("_")).title().strip()
-        telegram_topics = {
-            topic: _create_telegram_topic(
-                component_config["telegram_config"]["telegram_group_id"], get_chat_name(name)
-            )
-            for topic, get_chat_name in TOPICS_TO_CREATE
-        }
-    return telegram_topics
 
 
 def _configure_base_yaml_in_participatory_spaces(participatory_space):
@@ -168,8 +155,101 @@ def _split_components_between_configure_and_update(participatory_space):
     return components_to_configure, components_to_update
 
 
+def _configure_telegram_topic(config_name: str, topic_naming_func: Any, component_config):
+    """Configure a Telegram topic based on the provided configuration.
+
+    Args:
+    ----
+        config_name (str): The name of the configuration.
+        topic_naming_func (Any): The function used to generate topic names.
+        component_config: Configuration details for the component.
+
+    Returns:
+    -------
+        dict: A dictionary containing the configured Telegram topic.
+
+    """
+    telegram_topics = {}
+    name = " ".join(str(component_config["process_id"]).split("_")).title().strip()
+
+    telegram_topics = {
+        config_name: _create_telegram_topic(
+            component_config["telegram_config"]["telegram_group_id"], topic_naming_func(name)
+        )
+    }
+    return telegram_topics
+
+
+def _get_telegram_topics(component: dict, old_config: Optional[dict] = None):
+    telegram_topics_keys_configured = set(component["telegram_config"].keys())
+    if old_config:
+        telegram_topics_keys_configured = set(old_config["telegram_config"].keys())
+    logging.info("Telgram keys already configured: %s", telegram_topics_keys_configured)
+
+    telegram_topics_to_create = set(PROPOSALS_TOPICS_TO_CREATE.keys()).difference(
+        telegram_topics_keys_configured
+    )
+    logging.info("Telgram keys to configure: %s", telegram_topics_to_create)
+
+    return telegram_topics_to_create
+
+
+def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
+    assert isinstance(component, dict)
+
+    if not component["telegram_config"]["telegram_group_id"]:
+        return component["telegram_config"]
+
+    telegram_topics_to_create = _get_telegram_topics(component, old_config)
+
+    if len(telegram_topics_to_create) == 0:
+        return {**component["telegram_config"], **old_config["telegram_config"]}
+
+    telegram_topics = {}
+    for topic in telegram_topics_to_create:
+        telegram_topics = {
+            **telegram_topics,
+            **_configure_telegram_topic(
+                config_name=topic,
+                topic_naming_func=PROPOSALS_TOPICS_TO_CREATE.get(topic),
+                component_config=component,
+            ),
+        }
+    return {
+        **component["telegram_config"],
+        **(old_config["telegram_config"] if old_config else {}),
+        **telegram_topics,
+    }
+
+
+def _update_old_config(new_config: dict, old_config: dict):
+    """Update old configuration with new configuration details.
+
+    Args:
+    ----
+        new_config (dict): The new configuration to update from.
+        old_config (dict): The old configuration to be updated.
+
+    Returns:
+    -------
+        dict: The updated old configuration.
+    """
+    assert isinstance(new_config, dict)
+    assert isinstance(old_config, dict)
+
+    if "__typename" in new_config:
+        new_config.pop("__typename")
+    if "__typename" in old_config:
+        old_config.pop("__typename")
+
+    old_config["start_date"] = _str_to_datetime(new_config["start_date"])
+    old_config["end_date"] = _str_to_datetime(new_config["end_date"]) if new_config["end_date"] else None
+
+    return old_config
+
+
 DEFAULT_ARGS = {
-    "owner": "Paulo",
+    "owner": "Paulo G.",
     "depends_on_past": False,
     "email_on_failure": True,
     "email_on_retry": False,
@@ -241,61 +321,54 @@ def create_processes_configs():
         }
 
     @task
-    def configure_component(componentes_to_configure):
-        for _component in componentes_to_configure:
-            pasta_do_tipo_de_componente = CONFIG_FOLDER.joinpath(f"./{_component['__typename']}")
-            pasta_do_tipo_de_componente.mkdir(parents=True, exist_ok=True)
+    def configure_component(components_to_configure):
+        """Configure components based on the provided configurations.
 
-            if _component["telegram_config"]["telegram_group_id"]:
-                telegram_topics = _configure_telegram_topics(_component)
-                _component["telegram_config"] = {**_component["telegram_config"], **telegram_topics}
-            _component.pop("__typename")
+        This function iterates through a list of component configurations, creates folders
+        for each component type, updates the Telegram configuration, processes the component
+        by updating its old configuration with new details, and saves the processed component
+        as a YAML file.
 
-            _component["start_date"] = _str_to_datetime(_component["start_date"])
-            _component["end_date"] = (
-                _str_to_datetime(_component["end_date"]) if _component["end_date"] else None
-            )
+        Args:
+        ----
+            components_to_configure (list): A list of dictionaries representing component configurations.
 
-            with closing(
-                open(
-                    pasta_do_tipo_de_componente.joinpath(f"./{_component['component_id']}.yaml"),
-                    mode="w",
-                )
-            ) as component_yaml:
-                yaml.safe_dump(
-                    _component,
-                    component_yaml,
-                )
+        """
+        for component in components_to_configure:
+            component_type_folder = CONFIG_FOLDER.joinpath(f"./{component['__typename']}")
+            component_type_folder.mkdir(parents=True, exist_ok=True)
+
+            component["telegram_config"] = _update_telegram_config(component)
+            processed_component = _update_old_config(component, component)
+
+            yaml_file_path = component_type_folder.joinpath(f"./{component['component_id']}.yaml")
+            dump_yaml(processed_component, yaml_file_path)
 
     @task
-    def update_component(componentes_to_update):
-        for _component in componentes_to_update:
-            pasta_do_tipo_de_componente = CONFIG_FOLDER.joinpath(f"./{_component['__typename']}")
-            pasta_do_tipo_de_componente.mkdir(parents=True, exist_ok=True)
-            component_yaml_file = pasta_do_tipo_de_componente.joinpath(f"./{_component['component_id']}.yaml")
+    def update_component(components_to_update):
+        """Update components based on the provided configurations.
 
-            with closing(open(component_yaml_file)) as configured_component_file:
-                old_config = yaml.safe_load(configured_component_file)
+            This function takes a list of dictionaries representing component configurations
+        to be updated. For each component, it loads the existing configuration from a YAML
+        file, incorporates any new configuration details provided, updates the Telegram
+        configuration, and saves the updated configuration back to the YAML file.
 
-            if (
-                _component["telegram_config"]["telegram_group_id"]
-                and not old_config["telegram_config"]["telegram_group_id"]
-            ):
-                telegram_topics = _configure_telegram_topics(_component)
-                old_config["telegram_config"] = {**_component["telegram_config"], **telegram_topics}
+            Args:
+            ----
+                components_to_update (list): A list of dictionaries representing component configurations.
 
-            _component.pop("__typename")
+        """
+        for component in components_to_update:
+            component_type_folder = CONFIG_FOLDER.joinpath(f"./{component['__typename']}")
+            component_type_folder.mkdir(parents=True, exist_ok=True)
 
-            old_config["start_date"] = _str_to_datetime(_component["start_date"])
-            old_config["end_date"] = (
-                _str_to_datetime(_component["end_date"]) if _component["end_date"] else None
-            )
+            yaml_file_path = component_type_folder.joinpath(f"./{component['component_id']}.yaml")
+            old_config = load_yaml(yaml_file_path)
 
-            with closing(open(component_yaml_file, mode="w")) as component_yaml:
-                yaml.safe_dump(
-                    old_config,
-                    component_yaml,
-                )
+            old_config["telegram_config"] = _update_telegram_config(component, old_config)
+            old_config = _update_old_config(component, old_config)
+
+            dump_yaml(old_config, yaml_file_path)
 
     filter_and_configure_componets_task = filter_and_configure_componets(*tasks_to_get_all_components)
     configure_component(filter_and_configure_componets_task["components_to_configure"])

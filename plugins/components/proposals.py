@@ -55,6 +55,7 @@ class ProposalsHook(ComponentBaseHook):
             )
 
         result = None
+        logging.info(variables)
         for page in self.graphql.run_graphql_paginated_query(
             graphql_query,
             variables=variables,
