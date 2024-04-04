@@ -15,7 +15,7 @@ from plugins.components.proposals import ProposalsHook
 from plugins.faker.matomo_faker import MatomoFaker
 from plugins.reports.participatory_texts_report import ParticipatoryTextsReport
 
-BP_CONN_ID = "lab_conn"
+BP_CONN_ID = "api_decidim"
 SMPT_CONN_ID = "gmail_smtp"
 
 

@@ -24,6 +24,7 @@ from urllib.parse import urljoin
 import inflect
 import numpy as np
 import pandas as pd
+import pytz
 from inflection import underscore
 
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
@@ -269,19 +270,20 @@ class ComponentBaseHook:
             )
             return df
 
-        df["creation_date"] = pd.to_datetime(df["creation_date"], infer_datetime_format=True)
-        df["update_date"] = pd.to_datetime(df["update_date"], infer_datetime_format=True)
+        df["creation_date"] = pd.to_datetime(df["creation_date"])
+        df["update_date"] = pd.to_datetime(df["update_date"])
 
         df["date_filter"] = df[["creation_date", "update_date"]].max(axis=1)
-        df["date_filter"] = pd.to_datetime(df["date_filter"], infer_datetime_format=True)
 
         if start_date_filter:
-            df = df[df["date_filter"] > pd.to_datetime(start_date_filter, infer_datetime_format=True)]
+            start_date_filter = pd.to_datetime(start_date_filter)
+            start_date_filter = start_date_filter.replace(tzinfo=pytz.timezone("America/Sao_Paulo"))
+            df = df[df["date_filter"] > start_date_filter]
         if end_date_filter:
-            df = df[df["date_filter"] < pd.to_datetime(end_date_filter, infer_datetime_format=True)]
+            end_date_filter = pd.to_datetime(end_date_filter)
+            end_date_filter = end_date_filter.replace(tzinfo=pytz.timezone("America/Sao_Paulo"))
+            df = df[df["date_filter"] < end_date_filter]
 
-        #! TODO: Corrigir o time zone para GMT-3 ao invez de UTC
-        # df["date_filter"] = df["date_filter"]
         logging.info(df["date_filter"].max())
         link_base = self.get_component_link().rstrip("/")
 
