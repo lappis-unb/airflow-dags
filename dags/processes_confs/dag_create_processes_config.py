@@ -180,12 +180,7 @@ def _configure_telegram_topic(config_name: str, topic_naming_func: Any, componen
     return telegram_topics
 
 
-def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
-    assert isinstance(component, dict)
-
-    if not component["telegram_config"]["telegram_group_id"]:
-        return component["telegram_config"]
-
+def _get_telegram_topics(component: dict, old_config: Optional[dict] = None):
     telegram_topics_keys_configured = set(component["telegram_config"].keys())
     if old_config:
         telegram_topics_keys_configured = set(old_config["telegram_config"].keys())
@@ -196,10 +191,22 @@ def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
     )
     logging.info("Telgram keys to configure: %s", telegram_topics_to_create)
 
+    return telegram_topics_to_create
+
+
+def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
+    assert isinstance(component, dict)
+
+    if not component["telegram_config"]["telegram_group_id"]:
+        return component["telegram_config"]
+
+    telegram_topics_to_create = _get_telegram_topics(component, old_config)
+
+    if len(telegram_topics_to_create) == 0:
+        return {**component["telegram_config"], **old_config["telegram_config"]}
+
     telegram_topics = {}
     for topic in telegram_topics_to_create:
-        if topic not in PROPOSALS_TOPICS_TO_CREATE:
-            continue
         telegram_topics = {
             **telegram_topics,
             **_configure_telegram_topic(
@@ -208,14 +215,11 @@ def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
                 component_config=component,
             ),
         }
-    if telegram_topics:
-        return {
-            **component["telegram_config"],
-            **(old_config["telegram_config"] if old_config else {}),
-            **telegram_topics,
-        }
-
-    return {**component["telegram_config"], **old_config["telegram_config"]}
+    return {
+        **component["telegram_config"],
+        **(old_config["telegram_config"] if old_config else {}),
+        **telegram_topics,
+    }
 
 
 def _update_old_config(new_config: dict, old_config: dict):
