@@ -150,6 +150,7 @@ def _generate_report(
     end_date: str,
 ):
     report_name = filtered_data["participatory_space_name"]
+
     template_path = Path(__file__).parent.joinpath("./templates/template_participatory_texts.html")
     start_date = datetime.strptime(filtered_data["start_date"], "%Y-%m-%d")
     end_date = datetime.strptime(filtered_data["end_date"], "%Y-%m-%d")
