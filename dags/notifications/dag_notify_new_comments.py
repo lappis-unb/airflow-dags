@@ -24,12 +24,35 @@ class NotifyNewComments(NotifierDAG):
     """  # noqa: E501
 
     def _get_data(self, component_id: int, update_date: datetime):
+        """Retrieve comments data from Decidim for a given component and update date.
+
+        Args:
+        ----
+            component_id (int): The ID of the Decidim component to retrieve comments for.
+            update_date (datetime): The start date for retrieving comments.
+
+        Returns:
+        -------
+            dict: A dictionary containing comments data retrieved from Decidim.
+
+        """
         logging.info("Start date for comments: %s", update_date)
         msgs_dict = DecidimHook(DECIDIM_CONN_ID, component_id).get_comments(start_date=update_date)
 
         return msgs_dict
 
     def _format_telegram_message(self, data_row: pd.Series):
+        """Format a Telegram message based on the provided data row.
+
+        Args:
+        ----
+            data_row (pd.Series): A pandas Series containing data related to the comment.
+
+        Returns:
+        -------
+            str: A formatted Telegram message.
+
+        """
         state_map = {
             "update": {"label": "Comentario atualizado", "emoji": "🔄 🔄 🔄"},
             "new": {"label": "Novo comentario", "emoji": "💬"},

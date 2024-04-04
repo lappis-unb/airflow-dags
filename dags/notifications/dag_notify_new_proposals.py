@@ -43,6 +43,17 @@ class NotifyNewProposals(NotifierDAG):
         return component_dict
 
     def _format_telegram_message(self, data_row: Series):
+        """Format a Telegram message based on the provided data row.
+
+        Args:
+        ----
+            data_row (pd.Series): A pandas Series containing data related to the comment.
+
+        Returns:
+        -------
+            str: A formatted Telegram message.
+
+        """
         state = data_row["state"]
         organization_name = data_row.get("author.organizationName", "")
         author_name = data_row.get("author.name", "-")

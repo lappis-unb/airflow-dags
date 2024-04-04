@@ -156,6 +156,19 @@ def _split_components_between_configure_and_update(participatory_space):
 
 
 def _configure_telegram_topic(config_name: str, topic_naming_func: Any, component_config):
+    """Configure a Telegram topic based on the provided configuration.
+
+    Args:
+    ----
+        config_name (str): The name of the configuration.
+        topic_naming_func (Any): The function used to generate topic names.
+        component_config: Configuration details for the component.
+
+    Returns:
+    -------
+        dict: A dictionary containing the configured Telegram topic.
+
+    """
     telegram_topics = {}
     name = " ".join(str(component_config["process_id"]).split("_")).title().strip()
 
@@ -206,7 +219,17 @@ def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
 
 
 def _update_old_config(new_config: dict, old_config: dict):
+    """Update old configuration with new configuration details.
 
+    Args:
+    ----
+        new_config (dict): The new configuration to update from.
+        old_config (dict): The old configuration to be updated.
+
+    Returns:
+    -------
+        dict: The updated old configuration.
+    """
     assert isinstance(new_config, dict)
     assert isinstance(old_config, dict)
 
@@ -295,6 +318,18 @@ def create_processes_configs():
 
     @task
     def configure_component(components_to_configure):
+        """Configure components based on the provided configurations.
+
+        This function iterates through a list of component configurations, creates folders
+        for each component type, updates the Telegram configuration, processes the component
+        by updating its old configuration with new details, and saves the processed component
+        as a YAML file.
+
+        Args:
+        ----
+            components_to_configure (list): A list of dictionaries representing component configurations.
+
+        """
         for component in components_to_configure:
             component_type_folder = CONFIG_FOLDER.joinpath(f"./{component['__typename']}")
             component_type_folder.mkdir(parents=True, exist_ok=True)
@@ -307,6 +342,18 @@ def create_processes_configs():
 
     @task
     def update_component(components_to_update):
+        """Update components based on the provided configurations.
+
+            This function takes a list of dictionaries representing component configurations
+        to be updated. For each component, it loads the existing configuration from a YAML
+        file, incorporates any new configuration details provided, updates the Telegram
+        configuration, and saves the updated configuration back to the YAML file.
+
+            Args:
+            ----
+                components_to_update (list): A list of dictionaries representing component configurations.
+
+        """
         for component in components_to_update:
             component_type_folder = CONFIG_FOLDER.joinpath(f"./{component['__typename']}")
             component_type_folder.mkdir(parents=True, exist_ok=True)
