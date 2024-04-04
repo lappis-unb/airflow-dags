@@ -16,8 +16,6 @@ from sqlalchemy.exc import ProgrammingError
 
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 
-# Vai ser trocado para salvar em arquivo
-
 
 def _get_query():
     """

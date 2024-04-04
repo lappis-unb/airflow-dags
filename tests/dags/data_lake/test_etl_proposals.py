@@ -3,6 +3,7 @@ from datetime import datetime
 from unittest import mock
 
 import pandas as pd
+import pytest
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 
 from dags.data_lake.etl_proposals import (
@@ -30,36 +31,39 @@ from dags.data_lake.etl_proposals import (
 )
 
 
-def test_add_temporal_columns():
-    """
-    Test case for the add_temporal_columns function.
-
-    This test case verifies that the add_temporal_columns function correctly adds temporal columns.
-
-    Steps:
-    1. Create a sample DataFrame.
-    2. Set the execution date.
-    3. Call the add_temporal_columns function with the DataFrame and execution date.
-    4. Assert the expected values of the temporal columns in the result DataFrame.
-
-    Expected behavior:
-    - The event_day_id column should contain the execution date in the format YYYYMMDD.
-    - The available_day_id column should contain the day after the execution date in the format YYYYMMDD.
-    - The available_month_id column should contain the execution date in the format YYYYMM.
-    - The available_year_id column should contain the execution year in the format YYYY.
-    """
+@pytest.mark.parametrize(
+    """execution_date,
+    expected_event_day_id,
+    expected_available_day_id,
+    expected_available_month_id,
+    expected_available_year_id,
+    expected_writing_day_id""",
+    [
+        (datetime(2022, 1, 1), 20220101, 20220102, 202201, 2022, int(datetime.now().strftime("%Y%m%d"))),
+        (datetime(2022, 2, 15), 20220215, 20220216, 202202, 2022, int(datetime.now().strftime("%Y%m%d"))),
+        (datetime(2023, 12, 31), 20231231, 20240101, 202401, 2024, int(datetime.now().strftime("%Y%m%d"))),
+    ],
+)
+def test_add_temporal_columns(
+    execution_date,
+    expected_event_day_id,
+    expected_available_day_id,
+    expected_available_month_id,
+    expected_available_year_id,
+    expected_writing_day_id,
+):
     # Create a sample DataFrame
     df = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
-    execution_date = datetime(2022, 1, 1)
 
     # Call the function
     result = add_temporal_columns(df, execution_date)
 
     # Assert the expected values
-    assert result["event_day_id"].tolist() == [20220101, 20220101, 20220101]
-    assert result["available_day_id"].tolist() == [20220102, 20220102, 20220102]
-    assert result["available_month_id"].tolist() == [202201, 202201, 202201]
-    assert result["available_year_id"].tolist() == [2022, 2022, 2022]
+    assert result["event_day_id"].tolist() == [expected_event_day_id] * len(df)
+    assert result["available_day_id"].tolist() == [expected_available_day_id] * len(df)
+    assert result["available_month_id"].tolist() == [expected_available_month_id] * len(df)
+    assert result["available_year_id"].tolist() == [expected_available_year_id] * len(df)
+    assert result["writing_day_id"].tolist() == [expected_writing_day_id] * len(df)
 
 
 def test_dict_safe_get():
