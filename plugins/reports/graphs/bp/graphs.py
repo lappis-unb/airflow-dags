@@ -20,16 +20,14 @@ class BrasilParticipativoGraphs(ReportGraphs):
             "Valores": [total_comments, total_unique_participants],
         }
 
-        # Create a bar chart using Plotly Express
         fig = px.bar(data, x="Valores", y="Metrica", text="Valores", labels={"Valores": "Total"})
 
-        # Customize the layout if needed
         fig.update_layout(
             yaxis_title="",
             xaxis_title="",
             bargap=0.3,
-            width=width,  # Set the width of the plot
-            height=height,  # Set the height of the plot
+            width=width,
+            height=height,
         )
         fig.update_traces(marker_color=["#1f77b4", "#ff7f0e"], insidetextanchor="middle")
         return self.b64_encode_graph(fig)
@@ -159,7 +157,12 @@ class BrasilParticipativoGraphs(ReportGraphs):
         fig = go.Figure()
 
         unique_statuses = set(status for sublist in status_list_of_lists for status in sublist)
-        status_counts = {status: [0] * len(titles_limited) for status in unique_statuses}
+
+        status_name_mapping = {"in_discussion": "Em discussão", "rejected": "Rejeitado", "accepted": "Aceito"}
+
+        status_counts = {
+            status_name_mapping.get(status, status): [0] * len(titles_limited) for status in unique_statuses
+        }
 
         for i, statuses in enumerate(status_list_of_lists):
             for status in statuses:
@@ -182,7 +185,7 @@ class BrasilParticipativoGraphs(ReportGraphs):
             yaxis={"categoryorder": "total ascending"},
             xaxis_title=None,
             yaxis_title=None,
-            title="Dispositivos mais comentados",
+            title="Parágrafos mais comentados",
             title_x=0.5,
             uniformtext_minsize=8,
             uniformtext_mode="hide",
