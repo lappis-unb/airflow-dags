@@ -29,7 +29,7 @@
         <ul class="sublist">
           <li><a href="#contribution-section" class="index-subtopic">Número de contribuições por texto participativo</a></li>
         </ul>
-        <li><a href="#comments-section" class="index-topic bold">Comentários</a></li>
+        
 
         <li><a href="#access-section" class="index-topic bold">Acessos</a></li>
         <ul class="sublist">
@@ -39,6 +39,7 @@
         </ul>
 
         <li><a href="#final-consideration" class="index-topic bold">Considerações finais</a></li>
+        <li><a href="#comments-section" class="index-topic bold">Comentários</a></li>
       </ul>
     </div>
   </section>
@@ -93,12 +94,6 @@
     {{ macros.render_participatory_texts(data.participatory_texts) }}
   </section>
 
-  <section id="comments-section" class="pdf-page">
-    <h1 class="title-1 text-center">Comentários</h1>
-    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Neste capítulo, são apresentados os 3 dispositivos com mais contribuições e suas contribuições mais recentes.</p>
-    {{ macros.render_comments_section(data.comments.content) }}
-</section>
-
   <section id="access-section" class="pdf-page">
     <h1 class="title-1 text-center">Acessos</h1>
     <p>&emsp;&emsp;&emsp;&emsp;&emsp;A análise do acesso possibilita aos organizadores terem um panorama do engajamento no processo participativo.
@@ -117,10 +112,9 @@
     <h2  >Dados de Acesso (Geral)</h2>
     {{ macros.create_table_from_list_of_dicts(data.data_access) }}
 
-    <h2>Mapa com a quantidade de visitas por UF (Geral)</h2>
-    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Esse mapa explica a quantidade de acessos por Unidade Federativa do Brasil, no período de {{ data.document.date
-      }}. Com a análise do mapa,
-      o organizador poderá pensar em estratégias para aumentar a mobilização em determinado estado.
+    <h2>Mapa de taxa de proporção de acessos por população</h2>
+    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Esse mapa explica a taxa de proporção de acessos por população recebidas no período de {{ data.document.date
+    }}. Com a análise destes dados, o organizador poderá pensar estratégias para aumentar o engajamento em determinada região/estado, se for o caso.
     </p>
     {{ macros.create_svg_element(data.map_graph) }}
   </section>
@@ -150,4 +144,11 @@
       Assim, ao término do processo, é crucial que os organizadores compartilhem os resultados finais da consulta
       por meio da plataforma, garantindo transparência e prestação de contas à sociedade.
     </p>
+
+    <section id="comments-section" class="pdf-page">
+      <h1 class="title-1 text-center">Comentários</h1>
+      <p>&emsp;&emsp;&emsp;&emsp;&emsp;Neste capítulo, são apresentados todos os parágrafós e todos os seus respectivos comentários atuais.</p>
+      {{ macros.render_comments_section(data.comments.content) }}
+  </section>
+
 </html>
