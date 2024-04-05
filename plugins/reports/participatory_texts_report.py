@@ -110,7 +110,6 @@ class ParticipatoryTextsReport(Report):
                         "total_unique_participants": report_data["total_unique_participants"],
                     },
                     "participation_graph": {
-                        "label": "Gráfico De Participação",
                         "file": self.bp_graphs.generate_participation_graph(
                             report_data["total_comments"],
                             report_data["total_unique_participants"],
@@ -118,26 +117,23 @@ class ParticipatoryTextsReport(Report):
                     },
                     "participatory_texts": {
                         "ID": participatory_texts_ids,
-                        "Dispositivo": participatory_texts_title,
+                        "Parágrafos": participatory_texts_title,
                         "Nº de comentários": participatory_texts_comments,
                         "Nº de votos": participatory_texts_votes,
                     },
                     "top_devices_graph": {
-                        "label": "Dispositivos mais utilizados",
                         "file": top_devices_graph,
                     },
                     "data_access": MatotmoTables.generate_table_access_data_overview(
                         matomo_visits_summary_csv, matomo_visits_frequency_csv
                     ),
                     "device_graph": {
-                        "label": "Detecção de Dispositivos",
                         "file": self.matomo_graphs.try_build_graph(
                             self.matomo_graphs.generate_device_graph,
                             matomo_devices_detection_csv,
                         ),
                     },
                     "map_graph": {
-                        "label": "Acesso por Estado",
                         "file": self.matomo_graphs.try_build_graph(
                             self.matomo_graphs.generate_brasil_access_map,
                             matomo_user_country_csv,
