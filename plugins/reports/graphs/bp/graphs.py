@@ -157,7 +157,11 @@ class BrasilParticipativoGraphs(ReportGraphs):
         fig = go.Figure()
 
         unique_statuses = set(status for sublist in status_list_of_lists for status in sublist)
-        status_name_mapping = {"in_discussion": "Em discussão", "rejected": "Não incorporado", "accepted": "Incorporado"}
+        status_name_mapping = {
+            "in_discussion": "Em discussão",
+            "rejected": "Não incorporado",
+            "accepted": "Incorporado",
+        }
         status_counts = {status: [0] * len(titles_limited) for status in unique_statuses}
 
         for i, statuses in enumerate(status_list_of_lists):
@@ -166,17 +170,23 @@ class BrasilParticipativoGraphs(ReportGraphs):
                     status_counts[status][i] += 1
 
         titles_counts = list(zip(titles_limited, total_comments))
-        titles_counts.sort(key=lambda x: x[1], reverse=True)  
+        titles_counts.sort(key=lambda x: x[1], reverse=True)
         sorted_titles_limited, _ = zip(*titles_counts)
 
-        sorted_status_counts = {status_name_mapping[status]: [count for _, count in sorted(zip(titles_limited, counts), key=lambda x: titles_limited.index(x[0]))] for status, counts in status_counts.items()}
+        sorted_status_counts = {
+            status_name_mapping[status]: [
+                count
+                for _, count in sorted(zip(titles_limited, counts), key=lambda x: titles_limited.index(x[0]))
+            ]
+            for status, counts in status_counts.items()
+        }
 
         for status, counts in sorted_status_counts.items():
             fig.add_trace(
                 go.Bar(
                     y=sorted_titles_limited,
                     x=counts,
-                    name=status, 
+                    name=status,
                     orientation="h",
                     marker=dict(line=dict(width=0.5)),
                 )
@@ -194,7 +204,6 @@ class BrasilParticipativoGraphs(ReportGraphs):
         )
 
         return self.b64_encode_graph(fig)
-
 
     def generate_state_participatory_text(self, df: pd.DataFrame, width: int = 704, height: int = 480):
         state_rename = {
