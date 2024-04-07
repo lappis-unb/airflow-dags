@@ -34,7 +34,7 @@
         <li><a href="#access-section" class="index-topic bold">Acessos</a></li>
         <ul class="sublist">
           <li><a href="#access-section" class="index-subtopic">Dados de Acesso (Geral)</a></li>
-          <li><a href="#access-section" class="index-subtopic">Mapa com a quantidade de visitas por UF (Geral)</a></li>
+          <li><a href="#access-section" class="index-subtopic">Mapa de taxa de proporção de acessos por população</a></li>
           <li><a href="#access-section" class="index-subtopic">Dispositivos</a></li>
         </ul>
 
@@ -86,8 +86,8 @@
     <section id="contribution-section" class="pdf-page">
     <h2 class="text-center">Número de contribuições por parágrafo</h2>
     <p>
-      &emsp;&emsp;&emsp;&emsp;&emsp;Esta análise possibilita ao organizador verificar quais parágrafos/propostas mais receberam contribuições de modo a
-       focar os esforços nestes parágrafos/propostas.
+      &emsp;&emsp;&emsp;&emsp;&emsp;Esta análise possibilita ao organizador verificar quais parágrafos mais receberam contribuições de modo a
+       focar os esforços nestes parágrafos.
     </p>
     {{ macros.create_svg_element(data.top_devices_graph) }}
     <br>
@@ -145,10 +145,14 @@
       por meio da plataforma, garantindo transparência e prestação de contas à sociedade.
     </p>
 
-    <section id="comments-section" class="pdf-page">
-      <h1 class="title-1 text-center">Comentários</h1>
-      <p>&emsp;&emsp;&emsp;&emsp;&emsp;Neste capítulo, são apresentados todos os parágrafós e todos os seus respectivos comentários atuais.</p>
-      {{ macros.render_comments_section(data.comments.content) }}
+    
   </section>
+
+  <section id="comments-section" class="pdf-page">
+    <h1 class="title-1 text-center">Comentários</h1>
+    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Neste capítulo, são apresentados todos os parágrafós e todos os seus respectivos comentários atuais.</p>
+    {{ macros.render_comments_section(data.comments.content) }}
+  </section>
+
 
 </html>
