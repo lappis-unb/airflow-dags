@@ -1,20 +1,6 @@
+import logging
+
 import pandas as pd
-
-"""
-    def filter_proposals(self, bp_data, states, pattern):
-        proposals = []
-        for proposal in bp_data:
-            proposal_state = proposal.get("proposal_state")
-            proposal_title = proposal.get("proposal_title")
-            if (
-                proposal_state is not None
-                and proposal_state not in states
-                and bool(re.match(pattern, proposal_title))
-            ):
-                proposals.append(proposal)
-        return proposals
-
-"""
 
 
 class BrasilParticipativoTables:
@@ -47,6 +33,22 @@ class BrasilParticipativoTables:
         total_comments_per_proposal: list[int],
         votes_per_proposal: list[int],
     ):
+        """
+        Generates an overview of proposal statistics, excluding withdrawn proposals.
+
+        Parameters:
+        ----------
+        - votes_per_proposal (list[int]): A list of integers representing the number of votes.
+        - total_comments_per_proposal (list[int]): A list of integers representing the total number
+        of comments for each proposal.
+        - proposal_states (list[str]): A list of strings representing the state of each proposal.
+
+        Returns:
+        -------
+        - dict: A dictionary containing the total number of considered proposals ('Propostas'),
+        the cumulative number
+        of votes ('Votes'), and the total number of comments ('Comments') on these proposals.
+        """
         assert all(
             len(lst) == len(proposals_categories)
             for lst in [proposals_ids, total_comments_per_proposal, votes_per_proposal]
@@ -123,7 +125,7 @@ class BrasilParticipativoTables:
                 "total_comments_per_proposal": "Comentários",
             }
         )
-        print(len(df_ranking.to_dict("records")))
+        logging.info(len(df_ranking.to_dict("records")))
         return df_ranking.to_dict("records")
 
     @classmethod
@@ -134,6 +136,25 @@ class BrasilParticipativoTables:
         votes_per_proposal: list[int],
         total_comments_per_proposal: list[int],
     ):
+        """
+        Generates a list of the 20 best proposals ranked by the number of votes.
+
+        Parameters:
+        ----------
+        - proposals_ids (list): A list of proposal ids.
+        - proposals_titles (list[str]): A list of titles for the proposals.
+        - proposals_category_titles (list[str]): A list of category titles
+        for each proposal.
+        - vote_per_proposal (list[int]): A list of integers representing the total votes received
+        for each proposal.
+        - total_comments_per_proposal (list[int]): A list of integers representing the total
+        number of comments on each proposal.
+
+        Returns:
+        -------
+        - list[dict]: A list of dictionaries, where each dictionary contains details of a main proposal.
+
+        """
         assert all(
             len(lst) == len(proposals_ids)
             for lst in [
@@ -152,15 +173,15 @@ class BrasilParticipativoTables:
             },
             index=range(len(proposals_ids)),
         )
-        df_ranking = df.sort_values(by="total_comments", ascending=False)
+        df_ranking = df.sort_values(by="total_comments", ascending=False).head(5)
 
         df_ranking = df_ranking.rename(
             columns={
-                "title": "Dispositivo",
+                "title": "Parágrafos",
                 "id": "ID",
                 "total_comments": "Nº de comentários",
                 "proposal_total_votes": "Nº de votos",
             }
         )
-        print(len(df_ranking.to_dict("records")))
+        logging.info(len(df_ranking.to_dict("records")))
         return df_ranking.to_dict("records")

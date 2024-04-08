@@ -51,7 +51,6 @@ class ProposalsReport(Report):
                 "total_comments": general_data.get("Comentários"),
             }
             daily_graph_data = {
-                "label": "Gráfico Diário",
                 "file": self.bp_graphs.generate_daily_plot(
                     proposals_publication_date=bp_df["proposal_published_at"],
                     proposals_ids=bp_df["proposal_id"],
@@ -60,14 +59,12 @@ class ProposalsReport(Report):
                 ),
             }
             state_distribution_graph_data = {
-                "label": "Distribuição de Estados das Propostas",
                 "file": self.bp_graphs.generate_state_distribution_donut(bp_df),
             }
             data_access_data = MatotmoTables.generate_table_access_data_overview(
                 matomo_visits_summary_csv, matomo_visits_frequency_csv
             )
             device_graph_data = {
-                "label": "Detecção de Dispositivos",
                 "file": self.matomo_graphs.generate_device_graph(
                     matomo_devices_detection_csv,
                 ),
@@ -86,7 +83,6 @@ class ProposalsReport(Report):
                 total_comments_per_proposal=bp_df["proposal_total_comments"],
             )
             map_graph_data = {
-                "label": "Acesso por Estado",
                 "file": self.matomo_graphs.generate_brasil_access_map(
                     matomo_user_country_csv,
                     matomo_user_region_csv,

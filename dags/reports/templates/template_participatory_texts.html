@@ -11,7 +11,10 @@
   {% import "./jinja/macros.html" as macros %}
 
   <section class="pdf-page cinza-escuro-4">
-    <h3 class="bp-title text-center">{{ data.document.title }}</h3>
+    <div class="cover-content">
+      <h1 class="text-center index-title">{{ data.document.title }}</h1>
+      <h1></h1>
+    </div>
     <div class="document-date">
       <p class="text-center">{{ data.document.date }}</p>
     </div>
@@ -19,25 +22,26 @@
 
   <section class="pdf-page">
     <h1 class="text-center index-title">Índice</h1>
-  <div class="color-black">
-    <ul>
-      <li><a href="#introduction-section" class="index-topic bold">Introdução</a></li>
-      <li><a href="#contribution-section" class="index-topic bold">Contribuições</a></li>
-      <ul class="sublist">
-        <li><a href="#contribution-section" class="index-subtopic">Número de contribuições por texto participativo</a></li>
-      </ul>
-      <li><a href="#comments-section" class="index-topic bold">Comentários</a></li>
+    <div class="color-black">
+      <ul>
+        <li><a href="#introduction-section" class="index-topic bold">Introdução</a></li>
+        <li><a href="#contribution-section" class="index-topic bold">Contribuições</a></li>
+        <ul class="sublist">
+          <li><a href="#contribution-section" class="index-subtopic">Número de contribuições por texto participativo</a></li>
+        </ul>
+        
 
-      <li><a href="#access-section" class="index-topic bold">Acessos</a></li>
-      <ul class="sublist">
-        <li><a href="#access-section" class="index-subtopic">Dados de Acesso (Geral)</a></li>
-        <li><a href="#access-section" class="index-subtopic">Mapa com a quantidade de visitas por UF (Geral)</a></li>
-        <li><a href="#access-section" class="index-subtopic">Dispositivos</a></li>
-      </ul>
+        <li><a href="#access-section" class="index-topic bold">Acessos</a></li>
+        <ul class="sublist">
+          <li><a href="#access-section" class="index-subtopic">Dados de Acesso (Geral)</a></li>
+          <li><a href="#access-section" class="index-subtopic">Mapa de taxa de proporção de acessos por população</a></li>
+          <li><a href="#access-section" class="index-subtopic">Dispositivos</a></li>
+        </ul>
 
-      <li><a href="#final-consideration" class="index-topic bold">Considerações finais</a></li>
-    </ul>
-  </div>
+        <li><a href="#final-consideration" class="index-topic bold">Considerações finais</a></li>
+        <li><a href="#comments-section" class="index-topic bold">Comentários</a></li>
+      </ul>
+    </div>
   </section>
 
   <section id="introduction-section" class="pdf-page">
@@ -56,9 +60,9 @@
     <p class="mb">&emsp;&emsp;&emsp;&emsp;&emsp;Este relatório oferece uma análise das contribuições no(a) {{ data.document.component }}, no período de {{ data.document.date }},
       destacando os resultados da consulta e do perfil dos participantes. O objetivo é fornecer orientações para os organizadores do processo de consulta,
       auxiliando-os no desenvolvimento de estratégias de mobilização e na compreensão dos indicadores importantes para a sua condução.
-      <p class="mb">&emsp;&emsp;&emsp;&emsp;&emsp;Ao todo, houveram {{ data.introduction.num_participants }} participantes que fizeram {{
-        data.introduction.total_contribution }} contribuições, com um numero total de {{ data.introduction.total_votes }} votos.
-      </p>
+    <p class="mb">&emsp;&emsp;&emsp;&emsp;&emsp;Ao todo, houve {{ data.introduction.total_unique_participants }} participantes que fizeram {{
+      data.introduction.total_comments }} contribuições.
+    </p>
   </section>
 
   <section id="contribution-section" class="pdf-page">
@@ -66,7 +70,9 @@
     <p>&emsp;&emsp;&emsp;&emsp;&emsp;Neste capítulo, serão analisados os dados referentes às contribuições recebidas até o momento. Serão apresentados dados gerais de
       quantidade de contribuições, seus votos e comentários, além de dados sobre a distribuição de participação no território e as devolutivas ao cidadão.
     </p>
-
+    <p>&emsp;&emsp;&emsp;&emsp;&emsp;O gráfico a seguir exibe a distribuição total de participantes e contribuições.
+      Essas informações fornecem uma visão geral, clara e concisa da distribuição da participação e auxiliam na identificação da mobilização da plataforma.
+       </p>
     <br>
     {{ macros.create_svg_element(data.participation_graph) }}
 
@@ -80,19 +86,13 @@
     <section id="contribution-section" class="pdf-page">
     <h2 class="text-center">Número de contribuições por parágrafo</h2>
     <p>
-      &emsp;&emsp;&emsp;&emsp;&emsp;Esta análise possibilita ao organizador verificar quais parágrafos/propostas mais receberam contribuições de modo a
-       focar os esforços nestes parágrafos/propostas.
+      &emsp;&emsp;&emsp;&emsp;&emsp;Esta análise possibilita ao organizador verificar quais parágrafos mais receberam contribuições de modo a
+       focar os esforços nestes parágrafos.
     </p>
     {{ macros.create_svg_element(data.top_devices_graph) }}
     <br>
     {{ macros.render_participatory_texts(data.participatory_texts) }}
   </section>
-
-  <section id="comments-section" class="pdf-page">
-    <h1 class="title-1 text-center">Comentários</h1>
-    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Neste capítulo, são apresentados os 3 dispositivos com mais contribuições e suas contribuições mais recentes.</p>
-    {{ macros.render_comments_section(data.comments.content) }}
-</section>
 
   <section id="access-section" class="pdf-page">
     <h1 class="title-1 text-center">Acessos</h1>
@@ -112,10 +112,9 @@
     <h2  >Dados de Acesso (Geral)</h2>
     {{ macros.create_table_from_list_of_dicts(data.data_access) }}
 
-    <h2>Mapa com a quantidade de visitas por UF (Geral)</h2>
-    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Esse mapa explica a quantidade de acessos por Unidade Federativa do Brasil, no período de {{ data.document.date
-      }}. Com a análise do mapa,
-      o organizador poderá pensar estratégias para aumentar a mobilização em determinado estado.
+    <h2>Mapa de taxa de proporção de acessos por população</h2>
+    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Esse mapa explica a taxa de proporção de acessos por população recebidas no período de {{ data.document.date
+    }}. Com a análise destes dados, o organizador poderá pensar estratégias para aumentar o engajamento em determinada região/estado, se for o caso.
     </p>
     {{ macros.create_svg_element(data.map_graph) }}
   </section>
@@ -135,14 +134,25 @@
     <h1 class="title-1 text-center">Considerações Finais</h1>
     <p>
       &emsp;&emsp;&emsp;&emsp;&emsp;A participação da sociedade na gestão de políticas e programas do Governo Federal é uma forma do Estado
-      brasileiro reconhecer a importância das contribuições da sociedade civil de modo a fortalecer a democracia,
+      brasileiro reconhecer a importância das contribuições da sociedade civil para fortalecer a democracia,
       fomentar a cidadania e aprimorar a eficácia da Administração Pública. Neste contexto, é fundamental que a
       organização do processo participativo utilize os dados disponíveis para criar estratégias que incentivem
-      uma maior participação dos cidadãos nos seus processos de consulta.
+      uma maior participação dos cidadãos em seus processos de consulta.
     </p>
     <p>
       &emsp;&emsp;&emsp;&emsp;&emsp;É primordial também que os órgãos informem aos cidadãos os resultados dessa mobilização.
       Assim, ao término do processo, é crucial que os organizadores compartilhem os resultados finais da consulta
       por meio da plataforma, garantindo transparência e prestação de contas à sociedade.
     </p>
+
+    
+  </section>
+
+  <section id="comments-section" class="pdf-page">
+    <h1 class="title-1 text-center">Comentários</h1>
+    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Neste capítulo, são apresentados todos os parágrafós e todos os seus respectivos comentários atuais.</p>
+    {{ macros.render_comments_section(data.comments.content) }}
+  </section>
+
+
 </html>
