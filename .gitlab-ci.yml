@@ -1,7 +1,7 @@
 stages:
-  - sonarcloud
   - lint
   - tests
+  - sonarcloud
   - build
   - deploy
   - production
@@ -21,11 +21,9 @@ default:
     - pip install -r requirements.testing.txt # Install testing dependencies
 
 .default_rule_python: &default_rule_python
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - changes:
-        - ./**/*.py
-        - ./requirements.*
+  only:
+    - merge_requests
+    - branches
 
 .default_pytest: &default_pytest
   <<: *default_rule_python
@@ -106,17 +104,19 @@ sonarcloud-check:
     entrypoint: [""]
   inherit:
     default: false
+  dependencies:
+    - pytest-3.9
+    - pytest-3.10
+    - pytest-3.11
   cache:
     key: "${CI_JOB_NAME}"
     paths:
       - .sonar/cache
   script:
-    - sonar-scanner
+    - sonar-scanner -X
   only:
     - merge_requests
-    - main
-    - development
-
+    - branches
 
 # <------------- Continuous Deploy ------------->
 
