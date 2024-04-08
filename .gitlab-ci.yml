@@ -172,24 +172,6 @@ push-image-to-registry:
     default: false
   rules:
     - if: $CI_COMMIT_REF_NAME == "development"
-  dependencies:
-    - build-image
-  script:
-    - docker load -i build.img
-    - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
-    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA
-    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest
-
-push-image-to-registry-prod:
-  stage: production
-  tags:
-    - docker
-  services:
-    - docker:dind
-  image: docker
-  inherit:
-    default: false
-  rules:
     - if: $CI_COMMIT_REF_NAME == "main"
   dependencies:
     - build-image
@@ -197,4 +179,5 @@ push-image-to-registry-prod:
     - docker load -i build.img
     - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
     - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA
+    - docker tag $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest
     - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest
