@@ -1,7 +1,7 @@
 stages:
+  - sonarcloud
   - lint
   - tests
-  - sonarcloud
   - build
   - deploy
   - production
@@ -22,7 +22,6 @@ default:
 
 .default_rule_python: &default_rule_python
   rules:
-    - if: $CI_COMMIT_REF_PROTECTED == "true"
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - changes:
         - ./**/*.py
@@ -45,14 +44,12 @@ default:
 
 lint-ruff:
   stage: lint
-  image: ghcr.io/astral-sh/ruff:0.3.5
   <<: *default_rule_python
   script:
     - ruff .
 
 lint-black:
   stage: lint
-  image: pyfound/black:24.2.0
   <<: *default_rule_python
   script:
     - pip install black
@@ -102,23 +99,23 @@ pytest-3.11:
 
 # <------------- QA ------------->
 
-# sonarcloud-check:
-#   stage: sonarcloud
-#   image:
-#     name: sonarsource/sonar-scanner-cli:latest
-#     entrypoint: [""]
-#   inherit:
-#     default: false
-#   cache:
-#     key: "${CI_JOB_NAME}"
-#     paths:
-#       - .sonar/cache
-#   script:
-#     - sonar-scanner
-#   only:
-#     - merge_requests
-#     - main
-#     - development
+sonarcloud-check:
+  stage: sonarcloud
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  inherit:
+    default: false
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - sonar-scanner
+  only:
+    - merge_requests
+    - main
+    - development
 
 
 # <------------- Continuous Deploy ------------->
@@ -161,8 +158,8 @@ build-image:
     - echo "COPY ./plugins ./plugins" >> Dockerfile
 
     - echo "--------- Building the image ----------"
-    - docker build --cache-from $CI_REGISTRY_IMAGE:latest -t $CI_REGISTRY_IMAGE/$CI_COMMIT_BRANCH:-$CI_COMMIT_SHORT_SHA .
-    - docker save -o build.img $CI_REGISTRY_IMAGE/$CI_COMMIT_BRANCH:-$CI_COMMIT_SHORT_SHA
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest -t $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA .
+    - docker save -o build.img $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA
 
 push-image-to-registry:
   stage: deploy
@@ -174,14 +171,14 @@ push-image-to-registry:
   inherit:
     default: false
   rules:
-    - if: $CI_COMMIT_BRANCH == "development"
+    - if: $CI_COMMIT_REF_NAME == "development"
   dependencies:
     - build-image
   script:
     - docker load -i build.img
     - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
-    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_BRANCH:-$CI_COMMIT_SHORT_SHA
-
+    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest
 
 push-image-to-registry-prod:
   stage: production
@@ -193,10 +190,11 @@ push-image-to-registry-prod:
   inherit:
     default: false
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_REF_NAME == "main"
   dependencies:
     - build-image
   script:
     - docker load -i build.img
     - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
-    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_BRANCH:-$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest
