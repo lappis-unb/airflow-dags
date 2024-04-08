@@ -25,7 +25,6 @@ MATOMO_CONN_ID = "matomo_conn"
 SEGMENTED_IDS_VAR = "matomo_segmentation_ids"
 ACCEPTED_TYPES = ["Proposals", "Meetings", "Surveys"]
 
-# Teste git sync
 
 def _get_participatory_space_mapped_to_query_file(participatory_spaces: list[str]):
     queries_folder = Path(__file__).parent.joinpath("./queries/matomo_segmentation")
