@@ -15,6 +15,20 @@ class BrasilParticipativoGraphs(ReportGraphs):
         width: int = 704,
         height: int = 480,
     ):
+        """
+        Generates a bar graph showing participation metrics and returns it as a base64-encoded image.
+
+        Parameters:
+        ----------
+        - total_comments (int): The total number of comments.
+        - total_unique_participants (int): The number of participants.
+        - width (int, optional): The width of the generated graphic in pixels.
+        - height (int, optional): The height of the generated chart in pixels.
+
+        Returns:
+        -------
+        - str: A base64-encoded string of the generated graph.
+        """
         data = {
             "Metrica": ["Contribuições", "Participantes"],
             "Valores": [total_comments, total_unique_participants],
@@ -39,6 +53,21 @@ class BrasilParticipativoGraphs(ReportGraphs):
         total_comments_per_proposal: list[int],
         votes_per_proposal: list[int],
     ):
+        """
+        Generates a multi-line chart for daily activities and returning the graph as a base64 encoded image.
+
+        Parameters:
+        ----------
+        - proposals_publication_date (list): List of proposal publication dates.
+        - proposals_ids (list): List of proposal ids.
+        - total_comments_per_proposal (list[int]): List of total comments per proposals.
+        - vote_per_proposal (list[int]): List of total votes per proposal.
+
+        Returns:
+        -------
+        - str: A base64-encoded string of the generated graph.
+
+        """
         assert all(
             len(lst) == len(proposals_ids)
             for lst in [
@@ -115,6 +144,19 @@ class BrasilParticipativoGraphs(ReportGraphs):
         return self.b64_encode_graph(fig)
 
     def generate_state_distribution_donut(self, df: pd.DataFrame, width: int = 704, height: int = 480):
+        """
+        Generates a donut chart representing the distribution of proposal states within a dataset.
+
+        Parameters:
+        ----------
+        - df (pd.DataFrame): A pandas DataFrame containing a column called "proposal_state".
+        - width (int, optional): The width of the generated graphic in pixels. The default is 704.
+        - height (int, optional): The height of the generated graph in pixels. The default is 480.
+
+        Returns:
+        -------
+        - str: A base64 encoded string of the generated graph.
+        """
         state_rename = {
             "accepted": "Aceita",
             "withdrawn": "Retirada",
@@ -144,6 +186,20 @@ class BrasilParticipativoGraphs(ReportGraphs):
         return self.b64_encode_graph(fig)
 
     def generate_top_devices(self, titles: list, total_comments: list, status_list_of_lists: list):
+        """
+        Generates a horizontal stacked bar chart showing the distribution of statuses.
+
+        Parameters:
+        ----------
+        - titles (list): A list of strings, where each string is a title.
+        - total_comments (list): A list of integers, representing the total number of comments.
+        - status_list_of_lists (list): A list of lists, where each sublist contains strings.
+
+        Returns:
+        -------
+        - str: A base64-encoded string of the generated chart.
+
+        """
         assert len(titles) == len(total_comments) == len(status_list_of_lists)
 
         def limit_title(title, max_length=15):
@@ -206,6 +262,21 @@ class BrasilParticipativoGraphs(ReportGraphs):
         return self.b64_encode_graph(fig)
 
     def generate_state_participatory_text(self, df: pd.DataFrame, width: int = 704, height: int = 480):
+        """
+        Generates a donut chart visualizing the distribution of proposal states.
+
+        Parameters:
+        ----------
+        - df (pd.DataFrame): The DataFrame containing a column called 'proposal_state', which indicates the
+            status of each proposal.
+        - width (int, optional): The width of the generated graphic in pixels.
+        - height (int, optional): The height of the generated graph in pixels.
+
+        Returns:
+        -------
+        - str: A base64-encoded string of the generated chart.
+
+        """
         state_rename = {
             "accepted": "Aceita",
             "withdrawn": "Retirada",
