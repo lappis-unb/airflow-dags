@@ -91,9 +91,10 @@ class MatomoGraphs(ReportGraphs):
             margin=dict(l=0, r=0, b=0, t=0),
             coloraxis_colorbar=dict(
                 title="Taxa de Proporção",
-                tickvals=[0, 1, 1.5],
+                tickvals=[0, 1, 2],
                 ticktext=["Baixa Mobilização", "Média Mobilização", "Alta mobilização"],
             ),
         )
+
 
         return self.b64_encode_graph(fig)
