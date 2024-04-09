@@ -95,9 +95,9 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
                     "qt_unique_authors": len(set(unique_authors)),
                     "unique_authors": unique_authors,
                     "comments": (
-                        comments_df[
-                            ["body", "author_id", "author_name", "date_filter", "status"]
-                        ].to_dict("records")
+                        comments_df[["body", "author_id", "author_name", "date_filter", "status"]].to_dict(
+                            "records"
+                        )
                         if not comments_df.empty
                         else []
                     ),
