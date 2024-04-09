@@ -1,4 +1,4 @@
-query meetingQuery (id: ID!) {
+query meetingQuery ($id: ID!) {
   component(id: $id) {
     participatorySpace {
       id
@@ -10,23 +10,28 @@ query meetingQuery (id: ID!) {
       translation(locale: "pt-BR")
     }
     ... on Meetings {
-      meetings {
+      meetings {    
+        pageInfo{
+          hasNextPage
+      		endCursor
+        }
         nodes {
           id
+          title{
+            translation(locale: "pt-BR")
+          }
           category {
             id
             name {
               translation(locale: "pt-BR")
             }
           }
-          contributionCount
+          typeOfMeeting
           totalCommentsCount
           startTime
           endTime
-          attendeeCount
-          locationHints {
-            translation(locale: "pt-BR")
-          }
+          attendeeCount #Quantidade de participantes nesta reunião
+          address
           coordinates{
             latitude
             longitude
