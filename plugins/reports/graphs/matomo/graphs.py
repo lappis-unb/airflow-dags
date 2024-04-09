@@ -68,9 +68,12 @@ class MatomoGraphs(ReportGraphs):
 
         scale = [
             (0.0, "cyan"),
-            (1.0, "blue"),
+            (0.2, "lightblue"),
+            (0.4, "deepskyblue"),
+            (0.6, "dodgerblue"),
+            (0.8, "blue"),
+            (1.0, "midnightblue"),
         ]
-
         fig = px.choropleth(
             brasil_states_map,
             geojson=brasil_states_map.geometry,
@@ -88,8 +91,8 @@ class MatomoGraphs(ReportGraphs):
             margin=dict(l=0, r=0, b=0, t=0),
             coloraxis_colorbar=dict(
                 title="Taxa de Proporção",
-                tickvals=[0, 0.5, 1, 1.5, 2],
-                ticktext=["0.5", "0.75", "1", "1.25", "1.5"],
+                tickvals=[0, 1, 1.5],
+                ticktext=["Baixa Mobilização", "Média Mobilização", "Alta mobilização"],
             ),
         )
 
