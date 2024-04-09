@@ -128,7 +128,7 @@ class BrasilParticipativoGraphs(ReportGraphs):
 
         fig.update_layout(
             legend=dict(
-                title="",
+                title="Gráfico diário",
                 orientation="h",
                 yanchor="bottom",
                 y=1.02,
