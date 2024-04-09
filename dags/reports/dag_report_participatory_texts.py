@@ -64,6 +64,12 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
         "total_comments": 0,
         "proposals": [],
     }
+    start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+    current_date = datetime.now().date()
+
+    if start_date_obj > current_date:
+        return result
+
     for page in query_result:
         component = page["data"]["component"]
         proposals = component["proposals"]["nodes"]
