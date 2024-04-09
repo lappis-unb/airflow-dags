@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 MINIO_CONN = "minio_conn_id"
 MINIO_BUCKET = "matomo-extractions-csv"
 POSTGRES_CONN_ID = "conn_postgres"
+SCHEMA = "raw"
 
 
 def _generate_s3_filename(module, method, period, execution_date):
@@ -72,6 +73,18 @@ def _check_and_create_bucket():
     minio = S3Hook(MINIO_CONN)
     if not minio.check_for_bucket(bucket_name=MINIO_BUCKET):
         minio.create_bucket(bucket_name=MINIO_BUCKET)
+
+
+def _check_and_create_schema(schema: str = SCHEMA):
+    """
+    Checks if the specified schema exists in the PostgreSQL database and creates it if it doesn't exist.
+
+    Returns:
+    -------
+        None
+    """
+    pg_hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
+    pg_hook.run(f"CREATE SCHEMA IF NOT EXISTS {schema}")
 
 
 class MatomoDagGenerator:  # noqa: D101
@@ -207,10 +220,11 @@ class MatomoDagGenerator:  # noqa: D101
 
         # Insert the data into the PostgreSQL table
         df_with_temporal.to_sql(
-            name=f"raw.{module}_{method}_{period}",
+            name=f"{module}_{method}_{period}",
             con=pg_hook.get_sqlalchemy_engine(),
             if_exists="append",
             index=False,
+            schema=SCHEMA,
         )
 
     def generate_ingestion_dag(self, period: str, schedule: str):
@@ -238,6 +252,14 @@ class MatomoDagGenerator:  # noqa: D101
             start = EmptyOperator(task_id="start")
             end = EmptyOperator(task_id="end")
             """The main DAG for ingesting data from MinIO into the PostgreSQL database."""
+
+            @task
+            def check_and_create_schema():
+                _check_and_create_schema(SCHEMA)
+
+            task_check_and_create_schema = check_and_create_schema()
+            start >> task_check_and_create_schema
+
             for module, method in self.endpoints:
 
                 @task(task_id=f"ingest_{method}_{module}")
@@ -245,7 +267,7 @@ class MatomoDagGenerator:  # noqa: D101
                     """Task to ingest data from MinIO into a PostgreSQL database."""
                     self._ingest_into_postgres(module_, method_, period, context["data_interval_start"])
 
-                start >> ingest_data(module, method) >> end
+                task_check_and_create_schema >> ingest_data(module, method) >> end
 
         return matomo_data_ingestion()
 
