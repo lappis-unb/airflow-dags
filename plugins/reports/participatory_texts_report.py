@@ -34,20 +34,21 @@ class ParticipatoryTextsReport(Report):
         matomo_devices_detection_csv: str,
     ):
 
-        if not report_data:
+        if not report_data["proposals"]:
             return self.template.render(
                 data={
                     "document": {
                         "title": f"Relatório {self.report_name}",
                         "date": f"{self.start_date} até {self.end_date}",
                     },
+                    "introduction": None,
                     "participation_graph": None,
                     "participatory_texts": None,
                     "top_devices_graph": None,
                     "data_access": None,
                     "device_graph": None,
                     "map_graph": None,
-                    "comments": None,
+                    "comments": {"content": None},
                 }
             )
         else:

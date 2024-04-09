@@ -64,39 +64,43 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
         "total_comments": 0,
         "proposals": [],
     }
-    for page in query_result:
-        component = page["data"]["component"]
-        proposals = component["proposals"]["nodes"]
+    start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+    current_date = datetime.now().date()
 
-        for proposal in proposals:
-            comments_df = proposals_hook.get_comments_df(
-                proposal["comments"],
-                proposal["id"],
-                start_date_filter=start_date,
-                end_date_filter=end_date,
-            )
-            total_comments_in_proposal = comments_df.shape[0] if not comments_df.empty else 0
+    if start_date_obj <= current_date:
+        for page in query_result:
+            component = page["data"]["component"]
+            proposals = component["proposals"]["nodes"]
 
-            result["total_comments"] += total_comments_in_proposal
-            unique_authors = [*comments_df["author_id"].unique()] if not comments_df.empty else []
+            for proposal in proposals:
+                comments_df = proposals_hook.get_comments_df(
+                    proposal["comments"],
+                    proposal["id"],
+                    start_date_filter=start_date,
+                    end_date_filter=end_date,
+                )
+                total_comments_in_proposal = comments_df.shape[0] if not comments_df.empty else 0
 
-            result["proposals"].append(
-                {
-                    "vote_count": proposal["voteCount"],
-                    "total_comments": total_comments_in_proposal,
-                    "title": proposal["title"]["translation"],
-                    "id": proposal["id"],
-                    "qt_unique_authors": len(set(unique_authors)),
-                    "unique_authors": unique_authors,
-                    "comments": (
-                        comments_df[["body", "author_id", "author_name", "date_filter", "status"]].to_dict(
-                            "records"
-                        )
-                        if not comments_df.empty
-                        else []
-                    ),
-                }
-            )
+                result["total_comments"] += total_comments_in_proposal
+                unique_authors = [*comments_df["author_id"].unique()] if not comments_df.empty else []
+
+                result["proposals"].append(
+                    {
+                        "vote_count": proposal["voteCount"],
+                        "total_comments": total_comments_in_proposal,
+                        "title": proposal["title"]["translation"],
+                        "id": proposal["id"],
+                        "qt_unique_authors": len(set(unique_authors)),
+                        "unique_authors": unique_authors,
+                        "comments": (
+                            comments_df[
+                                ["body", "author_id", "author_name", "date_filter", "status"]
+                            ].to_dict("records")
+                            if not comments_df.empty
+                            else []
+                        ),
+                    }
+                )
 
     result["total_unique_participants"] = len(
         set(
