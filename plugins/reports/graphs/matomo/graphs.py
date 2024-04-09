@@ -12,7 +12,7 @@ from plugins.reports.graphs.base.graphs import ReportGraphs
 
 class MatomoGraphs(ReportGraphs):
     """Provides methods to generate specific graphs for the Matomo report."""
-
+    
     def _get_brasil_states_map(self) -> gpd.GeoDataFrame:
         shapefile_path = Path(__file__).parent.joinpath("./geo/shapefile/estados_2010.shp")
         return gpd.read_file(shapefile_path)
@@ -46,7 +46,7 @@ class MatomoGraphs(ReportGraphs):
     ):
         region_visits = pd.read_csv(StringIO(matomo_user_get_region_csv))
         region_visits = region_visits[region_visits["metadata_country"] == "br"].rename(
-            columns={"metadata_region": "UF"}
+            columns={"metadata_region_name": "UF"}
         )
 
         country_visits = pd.read_csv(StringIO(matomo_user_get_country_csv))

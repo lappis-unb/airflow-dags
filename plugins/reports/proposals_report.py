@@ -41,7 +41,7 @@ class ProposalsReport(Report):
     def _get_state_propotion_data(self, matomo_user_country_csv, matomo_user_region_csv):
         region_visits = pd.read_csv(StringIO(matomo_user_region_csv))
         region_visits = region_visits[region_visits["metadata_country"] == "br"].rename(
-            columns={"metadata_region": "UF"}
+            columns={"metadata_region_name": "UF"}
         )
 
         country_visits = pd.read_csv(StringIO(matomo_user_country_csv))

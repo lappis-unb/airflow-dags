@@ -17,7 +17,7 @@ from plugins.faker.matomo_faker import MatomoFaker
 from plugins.reports.participatory_texts_report import ParticipatoryTextsReport
 from plugins.utils.dates import fix_date
 
-BP_CONN_ID = "bp_conn_prod"
+BP_CONN_ID = "lab_conn"
 SMPT_CONN_ID = "gmail_smtp"
 
 
@@ -259,7 +259,7 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
             method: str,
         ):
             try:
-                return _get_matomo_data(
+                return _get_matomo_data_faker(
                     url=url,
                     start_date=filter_start_date,
                     end_date=filter_end_date,
