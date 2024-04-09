@@ -16,15 +16,16 @@ import requests
 from airflow.decorators import dag, task
 from airflow.hooks.base_hook import BaseHook
 from airflow.hooks.postgres_hook import PostgresHook
-from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.operators.empty import EmptyOperator
+from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 
 logger = logging.getLogger(__name__)
 
 
 MINIO_CONN = "minio_conn_id"
 MINIO_BUCKET = "matomo-extractions-csv"
-POSTGRES_CONN_ID = 'conn_postgres'
+POSTGRES_CONN_ID = "conn_postgres"
+
 
 def _generate_s3_filename(module, method, period, execution_date):
     return f"{module}_{method}_{period}_{execution_date.strftime('%Y-%m-%d')}.csv"
@@ -59,16 +60,19 @@ def add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataF
 
     return df
 
+
 def _check_and_create_bucket():
     """
     Checks if the specified bucket exists in the MinIO server and creates it if it doesn't exist.
 
     Returns:
+    -------
         None
     """
     minio = S3Hook(MINIO_CONN)
     if not minio.check_for_bucket(bucket_name=MINIO_BUCKET):
         minio.create_bucket(bucket_name=MINIO_BUCKET)
+
 
 class MatomoDagGenerator:  # noqa: D101
     endpoints: ClassVar[List] = [
@@ -146,7 +150,6 @@ class MatomoDagGenerator:  # noqa: D101
             doc_md=__doc__,
             tags=["matomo", "extraction"],
         )
-        
         def matomo_data_extraction():
             matomo_period = {
                 "daily": "day",
@@ -164,9 +167,8 @@ class MatomoDagGenerator:  # noqa: D101
             task_check_and_create_bucket = check_and_create_bucket()
             start >> task_check_and_create_bucket
 
-
-
             for module, method in self.endpoints:
+
                 @task(task_id=f"extract_{method}_{module}")
                 def fetch_data(module_: str, method_: str, **context):
                     data = self.get_matomo_data(
