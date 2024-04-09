@@ -2,8 +2,12 @@ apache-airflow-providers-telegram
 apache-airflow-providers-smtp
 apache-airflow-providers-postgres
 apache-airflow-providers-amazon
-apache-airflow-providers-celery==3.4.1
-apache-airflow-providers-cncf-kubernetes==7.10.0
+
+apache-airflow-providers-jdbc
+apache-airflow-providers-google
+apache-airflow-providers-odbc
+apache-airflow-providers-common-sql
+
 pandas==2.0.3
 beautifulsoup4==4.12.2
 tqdm==4.60.0
