@@ -96,5 +96,4 @@ class MatomoGraphs(ReportGraphs):
             ),
         )
 
-
         return self.b64_encode_graph(fig)

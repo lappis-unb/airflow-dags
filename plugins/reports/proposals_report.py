@@ -8,6 +8,7 @@ from plugins.reports.tables.bp.tables import BrasilParticipativoTables
 from plugins.reports.tables.matomo.tables import MatotmoTables
 from pathlib import Path
 
+
 class ProposalsReport(Report):
     """This class is generating proposals reports."""
 
@@ -26,6 +27,7 @@ class ProposalsReport(Report):
             )
         else:
             return None
+
     def _get_population_data(self) -> dict:
         current_script_path = Path(__file__).parent
 
@@ -35,7 +37,7 @@ class ProposalsReport(Report):
             population_data = json.load(f)
 
         return population_data["population_uf"]
-        
+
     def _get_state_propotion_data(self, matomo_user_country_csv, matomo_user_region_csv):
         region_visits = pd.read_csv(StringIO(matomo_user_region_csv))
         region_visits = region_visits[region_visits["metadata_country"] == "br"].rename(
@@ -55,12 +57,14 @@ class ProposalsReport(Report):
             axis=1,
         )
 
-        max_state = region_visits.loc[region_visits['access_ratio'].idxmax()]['UF']
-        min_state = region_visits.loc[region_visits['access_ratio'].idxmin()]['UF']
-        one_state = region_visits.iloc[(region_visits['access_ratio']-1).abs().argsort()[:1]]['UF'].values[0]
+        max_state = region_visits.loc[region_visits["access_ratio"].idxmax()]["UF"]
+        min_state = region_visits.loc[region_visits["access_ratio"].idxmin()]["UF"]
+        one_state = region_visits.iloc[(region_visits["access_ratio"] - 1).abs().argsort()[:1]]["UF"].values[
+            0
+        ]
 
         return max_state, min_state, one_state
-    
+
     def _render_data(
         self,
         bp_df,
@@ -120,14 +124,13 @@ class ProposalsReport(Report):
                 total_comments_per_proposal=bp_df["proposal_total_comments"].fillna(0).astype(int),
             )
             max_state, min_state, one_state = self._get_state_propotion_data(
-                matomo_user_country_csv, 
-                matomo_user_region_csv
+                matomo_user_country_csv, matomo_user_region_csv
             )
-            general_data.update({
+            state_proportion_data = {
                 "estado_maior_proporcao": max_state,
                 "estado_menor_proporcao": min_state,
-                "estado_proporcao_igual_um": one_state
-            })
+                "estado_proporcao_igual_um": one_state,
+            }
             map_graph_data = {
                 "file": self.matomo_graphs.generate_brasil_access_map(
                     matomo_user_country_csv,
@@ -142,11 +145,8 @@ class ProposalsReport(Report):
                 "date": f"{self.start_date} até {self.end_date}",
             },
             "introduction": introduction_data,
-            "general_data": 
-                general_data,
-                "estado_maior_proporcao": max_state,
-                "estado_menor_proporcao": min_state,
-                "estado_proporcao_igual_um": one_state,
+            "general_data": general_data,
+            "state_proportion": state_proportion_data,
             "daily_graph": daily_graph_data,
             "state_distribution_graph": state_distribution_graph_data,
             "data_access": data_access_data,
