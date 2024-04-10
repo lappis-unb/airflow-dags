@@ -13,6 +13,7 @@ from airflow.providers.smtp.hooks.smtp import SmtpHook
 from plugins.components.base_component.component import ComponentBaseHook
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 from plugins.reports.proposals_report import ProposalsReport
+from plugins.utils.dates import fix_date
 
 BP_CONN_ID = "bp_conn_prod"
 SMPT_CONN_ID = "gmail_smtp"
@@ -24,6 +25,8 @@ def _get_components_url(component_id: int):
 
 
 def _get_proposals_data(component_id: int, start_date: str, end_date: str):
+    start_date, end_date = fix_date(start_date, end_date)
+
     query = (
         Path(__file__).parent.joinpath("./queries/proposals/get_proposals_by_component_id.gql").open().read()
     )
@@ -87,6 +90,7 @@ def _get_proposals_data(component_id: int, start_date: str, end_date: str):
 
 
 def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, method: str):
+    start_date, end_date = fix_date(start_date, end_date)
     matomo_connection = BaseHook.get_connection("matomo_conn")
     matomo_url = matomo_connection.host
     token_auth = matomo_connection.password
@@ -124,6 +128,7 @@ def _generate_report(
     start_date: str,
     end_date: str,
 ):
+    start_date, end_date = fix_date(start_date, end_date)
     start_date = datetime.strptime(start_date, "%Y-%m-%d")
     end_date = datetime.strptime(end_date, "%Y-%m-%d")
 
