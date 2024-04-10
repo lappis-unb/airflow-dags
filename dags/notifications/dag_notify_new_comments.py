@@ -105,7 +105,9 @@ class NotifyNewComments(NotifierDAG):
         return result
 
 
-CONFIG_FOLDER = Path( os.environ.get("AIRFLOW_HOME", "/opt/airflow/") / Path("dags-data/Notifications-Configs"))
+CONFIG_FOLDER = Path(
+    os.environ.get("AIRFLOW_HOME", "/opt/airflow/") / Path("dags-data/Notifications-Configs")
+)
 for config in read_yaml_files_from_directory(CONFIG_FOLDER):
     if not config["telegram_config"]["telegram_group_id"]:
         continue
