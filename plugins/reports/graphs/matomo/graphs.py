@@ -82,7 +82,7 @@ class MatomoGraphs(ReportGraphs):
             color_continuous_scale=scale,
             range_color=(0, 2),
             labels={"access_ratio": "Visitas"},
-            title="Visitas por Estado no Brasil",
+            title="Taxa de Proporção por Estado no Brasil",
         )
 
         fig.update_geos(fitbounds="locations", visible=False)
