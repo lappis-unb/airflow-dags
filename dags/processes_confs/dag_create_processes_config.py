@@ -214,8 +214,8 @@ def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
             ),
         }
     return {
-        **component["telegram_config"],
         **(old_config["telegram_config"] if old_config else {}),
+        **component["telegram_config"],
         **telegram_topics,
     }
 
