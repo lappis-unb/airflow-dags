@@ -17,6 +17,7 @@ from sqlalchemy.exc import ProgrammingError
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 from typing import List, Tuple, Dict
 
+
 default_args = {
     "owner": "Amoêdo",
     "depends_on_past": False,
@@ -59,7 +60,7 @@ def _extract_id_date_from_response(response:str) -> pd.DataFrame:
     df_ids = pd.concat(pd.json_normalize(i) for i in proposals_lists)
     return df_ids
 
-def _task_get_date_id_update_proposals(query:str) -> Dict[Dict]:
+def _get_response_gql(query:str, response_text:bool=False, **variables):
     """
     Executes the GraphQL query to get the date and id of the update proposals.
 
@@ -79,9 +80,12 @@ def _task_get_date_id_update_proposals(query:str) -> Dict[Dict]:
         hook.api_url,
         json={
             "query": query,
+            "variables": variables,
         },
     )
     dado = response.text
+    if response_text:
+        return dado
     return json.loads(dado)
 
 def _filter_ids_by_ds_nodash(ids: pd.DataFrame, date: str) -> pd.DataFrame:
@@ -95,18 +99,25 @@ def _filter_ids_by_ds_nodash(ids: pd.DataFrame, date: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The filtered DataFrame containing only the rows with the specified date.
     """
-    ids = ids[ids['updatedDate']
+    print(ids.columns, 'to aq')
+    ids = ids[ids['updatedAt']
         .apply(lambda x: x[:10]
                .replace('-', '')) == date]
-    return ids
+    return list(ids['id'].values)
 
-def foo():
-    _task_get_date_id_update_proposals()
-
-
+def collect_responses(ids:List[str]):
+    s3 = S3Hook(MINIO_CONN)
+    responses = []
+    for _id in ids:
+        response = s3.read_key(f'updated_proposals/landing_zone/{_id}.json', MINIO_BUCKET)
+        response = json.loads(response)
+        responses.append(response)
+    return responses
 
 QUERY = _get_query()
 DECIDIM_CONN_ID = "api_decidim"
+MINIO_CONN = 'minio_conn_id'
+MINIO_BUCKET = 'brasil-participativo-daily-csv'
 
 
 @dag(
@@ -122,16 +133,45 @@ def ingest_update_proposals():
     @task
     def get_date_id_update_proposals():
         query = _get_query()
-        response = _task_get_date_id_update_proposals(query)
-        #response = _extract_id_date_from_response(response)
+        response = _get_response_gql(query)
+        response = _extract_id_date_from_response(response)
         return response
     
-    #@task(provide_context=True)
-    #def get_current_updated_ids(ids:pd.DataFrame, **context):
-    #    ids = _filter_ids_by_ds_nodash(ids, context['ds_nodash'])
+    @task(provide_context=True)
+    def get_current_updated_ids(ids:pd.DataFrame, **context):
+        ids = _filter_ids_by_ds_nodash(ids, context['ds_nodash'])
+        return ids
 
+    @task        
+    def check_and_create_bucket():
+        hook = S3Hook(MINIO_CONN)
+        if not hook.check_for_bucket(MINIO_BUCKET):
+            hook.create_bucket(bucket_name=MINIO_BUCKET)
 
+    @task
+    def get_updated_proposals(ids:List[str]):
+        query = _get_query('./queries/get_proposals_by_id.gql')
+        print(query)
+        for _id in ids:
+            response = _get_response_gql(query, response_text=True, id=_id)
+            print(response)
+            hook = S3Hook(MINIO_CONN)
+            hook.load_string(response, key=f'updated_proposals/landing_zone/{_id}.json', bucket_name=MINIO_BUCKET, replace=True)
 
-    start >> get_date_id_update_proposals()
+    @task(provide_context=True)
+    def transform_updated_proposals(**context):
+        ids = context['task_instance'].xcom_pull(task_ids='get_current_updated_ids')
+        responses = collect_responses(ids)
+        print(responses[0])
+    
+    _get_date_id_update_proposals = get_date_id_update_proposals()
+    _get_current_updated_ids= get_current_updated_ids(_get_date_id_update_proposals)
+    _get_updated_proposals = get_updated_proposals(_get_current_updated_ids)
+    _check_and_create_bucket = check_and_create_bucket()
+    _get_current_updated_ids >> _check_and_create_bucket >> _get_updated_proposals
+    
+    _get_updated_proposals >> transform_updated_proposals()
+
+    start >> _get_date_id_update_proposals
 
 dag = ingest_update_proposals()
