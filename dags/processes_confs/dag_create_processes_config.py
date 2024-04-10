@@ -27,8 +27,6 @@ TELEGRAM_MAX_RETRIES = 10
 PROPOSALS_TOPICS_TO_CREATE = {
     "telegram_moderation_proposals_topic_id": lambda name: f"{name}/Propostas",
     "telegram_moderation_comments_topic_id": lambda name: f"{name}/Comentarios Em Propostas",
-    "telegram_moderation_pre_moderation_topic_id": lambda name: f"{name}/Denuncias",
-    "telegram_moderation_teste_de_criar_novo_topico_topic_id": lambda name: f"{name}/NovoTopicoTeste",
 }
 
 
@@ -334,6 +332,7 @@ def create_processes_configs():
             components_to_configure (list): A list of dictionaries representing component configurations.
 
         """
+        logging.info("Configuring dags in folder %s.", CONFIG_FOLDER)
         for component in components_to_configure:
             component_type_folder = CONFIG_FOLDER.joinpath(f"./{component['__typename']}")
             component_type_folder.mkdir(parents=True, exist_ok=True)
@@ -358,6 +357,7 @@ def create_processes_configs():
                 components_to_update (list): A list of dictionaries representing component configurations.
 
         """
+        logging.info("Updating dags in folder %s.", CONFIG_FOLDER)
         for component in components_to_update:
             component_type_folder = CONFIG_FOLDER.joinpath(f"./{component['__typename']}")
             component_type_folder.mkdir(parents=True, exist_ok=True)
