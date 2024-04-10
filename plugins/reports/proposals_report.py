@@ -13,8 +13,8 @@ class ProposalsReport(Report):
             col in bp_df.columns
             for col in ["proposal_total_votes", "proposal_total_comments", "proposal_state"]
         ):
-            total_votes = bp_df["proposal_total_votes"].fillna(0)
-            total_comments = bp_df["proposal_total_comments"].fillna(0)
+            total_votes = bp_df["proposal_total_votes"].fillna(0).astype(int)
+            total_comments = bp_df["proposal_total_comments"].fillna(0).astype(int)
 
             return BrasilParticipativoTables.generate_table_proposals_overview(
                 votes_per_proposal=total_votes,
@@ -72,15 +72,15 @@ class ProposalsReport(Report):
             rank_temas_data = BrasilParticipativoTables.generate_table_theme_ranking(
                 proposals_categories=bp_df["proposal_category_title"],
                 proposals_ids=bp_df["proposal_id"],
-                total_comments_per_proposal=bp_df["proposal_total_comments"],
-                votes_per_proposal=bp_df["proposal_total_votes"],
+                total_comments_per_proposal=bp_df["proposal_total_comments"].fillna(0).astype(int),
+                votes_per_proposal=bp_df["proposal_total_votes"].fillna(0).astype(int),
             )
             top_proposals_filtered_data = BrasilParticipativoTables.generate_top_proposals(
                 proposals_ids=bp_df["proposal_id"],
                 proposals_titles=bp_df["proposal_title"],
                 proposals_category_titles=bp_df["proposal_category_title"],
-                votes_per_proposal=bp_df["proposal_total_votes"],
-                total_comments_per_proposal=bp_df["proposal_total_comments"],
+                votes_per_proposal=bp_df["proposal_total_votes"].fillna(0).astype(int),
+                total_comments_per_proposal=bp_df["proposal_total_comments"].fillna(0).astype(int),
             )
             map_graph_data = {
                 "file": self.matomo_graphs.generate_brasil_access_map(
