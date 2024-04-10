@@ -5,6 +5,7 @@ from itertools import chain
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import pendulum
 import requests
 from airflow.decorators import dag, task
 from airflow.hooks.base import BaseHook
@@ -14,6 +15,7 @@ from plugins.components.base_component.component import ComponentBaseHook
 from plugins.components.proposals import ProposalsHook
 from plugins.faker.matomo_faker import MatomoFaker
 from plugins.reports.participatory_texts_report import ParticipatoryTextsReport
+from plugins.utils.dates import fix_date
 
 BP_CONN_ID = "bp_conn_prod"
 SMPT_CONN_ID = "gmail_smtp"
@@ -41,6 +43,7 @@ def _get_matomo_data_faker(url: list, start_date: str, end_date: str, module: st
 
 
 def _get_participatory_texts_data(component_id: int, start_date: str, end_date: str):
+    start_date, end_date = fix_date(start_date, end_date)
     query = (
         Path(__file__)
         .parent.joinpath("./queries/participatory_texts/get_participatory_texts.gql")
@@ -118,6 +121,7 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
 
 
 def _get_matomo_data(url: list, start_date: str, end_date: str, module: str, method: str):
+    start_date, end_date = fix_date(start_date, end_date)
     matomo_connection = BaseHook.get_connection("matomo_conn")
     matomo_url = matomo_connection.host
     token_auth = matomo_connection.password
@@ -158,8 +162,9 @@ def _generate_report(
     report_name = filtered_data["participatory_space_name"]
 
     template_path = Path(__file__).parent.joinpath("./templates/template_participatory_texts.html")
-    start_date = datetime.strptime(filtered_data["start_date"], "%Y-%m-%d")
-    end_date = datetime.strptime(filtered_data["end_date"], "%Y-%m-%d")
+    start_date = pendulum.parse(str(filtered_data["start_date"]), strict=False)
+    end_date = pendulum.parse(str(filtered_data["end_date"]), strict=False)
+    start_date, end_date = fix_date(start_date, end_date)
 
     report_generator = ParticipatoryTextsReport(report_name, template_path, start_date, end_date)
 
