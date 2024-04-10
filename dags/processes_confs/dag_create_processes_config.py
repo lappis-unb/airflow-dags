@@ -213,9 +213,17 @@ def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
                 component_config=component,
             ),
         }
+
+    if old_config:
+        return {
+            **component["telegram_config"],
+            **(old_config["telegram_config"]),
+            "telegram_group_id": component["telegram_group_id"],
+            **telegram_topics,
+        }
     return {
-        **(old_config["telegram_config"] if old_config else {}),
         **component["telegram_config"],
+        "telegram_group_id": component["telegram_group_id"],
         **telegram_topics,
     }
 
