@@ -341,6 +341,9 @@ def create_processes_configs():
             processed_component = _update_old_config(component, component)
 
             yaml_file_path = component_type_folder.joinpath(f"./{component['component_id']}.yaml")
+
+            logging.info("Yaml configurado \n %s .", processed_component)
+
             dump_yaml(processed_component, yaml_file_path)
 
     @task
@@ -367,6 +370,8 @@ def create_processes_configs():
 
             old_config["telegram_config"] = _update_telegram_config(component, old_config)
             old_config = _update_old_config(component, old_config)
+
+            logging.info("Yaml configurado \n %s .", old_config)
 
             dump_yaml(old_config, yaml_file_path)
 
