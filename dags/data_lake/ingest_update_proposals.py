@@ -9,7 +9,7 @@ from airflow.decorators import dag, task, task_group
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.amazon.aws.operators.s3 import (
-    S3CreateBucketOperator,
+    S3CreateBucketOperator, S3DeleteObjectsOperator
 )
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from sqlalchemy.exc import ProgrammingError
@@ -137,12 +137,25 @@ def _filter_ids_by_ds_nodash(ids: pd.DataFrame, date: str) -> pd.DataFrame:
     return list(ids["id"].values)
 
 
-def collect_responses(ids: List[str], zone: str):
+def collect_responses(ids: List[str], zone: str, ds_nodash: str, suffix: str = "json"):
+    """
+    Collects responses from the S3 bucket for the given IDs, zone, and date.
+
+    Args:
+        ids (List[str]): A list of IDs for which responses need to be collected.
+        zone (str): The zone from which the responses should be collected.
+        ds_nodash (str): The date in the format 'YYYYMMDD' for which responses should be collected.
+        suffix (str, optional): The file suffix of the responses. Defaults to "json".
+
+    Returns:
+        List: A list of responses collected from the S3 bucket.
+    """
     s3 = S3Hook(MINIO_CONN)
     responses = []
     for _id in ids:
-        response = s3.read_key(f"updated_proposals/{zone}/{_id}.json", MINIO_BUCKET)
-        response = json.loads(response)
+        response = s3.read_key(f"updated_proposals/{zone}/{ds_nodash}_{_id}.{suffix}", MINIO_BUCKET)
+        if suffix == "json":
+            response = json.loads(response)
         responses.append(response)
     return responses
 
@@ -256,12 +269,12 @@ def get_proposal_dic(extract_text, main_title, component_id, component_name, pro
     return proposal_data
 
 
-def _convert_to_csv(proposal:dict) -> StringIO:
+def _convert_to_csv(proposal: dict) -> StringIO:
     """
     Converts a proposal to a CSV format.
 
     Args:
-        proposal (pd.DataFrame): The proposal data to be converted.
+        proposal (dict): The proposal data to be converted.
 
     Returns:
         StringIO: A buffer containing the CSV data.
@@ -280,7 +293,8 @@ MINIO_BUCKET = "brasil-participativo-daily-csv"
 LANDING_ZONE = "landing_zone"
 PROCESSING_ZONE = "processing"
 PROCESSED_ZONE = "processed"
-
+TABLE_NAME = 'updated_proposals'
+SCHEMA = 'raw'
 
 @dag(
     default_args=default_args,
@@ -310,25 +324,26 @@ def ingest_update_proposals():
         aws_conn_id=MINIO_CONN,
     )
 
-    @task
-    def get_updated_proposals(ids: List[str]):
+    @task(provide_context=True)
+    def get_updated_proposals(ids: List[str], **context):
+        ds_nodash = context["ds_nodash"]
         query = _get_query("./queries/get_proposals_by_id.gql")
         print(query)
         for _id in ids:
             response = _get_response_gql(query, response_text=True, id=_id)
-            print(response)
             hook = S3Hook(MINIO_CONN)
             hook.load_string(
                 response,
-                key=f"updated_proposals/landing_zone/{_id}.json",
+                key=f"updated_proposals/landing_zone/{ds_nodash}_{_id}.json",
                 bucket_name=MINIO_BUCKET,
                 replace=True,
             )
 
     @task(provide_context=True)
     def transform_updated_proposals(**context):
+        ds_nodash = context["ds_nodash"]
         ids = context["task_instance"].xcom_pull(task_ids="get_current_updated_ids")
-        responses = collect_responses(ids, LANDING_ZONE)
+        responses = collect_responses(ids, LANDING_ZONE, ds_nodash)
         for response, _id in zip(responses, ids):
             proposal:dict = flatten_structure_with_additional_fields(response, extract_by_id=True)
             csv_buffer = _convert_to_csv(proposal)
@@ -336,30 +351,50 @@ def ingest_update_proposals():
             hook.load_string(
             string_data=csv_buffer.getvalue(),
             bucket_name=MINIO_BUCKET,
-            key=f'updated_proposals/{PROCESSING_ZONE}/{_id}.csv',
+            key=f'updated_proposals/{PROCESSING_ZONE}/{ds_nodash}_{_id}.csv',
             replace=True,
         )
 
-
     check_and_create_schema = PostgresOperator(
         task_id="check_and_create_schema",
-        sql="CREATE SCHEMA IF NOT EXISTS decidim;",
+        sql=f"CREATE SCHEMA IF NOT EXISTS {SCHEMA};",
         postgres_conn_id="conn_postgres",
     )
     
     @task(provide_context=True)
     def insert_updeted_proposals(**context):
         ids = context["task_instance"].xcom_pull(task_ids="get_current_updated_ids")
-        responses = collect_responses(ids, PROCESSING_ZONE)
-        print(responses)
+        responses = collect_responses(ids, PROCESSING_ZONE, context["ds_nodash"], suffix='csv')
+        df = pd.concat(
+            pd.read_csv(io.StringIO(response)) for response in responses
+        )
+        engine = PostgresHook(postgres_conn_id='conn_postgres').get_sqlalchemy_engine()
+        df.to_sql(
+            name=TABLE_NAME,
+            con=engine,
+            schema=SCHEMA,
+            if_exists="append",
+            index=False,
+        )
         
 
+    delete_landing_zone = S3DeleteObjectsOperator(
+        task_id="delete_landing_zone",
+        bucket=MINIO_BUCKET,
+        prefix=f"updated_proposals/{LANDING_ZONE}/" + "{{ ds_nodash }}",
+        aws_conn_id=MINIO_CONN,
+    )
+
+    
     _get_date_id_update_proposals = get_date_id_update_proposals()
+    _transform_updated_proposals = transform_updated_proposals()
     start >> _get_date_id_update_proposals
     _get_current_updated_ids = get_current_updated_ids(_get_date_id_update_proposals)
     _get_updated_proposals = get_updated_proposals(_get_current_updated_ids)
     _get_current_updated_ids >> check_and_create_bucket >> _get_updated_proposals
-    _get_updated_proposals >> transform_updated_proposals() >> check_and_create_schema
+    _get_updated_proposals >> _transform_updated_proposals >> check_and_create_schema
+    _transform_updated_proposals >> delete_landing_zone
+
     check_and_create_schema >> insert_updeted_proposals()
 
 dag = ingest_update_proposals()
