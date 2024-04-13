@@ -1,12 +1,12 @@
-import pandas as pd
-import geopandas as gpd
 import json
-
 from io import StringIO
+from pathlib import Path
+
+import pandas as pd
+
 from plugins.reports.base.report import Report
 from plugins.reports.tables.bp.tables import BrasilParticipativoTables
 from plugins.reports.tables.matomo.tables import MatotmoTables
-from pathlib import Path
 
 
 class ProposalsReport(Report):
@@ -36,7 +36,7 @@ class ProposalsReport(Report):
         with population_json_path.open("r") as f:
             population_data = json.load(f)
 
-        return population_data["population_uf"]
+        return population_data["population_estado"]
 
     def _get_state_propotion_data(self, matomo_user_country_csv, matomo_user_region_csv):
         region_visits = pd.read_csv(StringIO(matomo_user_region_csv))
