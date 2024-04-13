@@ -68,7 +68,6 @@ class MatomoGraphs(ReportGraphs):
 
         scale = [
             (0.0, "cyan"),
-            (0.2, "lightblue"),
             (0.4, "deepskyblue"),
             (0.6, "dodgerblue"),
             (0.8, "blue"),

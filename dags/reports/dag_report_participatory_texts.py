@@ -5,7 +5,7 @@ from itertools import chain
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import pendulum
+import pandas as pd
 import requests
 from airflow.decorators import dag, task
 from airflow.hooks.base import BaseHook
@@ -15,7 +15,6 @@ from plugins.components.base_component.component import ComponentBaseHook
 from plugins.components.proposals import ProposalsHook
 from plugins.faker.matomo_faker import MatomoFaker
 from plugins.reports.participatory_texts_report import ParticipatoryTextsReport
-from plugins.utils.dates import fix_date
 
 BP_CONN_ID = "lab_conn"
 SMPT_CONN_ID = "gmail_smtp"
@@ -88,6 +87,10 @@ def _get_participatory_texts_data(component_id: int, start_date: str, end_date: 
 
             result["total_comments"] += total_comments_in_proposal
             unique_authors = [*comments_df["author_id"].unique()] if not comments_df.empty else []
+            if not comments_df.empty:
+                comments_df["date_filter"] = pd.to_datetime(comments_df["date_filter"]).dt.strftime(
+                    "%d-%m-%Y"
+                )
 
             result["proposals"].append(
                 {
@@ -259,7 +262,7 @@ def generate_report_participatory_texts(email: str, start_date: str, end_date: s
             method: str,
         ):
             try:
-                return _get_matomo_data_faker(
+                return _get_matomo_data(
                     url=url,
                     start_date=filter_start_date,
                     end_date=filter_end_date,
