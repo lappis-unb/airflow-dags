@@ -1,3 +1,9 @@
+import json
+from io import StringIO
+from pathlib import Path
+
+import pandas as pd
+
 from plugins.reports.base.report import Report
 from plugins.reports.tables.matomo.tables import MatotmoTables
 
@@ -24,6 +30,40 @@ class ParticipatoryTextsReport(Report):
         str: The rendered report template.
     """
 
+    def _get_population_data(self) -> dict:
+        current_script_path = Path(__file__).parent
+        population_json_path = current_script_path / "graphs/matomo/geo/population_uf.json"
+        with population_json_path.open("r") as f:
+            population_data = json.load(f)
+        return population_data["population_estado"]
+
+    def _get_state_proportion_data(self, matomo_user_country_csv, matomo_user_region_csv):
+        region_visits = pd.read_csv(StringIO(matomo_user_region_csv))
+        region_visits = region_visits[region_visits["metadata_country"] == "br"].rename(
+            columns={"metadata_region_name": "UF"}
+        )
+
+        country_visits = pd.read_csv(StringIO(matomo_user_country_csv))
+        total_brazil_visits = country_visits.loc[
+            country_visits["metadata_code"] == "br", "sum_daily_nb_uniq_visitors"
+        ].iloc[0]
+
+        population_data = self._get_population_data()
+        region_visits["access_ratio"] = region_visits.apply(
+            lambda x: (x["sum_daily_nb_uniq_visitors"] / total_brazil_visits)
+            * 100
+            / population_data[x["UF"]],
+            axis=1,
+        )
+
+        max_state = region_visits.loc[region_visits["access_ratio"].idxmax()]["UF"]
+        min_state = region_visits.loc[region_visits["access_ratio"].idxmin()]["UF"]
+        one_state = region_visits.iloc[(region_visits["access_ratio"] - 1).abs().argsort()[:1]]["UF"].values[
+            0
+        ]
+
+        return max_state, min_state, one_state
+
     def render_template(
         self,
         report_data,
@@ -48,6 +88,7 @@ class ParticipatoryTextsReport(Report):
                     "data_access": None,
                     "device_graph": None,
                     "map_graph": None,
+                    "state_proportion": None,
                     "comments": {"content": None},
                 }
             )
@@ -99,6 +140,9 @@ class ParticipatoryTextsReport(Report):
                 {"title": text["title"], "comments": rename_state(text["comments"])}
                 for text in participatory_texts
             ]
+            max_state, min_state, one_state = self._get_state_proportion_data(
+                matomo_user_country_csv, matomo_user_region_csv
+            )
 
             return self.template.render(
                 data={
@@ -140,6 +184,11 @@ class ParticipatoryTextsReport(Report):
                             matomo_user_country_csv,
                             matomo_user_region_csv,
                         ),
+                    },
+                    "state_proportion": {
+                        "estado_maior_proporcao": max_state,
+                        "estado_menor_proporcao": min_state,
+                        "estado_proporcao_igual_um": one_state,
                     },
                     "comments": {"content": comments_data},
                 }
