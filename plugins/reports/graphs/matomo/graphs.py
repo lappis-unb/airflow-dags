@@ -27,6 +27,7 @@ class MatomoGraphs(ReportGraphs):
     def generate_device_graph(self, matomo_device_get_type: str):
         df = pd.read_csv(StringIO(matomo_device_get_type))
         matomo_data_sorted = df.sort_values("nb_visits", ascending=False).head(3)
+        color_discrete_map = {"Smartphone": "#183EFF", "Desktop": "#FFD000", "Phablet": "#00D000"}
 
         fig = px.pie(
             matomo_data_sorted,
@@ -35,6 +36,8 @@ class MatomoGraphs(ReportGraphs):
             title="Top 3 Dispositivos mais Utilizados",
             hole=0.3,
             labels={"label": "Dispositivos", "nb_visits": "Numero de Visitas"},
+            color="label",  # Especifica que a cor é determinada pelo label
+            color_discrete_map=color_discrete_map,  # Aplica o mapeamento de cores
         )
         return self.b64_encode_graph(fig)
 

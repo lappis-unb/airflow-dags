@@ -107,7 +107,8 @@ class BrasilParticipativoGraphs(ReportGraphs):
             y=daily_data["proposals"],
             mode="lines+markers",
             name="Propostas",
-            marker=dict(size=8),
+            marker=dict(size=8, color="#FF0000"),  # vermelho
+            line=dict(color="#FF0000"),  # vermelho
         )
 
         fig.add_scatter(
@@ -115,7 +116,8 @@ class BrasilParticipativoGraphs(ReportGraphs):
             y=daily_data["total_comments"],
             mode="lines+markers",
             name="Comentários por Propostas",
-            marker=dict(size=8),
+            marker=dict(size=8, color="#183EFF"),  # azul
+            line=dict(color="#183EFF"),  # azul
         )
 
         fig.add_scatter(
@@ -123,7 +125,8 @@ class BrasilParticipativoGraphs(ReportGraphs):
             y=daily_data["total_votes"],
             mode="lines+markers",
             name="Votos por Propostas",
-            marker=dict(size=8),
+            marker=dict(size=8, color="#00D000"),  # verde
+            line=dict(color="#00D000"),  # verde
         )
 
         fig.update_layout(
@@ -169,7 +172,12 @@ class BrasilParticipativoGraphs(ReportGraphs):
         state_counts = df["proposal_state"].value_counts().reset_index()
         state_counts.columns = ["Estado", "Quantidade"]
 
-        color_map = {"Aceita": "green", "Rejeitada": "red", "Retirada": "yellow", "Em avaliação": "blue"}
+        color_map = {
+            "Aceita": "#00D000",  # verde
+            "Rejeitada": "#FF0000",  # vermelho
+            "Retirada": "#FFD000",  # amarelo
+            "Em avaliação": "#183EFF",  # azul
+        }
 
         fig = px.pie(
             state_counts,
@@ -217,6 +225,7 @@ class BrasilParticipativoGraphs(ReportGraphs):
             "in_discussion": "Em discussão",
             "rejected": "Não incorporado",
             "accepted": "Incorporado",
+            None: "Em discussão",
         }
         status_counts = {status: [0] * len(titles_limited) for status in unique_statuses}
 
@@ -227,6 +236,7 @@ class BrasilParticipativoGraphs(ReportGraphs):
 
         titles_counts = list(zip(titles_limited, total_comments))
         titles_counts.sort(key=lambda x: x[1], reverse=True)
+        titles_counts = titles_counts[:5]
         sorted_titles_limited, _ = zip(*titles_counts)
 
         sorted_status_counts = {
@@ -249,8 +259,9 @@ class BrasilParticipativoGraphs(ReportGraphs):
             )
 
         fig.update_layout(
-            barmode="stack",
+            barmode="group",
             yaxis={"categoryorder": "total ascending"},
+            bargap=0.3,
             xaxis_title=None,
             yaxis_title=None,
             title="Parágrafos mais comentados",
