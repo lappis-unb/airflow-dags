@@ -36,9 +36,16 @@ class MatomoGraphs(ReportGraphs):
             title="Top 3 Dispositivos mais Utilizados",
             hole=0.3,
             labels={"label": "Dispositivos", "nb_visits": "Numero de Visitas"},
-            color="label",  # Especifica que a cor é determinada pelo label
-            color_discrete_map=color_discrete_map,  # Aplica o mapeamento de cores
+            color="label",
+            color_discrete_map=color_discrete_map,
         )
+
+        fig.update_layout(
+            title=dict(
+                text="Top 3 Dispositivos mais Utilizados", x=0.5, y=0.95, xanchor="center", yanchor="top"
+            )
+        )
+
         return self.b64_encode_graph(fig)
 
     @decople

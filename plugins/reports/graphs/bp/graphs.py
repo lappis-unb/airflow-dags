@@ -173,10 +173,10 @@ class BrasilParticipativoGraphs(ReportGraphs):
         state_counts.columns = ["Estado", "Quantidade"]
 
         color_map = {
-            "Aceita": "#00D000",  # verde
-            "Rejeitada": "#FF0000",  # vermelho
-            "Retirada": "#FFD000",  # amarelo
-            "Em avaliação": "#183EFF",  # azul
+            "Aceita": "#00D000",
+            "Rejeitada": "#FF0000",
+            "Retirada": "#FFD000",
+            "Em avaliação": "#183EFF",
         }
 
         fig = px.pie(
@@ -184,11 +184,13 @@ class BrasilParticipativoGraphs(ReportGraphs):
             names="Estado",
             values="Quantidade",
             hole=0.3,
-            title="Situação das Propostas",
             width=width,
             height=height,
             color="Estado",
             color_discrete_map=color_map,
+        )
+        fig.update_layout(
+            title=dict(text="Situação das Propostas", x=0.5, y=0.95, xanchor="center", yanchor="top")
         )
 
         return self.b64_encode_graph(fig)
