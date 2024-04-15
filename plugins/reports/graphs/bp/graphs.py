@@ -43,7 +43,7 @@ class BrasilParticipativoGraphs(ReportGraphs):
             width=width,
             height=height,
         )
-        fig.update_traces(marker_color=["#1f77b4", "#ff7f0e"], insidetextanchor="middle")
+        fig.update_traces(marker_color=["#183EFF", "#FFD000"], insidetextanchor="middle")
         return self.b64_encode_graph(fig)
 
     def generate_daily_plot(
@@ -218,11 +218,16 @@ class BrasilParticipativoGraphs(ReportGraphs):
             else:
                 return title
 
-        titles_limited = [limit_title(title) for title in titles]
+        sorted_indices = sorted(range(len(total_comments)), key=lambda k: total_comments[k], reverse=True)
+        top_indices = sorted_indices[:5]
+
+        sorted_titles = [limit_title(titles[i]) for i in top_indices]
+        sorted_status_list_of_lists = [status_list_of_lists[i] for i in top_indices]
 
         fig = go.Figure()
 
-        unique_statuses = set(status for sublist in status_list_of_lists for status in sublist)
+        unique_statuses = set(status for i in top_indices for status in status_list_of_lists[i])
+
         status_name_mapping = {
             "in_discussion": "Em discussão",
             "rejected": "Não incorporado",
@@ -236,34 +241,15 @@ class BrasilParticipativoGraphs(ReportGraphs):
             "Incorporado": "#00D000",
         }
 
-        status_counts = {status: [0] * len(titles_limited) for status in unique_statuses}
-
-        for i, statuses in enumerate(status_list_of_lists):
-            for status in statuses:
-                if status in status_counts:
-                    status_counts[status][i] += 1
-
-        titles_comments_counts = list(zip(titles_limited, total_comments, status_list_of_lists))
-        titles_comments_counts.sort(key=lambda x: x[1], reverse=True)
-        top_titles_comments_counts = titles_comments_counts[:5]
-        sorted_titles_limited, sorted_total_comments, sorted_status_list_of_lists = zip(
-            *top_titles_comments_counts
-        )
-
-        sorted_status_counts = {}
-        for status, counts in status_counts.items():
-            sorted_status_counts[status_name_mapping.get(status, "Em discussão")] = [
-                counts[i] for i in range(len(titles_limited)) if titles_limited[i] in sorted_titles_limited
-            ]
-
-        for status, counts in sorted_status_counts.items():
+        for status in unique_statuses:
+            status_counts = [sorted_status_list_of_lists[i].count(status) for i in range(5)]
             fig.add_trace(
                 go.Bar(
-                    y=list(sorted_titles_limited),
-                    x=counts,
-                    name=status,
+                    y=sorted_titles,
+                    x=status_counts,
+                    name=status_name_mapping.get(status, "Em discussão"),
                     orientation="h",
-                    marker=dict(color=status_colors[status], line=dict(width=0.5)),
+                    marker=dict(color=status_colors[status_name_mapping.get(status, "Em discussão")]),
                 )
             )
 
