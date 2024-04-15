@@ -229,6 +229,13 @@ class BrasilParticipativoGraphs(ReportGraphs):
             "accepted": "Incorporado",
             None: "Em discussão",
         }
+
+        status_colors = {
+            "Em discussão": "#183EFF",
+            "Não incorporado": "#FF0000",
+            "Incorporado": "#00D000",
+        }
+
         status_counts = {status: [0] * len(titles_limited) for status in unique_statuses}
 
         for i, statuses in enumerate(status_list_of_lists):
@@ -236,27 +243,27 @@ class BrasilParticipativoGraphs(ReportGraphs):
                 if status in status_counts:
                     status_counts[status][i] += 1
 
-        titles_counts = list(zip(titles_limited, total_comments))
-        titles_counts.sort(key=lambda x: x[1], reverse=True)
-        titles_counts = titles_counts[:5]
-        sorted_titles_limited, _ = zip(*titles_counts)
+        titles_comments_counts = list(zip(titles_limited, total_comments, status_list_of_lists))
+        titles_comments_counts.sort(key=lambda x: x[1], reverse=True)
+        top_titles_comments_counts = titles_comments_counts[:5]
+        sorted_titles_limited, sorted_total_comments, sorted_status_list_of_lists = zip(
+            *top_titles_comments_counts
+        )
 
-        sorted_status_counts = {
-            status_name_mapping[status]: [
-                count
-                for _, count in sorted(zip(titles_limited, counts), key=lambda x: titles_limited.index(x[0]))
+        sorted_status_counts = {}
+        for status, counts in status_counts.items():
+            sorted_status_counts[status_name_mapping.get(status, "Em discussão")] = [
+                counts[i] for i in range(len(titles_limited)) if titles_limited[i] in sorted_titles_limited
             ]
-            for status, counts in status_counts.items()
-        }
 
         for status, counts in sorted_status_counts.items():
             fig.add_trace(
                 go.Bar(
-                    y=sorted_titles_limited,
+                    y=list(sorted_titles_limited),
                     x=counts,
                     name=status,
                     orientation="h",
-                    marker=dict(line=dict(width=0.5)),
+                    marker=dict(color=status_colors[status], line=dict(width=0.5)),
                 )
             )
 
@@ -264,9 +271,9 @@ class BrasilParticipativoGraphs(ReportGraphs):
             barmode="group",
             yaxis={"categoryorder": "total ascending"},
             bargap=0.3,
-            xaxis_title=None,
-            yaxis_title=None,
-            title="Parágrafos mais comentados",
+            xaxis_title="Número de comentários",
+            yaxis_title="Parágrafos",
+            title="Top 5 Parágrafos mais Comentados",
             title_x=0.5,
             uniformtext_minsize=8,
             uniformtext_mode="hide",

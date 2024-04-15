@@ -89,8 +89,16 @@
       &emsp;&emsp;&emsp;&emsp;&emsp;Esta análise possibilita ao organizador verificar quais parágrafos mais receberam contribuições de modo a
        focar os esforços nestes parágrafos.
     </p>
+    <p>
+      &emsp;&emsp;&emsp;&emsp;&emsp;O gráfico a seguir oferece uma perspectiva imediata sobre os parágrafos que despertaram maior interesse e 
+      participação da população. 
+    </p>
     {{ macros.create_svg_element(data.top_devices_graph) }}
     <br>
+    <p>
+      &emsp;&emsp;&emsp;&emsp;&emsp;Já a tabela complementar fornece uma dimensão quantitativa mais detalhada, revelando não apenas o número de comentários
+      por parágrafo mas também a quantidade de votos, quando aplicável.
+    </p>
     {{ macros.render_participatory_texts(data.participatory_texts) }}
   </section>
 
@@ -98,7 +106,11 @@
     <h1 class="title-1 text-center">Acessos</h1>
     <p>&emsp;&emsp;&emsp;&emsp;&emsp;A análise do acesso possibilita aos organizadores terem um panorama do engajamento no processo participativo.
       Aqui ele poderá verificar a
-      quantidade de acessos, a distribuição no território e os dispositivos mais utilizados
+      quantidade de acessos, a distribuição no território e os dispositivos mais utilizados.
+      Observamos que certos parágrafos concentraram um número significativo de comentários, destacando-se como focos de intensa discussão e engajamento. 
+      A coloração do gráfico é estrategicamente escolhida para transmitir o estado atual das contribuições: o vermelho para as contribuições "Não incorporadas", 
+      refletindo uma conotação de rejeição ou de pendências; o verde para as "Incorporadas", indicando aceitação e integração ao texto; e o azul para aquelas 
+      "Em discussão", simbolizando um estágio de deliberação e análise.
     </p>
     <p>&emsp;&emsp;&emsp;&emsp;&emsp;Os dados de acesso são referentes à visitação da página da conferência. Um indicador da mobilização realizada,
       mas principalmente sobre o comportamento
@@ -152,7 +164,7 @@
 
   <section id="comments-section" class="pdf-page">
     <h1 class="title-1 text-center">Comentários</h1>
-    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Neste capítulo, são apresentados todos os parágrafós e todos os seus respectivos comentários atuais.</p>
+    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Neste capítulo, são apresentados todos os parágrafos e todos os seus respectivos comentários atuais.</p>
     {{ macros.render_comments_section(data.comments.content) }}
   </section>
 

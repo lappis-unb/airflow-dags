@@ -147,6 +147,7 @@ class ParticipatoryTextsReport(Report):
             return self.template.render(
                 data={
                     "document": {
+                        "component": self.report_name,
                         "title": f"Relatório {self.report_name}",
                         "date": f"{self.start_date} até {self.end_date}",
                     },
