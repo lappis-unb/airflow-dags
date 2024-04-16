@@ -118,7 +118,6 @@ class ParticipatoryTextsReport(Report):
                 total_comments_per_proposal,
             )
 
-            participatory_texts_ids = [text["ID"] for text in participatory_texts_file]
             participatory_texts_title = [text["Parágrafos"] for text in participatory_texts_file]
             participatory_texts_comments = [text["Nº de comentários"] for text in participatory_texts_file]
             participatory_texts_votes = [text["Nº de votos"] for text in participatory_texts_file]
@@ -162,7 +161,6 @@ class ParticipatoryTextsReport(Report):
                         ),
                     },
                     "participatory_texts": {
-                        "ID": participatory_texts_ids,
                         "Parágrafos": participatory_texts_title,
                         "Nº de comentários": participatory_texts_comments,
                         "Nº de votos": participatory_texts_votes,
