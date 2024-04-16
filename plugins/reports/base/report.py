@@ -98,14 +98,14 @@ class Report:
         """Raises NotImplementedError."""
         raise NotImplementedError
 
-    def _get_population_data(self) -> dict:
-        current_script_path = Path(__file__).parent
+    def get_population_data(self) -> dict:
+        current_script_path = Path(__file__).parent.parent
         population_json_path = current_script_path / "graphs/matomo/geo/population_uf.json"
         with population_json_path.open("r") as f:
             population_data = json.load(f)
         return population_data["population_estado"]
 
-    def _get_state_proportion_data(
+    def get_state_proportion_data(
         self, matomo_user_country_csv: str, matomo_user_region_csv: str
     ) -> Tuple[str, str, str]:
         region_visits = pd.read_csv(StringIO(matomo_user_region_csv))
@@ -118,7 +118,7 @@ class Report:
             country_visits["metadata_code"] == "br", "sum_daily_nb_uniq_visitors"
         ].iloc[0]
 
-        population_data = self._get_population_data()
+        population_data = self.get_population_data()
         region_visits["access_ratio"] = region_visits.apply(
             lambda x: (x["sum_daily_nb_uniq_visitors"] / total_brazil_visits)
             * 100

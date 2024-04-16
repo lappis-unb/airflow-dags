@@ -99,7 +99,7 @@ class ParticipatoryTextsReport(Report):
                 {"title": text["title"], "comments": rename_state(text["comments"])}
                 for text in participatory_texts
             ]
-            max_state, min_state, one_state = self._get_state_proportion_data(
+            max_state, min_state, one_state = self.get_state_proportion_data(
                 matomo_user_country_csv, matomo_user_region_csv
             )
 

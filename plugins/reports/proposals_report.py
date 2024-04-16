@@ -82,7 +82,7 @@ class ProposalsReport(Report):
                 votes_per_proposal=bp_df["proposal_total_votes"].fillna(0).astype(int),
                 total_comments_per_proposal=bp_df["proposal_total_comments"].fillna(0).astype(int),
             )
-            max_state, min_state, one_state = self._get_state_propotion_data(
+            max_state, min_state, one_state = self.get_state_proportion_data(
                 matomo_user_country_csv, matomo_user_region_csv
             )
             state_proportion_data = {
