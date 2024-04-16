@@ -44,37 +44,35 @@
 
   <section id="introduction-section" class="pdf-page">
     <h1 class="text-center title-1">Introdução</h1>
-    <p class="mb">&emsp;&emsp;&emsp;&emsp;&emsp;Este relatório oferece uma análise das contribuições no(a) {{ data.document.component }},
-      no período de {{ data.document.date }},
-      destacando os resultados da consulta e do perfil dos participantes.
-      O objetivo é fornecer orientações para os organizadores do processo de consulta, auxiliando-os no desenvolvimento
-      de estratégias de mobilização e
-      na compreensão dos indicadores importantes para a sua condução.</p>
+    {{ macros.paragrafo ('Este relatório oferece uma análise das contribuições no(a) ' ~ data.document.component ~ ',
+    no período de ' ~ data.document.date ~ ' ,
+    destacando os resultados da consulta e do perfil dos participantes.
+    O objetivo é fornecer orientações para os organizadores do processo de consulta, auxiliando-os no desenvolvimento
+    de estratégias de mobilização e
+    na compreensão dos indicadores importantes para a sua condução.') }}
 
-    <p class="mb">&emsp;&emsp;&emsp;&emsp;&emsp;Ao todo, foram recebidas {{ data.introduction.num_proposals }} propostas que somam {{
-      data.introduction.total_comments }} comentários e {{ data.introduction.total_votes }} votos.
-    </p>
+    {{ macros.paragrafo ('Ao todo, foram recebidas ' ~ data.introduction.num_proposals ~ ' propostas que somam ' ~
+      data.introduction.total_comments ~ ' comentários e ' ~ data.introduction.total_votes ~ ' votos.')}}
+
   </section>
 
   <section id="proposals-section" class="pdf-page">
     <h1 class="title-1 text-center">Propostas</h1>
-    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Neste capítulo, serão analisados os dados referentes às propostas recebidas até o momento. Serão apresentados
-      dados gerais de quantidade
-      de contribuições, seus votos e comentários, além de dados sobre a distribuição de participação no território e as
-      devolutivas ao cidadão.
-    </p>
+    {{ macros.paragrafo ('Neste capítulo, serão analisados os dados referentes às propostas recebidas até o momento. Serão apresentados
+    dados gerais de quantidade
+    de contribuições, seus votos e comentários, além de dados sobre a distribuição de participação no território e as
+    devolutivas ao cidadão.')}}
 
     <br>
     {{ macros.create_table_from_dict(data.general_data) }}
 
     <br>
-
-    <p>&emsp;&emsp;&emsp;&emsp;&emsp;O gráfico abaixo mostra o comportamento da quantidade total de Propostas, Votos e comentários no período de {{
-      data.document.date }}. Aqui, o organizador
+    {{ macros.paragrafo ('O gráfico abaixo mostra o comportamento da quantidade total de Propostas, Votos e comentários no período de ' ~
+      data.document.date ~ '. Aqui, o organizador
       poderá analisar os dias em que mais houve recebimento de propostas, votos e comentários e verificar se algum
       evento específico motivou o aumento
-      das variáveis (publicação de notícia no site, post nas redes sociais, por exemplo).
-    </p>
+      das variáveis (publicação de notícia no site, post nas redes sociais, por exemplo).')}}
+
 
     {{ macros.create_svg_element(data.daily_graph) }}
 
@@ -89,12 +87,10 @@
 
     <section id="proposals-section" class="pdf-page">
     <h1 class="text-center">Temas</h1>
-    <p>
-      &emsp;&emsp;&emsp;&emsp;&emsp;As propostas foram classificadas em grandes temas. Abaixo será possível verificar os temas com maior número de
-      propostas e as propostas mais votadas.
-      Assim, os organizadores poderão ter uma base dos assuntos que mais renderão discussão durante as próximas etapas.
-      Os temas com o maior número de propostas são:
-    </p>
+    {{ macros.paragrafo ('As propostas foram classificadas em grandes temas. Abaixo será possível verificar os temas com maior número de
+    propostas e as propostas mais votadas.
+    Assim, os organizadores poderão ter uma base dos assuntos que mais renderão discussão durante as próximas etapas.
+    Os temas com o maior número de propostas são:')}}
 
     <br>
     {{ macros.create_table_from_list_of_dicts(data.rank_temas) }}
@@ -104,10 +100,8 @@
     <h1 class="text-center">
       Top 20 Propostas
     </h1>
-    <p>
-      &emsp;&emsp;&emsp;&emsp;&emsp;As top 20 propostas mais votadas evidenciam as com maior mobilização e maior interesse do participante.
-      É possível observar também o número de comentários por proposta.
-    </p>
+    {{ macros.paragrafo ('As top 20 propostas mais votadas evidenciam as com maior mobilização e maior interesse do participante.
+    É possível observar também o número de comentários por proposta.')}}
 
     <br>
 
@@ -118,67 +112,62 @@
 
   <section id="proposals-section" class="pdf-page">
     <h2 class="text-center">Devolutiva ao cidadão</h2>
-    <p>&emsp;&emsp;&emsp;&emsp;&emsp;O gráfico abaixo representa o status das propostas em relação à devolutiva ao cidadão. É importante que a
-      organização esteja atenta a este dado,
-      uma vez que o cidadão que contribui espera uma resposta do órgão consultor e se sentirá estimulado a participar de
-      outros processos de consulta.
-    </p>
+    {{ macros.paragrafo ('O gráfico abaixo representa o status das propostas em relação à devolutiva ao cidadão. É importante que a
+    organização esteja atenta a este dado,
+    uma vez que o cidadão que contribui espera uma resposta do órgão consultor e se sentirá estimulado a participar de
+    outros processos de consulta.')}}
+
     {{ macros.create_svg_element(data.state_distribution_graph) }}
   </section>
 
   <section id="access-section" class="pdf-page">
     <h1 class="title-1 text-center">Acessos</h1>
-    <p>&emsp;&emsp;&emsp;&emsp;&emsp;A análise do acesso possibilita aos organizadores terem um panorama do engajamento no processo participativo.
-      Aqui ele poderá verificar a
-      quantidade de acessos, a distribuição no território e os dispositivos mais utilizados
-    </p>
-    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Os dados de acesso são referentes à visitação da página da conferência. Um indicador da mobilização realizada,
-      mas principalmente sobre o comportamento
-      do usuário padrão na plataforma. Além disso, será possível analisar a taxa de abandono que
-      é quando o usuário acessa a plataforma, mas não realiza qualquer ação na mesma. Essas métricas auxiliam os
-      organizadores a verificar se
-      a quantidade de acesso na plataforma está de acordo com o previsto. Essas métricas também guiam a revisita das
-      estratégias de mobilização e de
-      comunicação na plataforma.
-    </p>
+    {{ macros.paragrafo ('A análise do acesso possibilita aos organizadores terem um panorama do engajamento no processo participativo.
+    Aqui ele poderá verificar a
+    quantidade de acessos, a distribuição no território e os dispositivos mais utilizados')}}
+
+    {{ macros.paragrafo ('Os dados de acesso são referentes à visitação da página da conferência. Um indicador da mobilização realizada,
+    mas principalmente sobre o comportamento
+    do usuário padrão na plataforma. Além disso, será possível analisar a taxa de abandono que
+    é quando o usuário acessa a plataforma, mas não realiza qualquer ação na mesma. Essas métricas auxiliam os
+    organizadores a verificar se
+    a quantidade de acesso na plataforma está de acordo com o previsto. Essas métricas também guiam a revisita das
+    estratégias de mobilização e de
+    comunicação na plataforma.')}}
+
     <h2  >Dados de Acesso (Geral)</h2>
     {{ macros.create_table_from_list_of_dicts(data.data_access) }}
 
     <h2>Mapa de taxa de proporção de acessos por população</h2>
-    <p>&emsp;&emsp;&emsp;&emsp;&emsp;Esse mapa explica a taxa de proporção de acessos por população recebidas no período de {{ data.document.date
-    }}. Com a análise destes dados, o organizador poderá pensar estratégias para aumentar o engajamento em determinada região/estado, se for o caso.
-    O estado com a maior taxa é {{ data.state_proportion.estado_maior_proporcao}}, o estado com a menor taxa é {{ data.state_proportion.estado_menor_proporcao}} e o 
-    estado com a taxa padrão é {{ data.state_proportion.estado_proporcao_igual_um}}.
-    </p>
+    {{ macros.paragrafo ('Esse mapa explica a taxa de proporção de acessos por população recebidas no período de ' ~ data.document.date
+    ~ '. Com a análise destes dados, o organizador poderá pensar estratégias para aumentar o engajamento em determinada região/estado, se for o caso.
+    O estado com a maior taxa é ' ~ data.state_proportion.estado_maior_proporcao~ ', o estado com a menor taxa é ' ~ data.state_proportion.estado_menor_proporcao ~ ' e o 
+    estado com a taxa padrão é ' ~ data.state_proportion.estado_proporcao_igual_um ~ '.')}}
+
     {{ macros.create_svg_element(data.map_graph) }}
   </section>
 
   <section id="access-section" class="pdf-page">
     <h2 class="text-center">Dispositivos</h2>
-    <p>
-      &emsp;&emsp;&emsp;&emsp;&emsp;Neste capítulo, exploramos os dados relativos às visitas a um determinado site, analisando o tráfego por
-      diferentes tipos de dispositivos.
-      Ao investigar a distribuição de visitantes em relação aos dispositivos utilizados, podemos identificar tendências
-      e preferências de acesso que podem ser valiosas para a tomada de decisões estratégicas.
-    </p>
+    {{ macros.paragrafo ('Neste capítulo, exploramos os dados relativos às visitas a um determinado site, analisando o tráfego por
+    diferentes tipos de dispositivos.
+    Ao investigar a distribuição de visitantes em relação aos dispositivos utilizados, podemos identificar tendências
+    e preferências de acesso que podem ser valiosas para a tomada de decisões estratégicas.')}}
+
     {{ macros.create_svg_element(data.device_graph) }}
   </section>
 
   <section id="final-consideration" class="pdf-page">
     <h1 class="title-1 text-center">Considerações Finais</h1>
-    <p>
-      &emsp;&emsp;&emsp;&emsp;&emsp;A participação da sociedade na gestão de políticas e programas do Governo Federal é uma forma do Estado
-      brasileiro reconhecer a importância das contribuições da sociedade civil de modo a fortalecer a democracia,
-      fomentar a cidadania e aprimorar a eficácia da Administração Pública. Neste contexto, é fundamental que a
-      organização do processo participativo utilize os dados disponíveis para criar estratégias que incentivem
-      uma maior participação dos cidadãos nos seus processos de consulta.
-    </p>
-    <p>
-      &emsp;&emsp;&emsp;&emsp;&emsp;É primordial também que os órgãos informem aos cidadãos os resultados dessa mobilização.
-      Assim, ao término do processo, é crucial que os organizadores compartilhem os resultados finais da consulta
-      por meio da plataforma, garantindo transparência e prestação de contas à sociedade.
-    </p>
+    {{ macros.paragrafo ('A participação da sociedade na gestão de políticas e programas do Governo Federal é uma forma do Estado
+    brasileiro reconhecer a importância das contribuições da sociedade civil de modo a fortalecer a democracia,
+    fomentar a cidadania e aprimorar a eficácia da Administração Pública. Neste contexto, é fundamental que a
+    organização do processo participativo utilize os dados disponíveis para criar estratégias que incentivem
+    uma maior participação dos cidadãos nos seus processos de consulta.')}}
 
+    {{ macros.paragrafo ('É primordial também que os órgãos informem aos cidadãos os resultados dessa mobilização.
+    Assim, ao término do processo, é crucial que os organizadores compartilhem os resultados finais da consulta
+    por meio da plataforma, garantindo transparência e prestação de contas à sociedade.')}}
 </body>
 
 
