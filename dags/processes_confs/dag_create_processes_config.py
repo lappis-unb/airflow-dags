@@ -153,7 +153,7 @@ def _split_components_between_configure_and_update(participatory_space):
     return components_to_configure, components_to_update
 
 
-def _configure_telegram_topic(config_name: str, topic_naming_func: Any, component_config):
+def _configure_telegram_topic(topic_naming_func: Any, component_config):
     """Configure a Telegram topic based on the provided configuration.
 
     Args:
@@ -167,21 +167,17 @@ def _configure_telegram_topic(config_name: str, topic_naming_func: Any, componen
         dict: A dictionary containing the configured Telegram topic.
 
     """
-    telegram_topics = {}
     name = " ".join(str(component_config["process_id"]).split("_")).title().strip()
 
-    telegram_topics = {
-        config_name: _create_telegram_topic(
-            component_config["telegram_config"]["telegram_group_id"], topic_naming_func(name)
-        )
-    }
-    return telegram_topics
+    return _create_telegram_topic(
+        component_config["telegram_config"]["telegram_group_id"], topic_naming_func(name)
+    )
 
 
 def _get_telegram_topics(component: dict, old_config: Optional[dict] = None):
-    telegram_topics_keys_configured = set(component["telegram_config"].keys())
+    telegram_topics_keys_configured = set([key for key in component["telegram_config"] if key])
     if old_config:
-        telegram_topics_keys_configured = set(old_config["telegram_config"].keys())
+        telegram_topics_keys_configured = set([key for key in old_config["telegram_config"] if key])
     logging.info("Telgram keys already configured: %s", telegram_topics_keys_configured)
 
     telegram_topics_to_create = set(PROPOSALS_TOPICS_TO_CREATE.keys()).difference(
@@ -189,7 +185,7 @@ def _get_telegram_topics(component: dict, old_config: Optional[dict] = None):
     )
     logging.info("Telgram keys to configure: %s", telegram_topics_to_create)
 
-    return telegram_topics_to_create
+    return telegram_topics_to_create, telegram_topics_keys_configured
 
 
 def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
