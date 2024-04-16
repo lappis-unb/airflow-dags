@@ -232,6 +232,19 @@ def flatten_structure_with_additional_fields(data, extract_by_id: bool = False):
 
 
 def get_proposal_dic(extract_text, main_title, component_id, component_name, proposal):
+    """
+    Constructs a dictionary containing various data fields extracted from a proposal.
+
+    Args:
+        extract_text (function): A function used to extract text from a list of translations.
+        main_title (str): The main title of the proposal.
+        component_id (str): The ID of the component.
+        component_name (str): The name of the component.
+        proposal (dict): The proposal object containing various fields.
+
+    Returns:
+        dict: A dictionary containing the extracted data fields from the proposal.
+    """
     proposal_data = {
         "main_title": main_title,
         "component_id": component_id,
@@ -274,11 +287,9 @@ def _convert_to_csv(proposal: dict) -> StringIO:
     Converts a proposal to a CSV format.
 
     Args:
-    ----
         proposal (dict): The proposal data to be converted.
 
     Returns:
-    -------
         StringIO: A buffer containing the CSV data.
     """
     proposal = pd.DataFrame(proposal)
@@ -289,6 +300,12 @@ def _convert_to_csv(proposal: dict) -> StringIO:
 
 
 def _get_create_table():
+    """
+    Retrieves the SQL query for creating a table for updated proposals.
+
+    Returns:
+        str: The SQL query for creating the table.
+    """
     create_table: str = (
         Path(__file__)
         .parent.joinpath("./queries/create_table/create_table_updated_proposals.sql")
@@ -323,6 +340,12 @@ def ingest_update_proposals():
 
     @task
     def get_date_id_update_proposals():
+        """
+        Retrieves the date and ID information for updating proposals.
+
+        Returns:
+            dict: A dictionary containing the extracted date and ID information.
+        """
         query = _get_query()
         response = _get_response_gql(query)
         response = _extract_id_date_from_response(response)
@@ -330,6 +353,16 @@ def ingest_update_proposals():
 
     @task(provide_context=True)
     def get_current_updated_ids(ids: pd.DataFrame, **context):
+        """
+        Filter the given DataFrame of IDs based on the current execution date.
+
+        Args:
+            ids (pd.DataFrame): The DataFrame containing the IDs to be filtered.
+            context (dict): The context dictionary containing the execution context.
+
+        Returns:
+            pd.DataFrame: The filtered DataFrame of IDs.
+        """
         ids = _filter_ids_by_ds_nodash(ids, context["ds_nodash"])
         return ids
 
@@ -341,6 +374,16 @@ def ingest_update_proposals():
 
     @task(provide_context=True)
     def get_updated_proposals(ids: List[str], **context):
+        """
+        Retrieves and stores updated proposals in the landing zone.
+
+        Args:
+            ids (List[str]): A list of proposal IDs to retrieve.
+            context (dict): The context dictionary provided by Airflow.
+
+        Returns:
+            None
+        """
         ds_nodash = context["ds_nodash"]
         query = _get_query("./queries/get_proposals_by_id.gql")
         for _id in ids:
@@ -355,6 +398,15 @@ def ingest_update_proposals():
 
     @task(provide_context=True)
     def transform_updated_proposals(**context):
+        """
+        Transforms and ingests updated proposals into the data lake.
+
+        Args:
+            context (dict): The context dictionary containing task information.
+
+        Returns:
+            None
+        """
         ds_nodash = context["ds_nodash"]
         ids = context["task_instance"].xcom_pull(task_ids="get_current_updated_ids")
         responses = collect_responses(ids, LANDING_ZONE, ds_nodash)
@@ -371,6 +423,20 @@ def ingest_update_proposals():
 
     @task.branch(provide_context=True)
     def check_ids(**context):
+        """
+        Check if there are any updated IDs available.
+
+        This function retrieves the updated IDs from the previous task using XCom,
+        and checks if there are any IDs present. If there are, it returns the task
+        ID for creating the schema, otherwise it returns the task ID for ending the
+        workflow.
+
+        Args:
+            context (dict): The context dictionary containing task instance information.
+
+        Returns:
+            str: The task ID for the next task to execute.
+        """
         ids = context["task_instance"].xcom_pull(task_ids="get_current_updated_ids")
         if len(ids) > 0:
             return "check_and_create_schema"
@@ -389,7 +455,19 @@ def ingest_update_proposals():
     )
 
     @task(provide_context=True)
-    def insert_updeted_proposals(**context):
+    def insert_updated_proposals(**context):
+        """
+        Task to insert updated proposals into a PostgreSQL database.
+
+        Parameters:
+        - context (dict): The context dictionary containing task instance information.
+
+        Returns:
+        - None
+
+        Raises:
+        - None
+        """
         ids = context["task_instance"].xcom_pull(task_ids="get_current_updated_ids")
         responses = collect_responses(ids, PROCESSING_ZONE, context["ds_nodash"], suffix="csv")
         df = pd.concat(pd.read_csv(io.StringIO(response)) for response in responses)
@@ -419,7 +497,7 @@ def ingest_update_proposals():
     _transform_updated_proposals >> delete_landing_zone
 
     _check_ids >> [check_and_create_schema, end]
-    check_and_create_schema >> create_table >> insert_updeted_proposals() >> end
+    check_and_create_schema >> create_table >> insert_updated_proposals() >> end
 
 
 dag = ingest_update_proposals()
