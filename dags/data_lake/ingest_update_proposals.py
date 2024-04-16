@@ -12,7 +12,6 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.amazon.aws.operators.s3 import S3CreateBucketOperator, S3DeleteObjectsOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.providers.postgres.operators.postgres import PostgresOperator
 
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 
@@ -132,7 +131,6 @@ def _filter_ids_by_ds_nodash(ids: pd.DataFrame, date: str) -> pd.DataFrame:
     -------
         pd.DataFrame: The filtered DataFrame containing only the rows with the specified date.
     """
-    print(ids.columns, "to aq")
     ids = ids[ids["updatedAt"].apply(lambda x: x[:10].replace("-", "")) == date]
     return list(ids["id"].values)
 
@@ -321,6 +319,7 @@ SCHEMA = "raw"
 )
 def ingest_update_proposals():
     start = EmptyOperator(task_id="start")
+    end = EmptyOperator(task_id="end", trigger_rule="none_failed")
 
     @task
     def get_date_id_update_proposals():
@@ -344,7 +343,6 @@ def ingest_update_proposals():
     def get_updated_proposals(ids: List[str], **context):
         ds_nodash = context["ds_nodash"]
         query = _get_query("./queries/get_proposals_by_id.gql")
-        print(query)
         for _id in ids:
             response = _get_response_gql(query, response_text=True, id=_id)
             hook = S3Hook(MINIO_CONN)
@@ -371,10 +369,17 @@ def ingest_update_proposals():
                 replace=True,
             )
 
-    check_and_create_schema = PostgresOperator(
+    @task.branch(provide_context=True)
+    def check_ids(**context):
+        ids = context["task_instance"].xcom_pull(task_ids="get_current_updated_ids")
+        if len(ids) > 0:
+            return "check_and_create_schema"
+        return "end"
+
+    check_and_create_schema = SQLExecuteQueryOperator(
         task_id="check_and_create_schema",
         sql=f"CREATE SCHEMA IF NOT EXISTS {SCHEMA};",
-        postgres_conn_id="conn_postgres",
+        conn_id="conn_postgres",
     )
 
     create_table = SQLExecuteQueryOperator(
@@ -403,17 +408,18 @@ def ingest_update_proposals():
         prefix=f"updated_proposals/{LANDING_ZONE}/" + "{{ ds_nodash }}",
         aws_conn_id=MINIO_CONN,
     )
-
+    _check_ids = check_ids()
     _get_date_id_update_proposals = get_date_id_update_proposals()
     _transform_updated_proposals = transform_updated_proposals()
     start >> _get_date_id_update_proposals
     _get_current_updated_ids = get_current_updated_ids(_get_date_id_update_proposals)
     _get_updated_proposals = get_updated_proposals(_get_current_updated_ids)
     _get_current_updated_ids >> check_and_create_bucket >> _get_updated_proposals
-    _get_updated_proposals >> _transform_updated_proposals >> check_and_create_schema
+    _get_updated_proposals >> _transform_updated_proposals >> _check_ids
     _transform_updated_proposals >> delete_landing_zone
 
-    check_and_create_schema >> create_table >> insert_updeted_proposals()
+    _check_ids >> [check_and_create_schema, end]
+    check_and_create_schema >> create_table >> insert_updeted_proposals() >> end
 
 
 dag = ingest_update_proposals()
