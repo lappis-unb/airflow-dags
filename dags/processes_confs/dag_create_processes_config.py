@@ -194,38 +194,37 @@ def _get_telegram_topics(component: dict, old_config: Optional[dict] = None):
 
 def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
     assert isinstance(component, dict)
+    if old_config:
+        assert isinstance(old_config, (dict))
 
     if not component["telegram_config"]["telegram_group_id"]:
-        return component["telegram_config"]
+        return old_config["telegram_config"] if old_config else component["telegram_config"]
 
-    telegram_topics_to_create = _get_telegram_topics(component, old_config)
+    telegram_group_id = (
+        old_config["telegram_config"]["telegram_group_id"]
+        if old_config
+        else component["telegram_config"]["telegram_group_id"]
+    )
 
-    if len(telegram_topics_to_create) == 0:
-        return {**component["telegram_config"], **old_config["telegram_config"]}
+    telegram_topics_to_create, telegram_topics_keys_configured = _get_telegram_topics(component, old_config)
 
-    telegram_topics = {}
-    for topic in telegram_topics_to_create:
-        telegram_topics = {
-            **telegram_topics,
-            **_configure_telegram_topic(
-                config_name=topic,
-                topic_naming_func=PROPOSALS_TOPICS_TO_CREATE.get(topic),
-                component_config=component,
-            ),
-        }
-
-    if old_config:
-        return {
-            **component["telegram_config"],
-            **(old_config["telegram_config"]),
-            "telegram_group_id": component["telegram_group_id"],
-            **telegram_topics,
-        }
-    return {
-        **component["telegram_config"],
-        "telegram_group_id": component["telegram_group_id"],
-        **telegram_topics,
+    new_topics = {
+        topic: _configure_telegram_topic(
+            topic_naming_func=PROPOSALS_TOPICS_TO_CREATE.get(topic),
+            component_config=component,
+        )
+        for topic in telegram_topics_to_create
     }
+
+    old_topics = {
+        topic: (old_config if old_config else component)["telegram_config"][topic]
+        for topic in telegram_topics_keys_configured
+    }
+    result = {"telegram_group_id": telegram_group_id, **new_topics, **old_topics}
+
+    logging.info("Configured telegram for %s\n%s", component["process_id"], result)
+
+    return result
 
 
 def _update_old_config(new_config: dict, old_config: dict):
