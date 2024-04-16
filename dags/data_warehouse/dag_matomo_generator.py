@@ -19,7 +19,7 @@ from airflow.hooks.postgres_hook import PostgresHook
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.amazon.aws.operators.s3 import S3CreateBucketOperator
-from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 logger = logging.getLogger(__name__)
 
@@ -229,8 +229,8 @@ class MatomoDagGenerator:  # noqa: D101
             end = EmptyOperator(task_id="end")
             """The main DAG for ingesting data from MinIO into the PostgreSQL database."""
 
-            task_check_and_create_schema = PostgresOperator(
-                postgres_conn_id=POSTGRES_CONN_ID,
+            task_check_and_create_schema = SQLExecuteQueryOperator(
+                conn_id=POSTGRES_CONN_ID,
                 task_id="check_and_create_schema",
                 sql=f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}",
             )
