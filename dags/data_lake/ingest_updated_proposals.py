@@ -236,6 +236,7 @@ def get_proposal_dic(extract_text, main_title, component_id, component_name, pro
     Constructs a dictionary containing various data fields extracted from a proposal.
 
     Args:
+    ----
         extract_text (function): A function used to extract text from a list of translations.
         main_title (str): The main title of the proposal.
         component_id (str): The ID of the component.
@@ -243,6 +244,7 @@ def get_proposal_dic(extract_text, main_title, component_id, component_name, pro
         proposal (dict): The proposal object containing various fields.
 
     Returns:
+    -------
         dict: A dictionary containing the extracted data fields from the proposal.
     """
     proposal_data = {
@@ -287,9 +289,11 @@ def _convert_to_csv(proposal: dict) -> StringIO:
     Converts a proposal to a CSV format.
 
     Args:
+    ----
         proposal (dict): The proposal data to be converted.
 
     Returns:
+    -------
         StringIO: A buffer containing the CSV data.
     """
     proposal = pd.DataFrame(proposal)
@@ -304,6 +308,7 @@ def _get_create_table():
     Retrieves the SQL query for creating a table for updated proposals.
 
     Returns:
+    -------
         str: The SQL query for creating the table.
     """
     create_table: str = (
@@ -344,6 +349,7 @@ def ingest_update_proposals():
         Retrieves the date and ID information for updating proposals.
 
         Returns:
+        -------
             dict: A dictionary containing the extracted date and ID information.
         """
         query = _get_query()
@@ -357,10 +363,12 @@ def ingest_update_proposals():
         Filter the given DataFrame of IDs based on the current execution date.
 
         Args:
+        ----
             ids (pd.DataFrame): The DataFrame containing the IDs to be filtered.
             context (dict): The context dictionary containing the execution context.
 
         Returns:
+        -------
             pd.DataFrame: The filtered DataFrame of IDs.
         """
         ids = _filter_ids_by_ds_nodash(ids, context["ds_nodash"])
@@ -378,10 +386,12 @@ def ingest_update_proposals():
         Retrieves and stores updated proposals in the landing zone.
 
         Args:
+        ----
             ids (List[str]): A list of proposal IDs to retrieve.
             context (dict): The context dictionary provided by Airflow.
 
         Returns:
+        -------
             None
         """
         ds_nodash = context["ds_nodash"]
@@ -402,9 +412,11 @@ def ingest_update_proposals():
         Transforms and ingests updated proposals into the data lake.
 
         Args:
+        ----
             context (dict): The context dictionary containing task information.
 
         Returns:
+        -------
             None
         """
         ds_nodash = context["ds_nodash"]
@@ -432,9 +444,11 @@ def ingest_update_proposals():
         workflow.
 
         Args:
+        ----
             context (dict): The context dictionary containing task instance information.
 
         Returns:
+        -------
             str: The task ID for the next task to execute.
         """
         ids = context["task_instance"].xcom_pull(task_ids="get_current_updated_ids")
@@ -460,12 +474,15 @@ def ingest_update_proposals():
         Task to insert updated proposals into a PostgreSQL database.
 
         Parameters:
+        ----------
         - context (dict): The context dictionary containing task instance information.
 
         Returns:
+        -------
         - None
 
         Raises:
+        ------
         - None
         """
         ids = context["task_instance"].xcom_pull(task_ids="get_current_updated_ids")
