@@ -10,6 +10,7 @@ from airflow.decorators import dag, task
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.amazon.aws.operators.s3 import S3CreateBucketOperator, S3DeleteObjectsOperator
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 
@@ -289,6 +290,17 @@ def _convert_to_csv(proposal: dict) -> StringIO:
     return csv_buffer
 
 
+def _get_create_table():
+    create_table: str = (
+        Path(__file__)
+        .parent.joinpath("./queries/create_table/create_table_updated_proposals.sql")
+        .open()
+        .read()
+    )
+
+    return create_table.format(schema=SCHEMA, table_name=TABLE_NAME)
+
+
 QUERY = _get_query()
 DECIDIM_CONN_ID = "api_decidim"
 MINIO_CONN = "minio_conn_id"
@@ -365,6 +377,12 @@ def ingest_update_proposals():
         postgres_conn_id="conn_postgres",
     )
 
+    create_table = SQLExecuteQueryOperator(
+        task_id="create_table",
+        sql=_get_create_table(),
+        conn_id="conn_postgres",
+    )
+
     @task(provide_context=True)
     def insert_updeted_proposals(**context):
         ids = context["task_instance"].xcom_pull(task_ids="get_current_updated_ids")
@@ -395,7 +413,7 @@ def ingest_update_proposals():
     _get_updated_proposals >> _transform_updated_proposals >> check_and_create_schema
     _transform_updated_proposals >> delete_landing_zone
 
-    check_and_create_schema >> insert_updeted_proposals()
+    check_and_create_schema >> create_table >> insert_updeted_proposals()
 
 
 dag = ingest_update_proposals()
