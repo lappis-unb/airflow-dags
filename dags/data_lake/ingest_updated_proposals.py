@@ -503,6 +503,36 @@ def ingest_update_proposals():
         prefix=f"updated_proposals/{LANDING_ZONE}/" + "{{ ds_nodash }}",
         aws_conn_id=MINIO_CONN,
     )
+
+    @task(provide_context=True)
+    def move_to_processed_zone(**context):
+        """
+        Moves the updated proposals to the processed zone.
+
+        Args:
+        ----
+            context (dict): The context dictionary containing task information.
+
+        Returns:
+        -------
+            None
+        """
+        ds_nodash = context["ds_nodash"]
+        ids = context["task_instance"].xcom_pull(task_ids="get_current_updated_ids")
+        for _id in ids:
+            hook = S3Hook(MINIO_CONN)
+            hook.copy_object(
+                source_bucket_key=f"updated_proposals/{PROCESSING_ZONE}/{ds_nodash}_{_id}.csv",
+                dest_bucket_key=f"updated_proposals/{PROCESSED_ZONE}/{ds_nodash}_{_id}.csv",
+                source_bucket_name=MINIO_BUCKET,
+                dest_bucket_name=MINIO_BUCKET,
+            )
+
+            hook.delete_objects(
+                bucket=MINIO_BUCKET,
+                keys=f"updated_proposals/{PROCESSING_ZONE}/{ds_nodash}_{_id}.csv",
+            )
+
     _check_ids = check_ids()
     _get_date_id_update_proposals = get_date_id_update_proposals()
     _transform_updated_proposals = transform_updated_proposals()
@@ -514,7 +544,7 @@ def ingest_update_proposals():
     _transform_updated_proposals >> delete_landing_zone
 
     _check_ids >> [check_and_create_schema, end]
-    check_and_create_schema >> create_table >> insert_updated_proposals() >> end
+    check_and_create_schema >> create_table >> insert_updated_proposals() >> move_to_processed_zone() >> end
 
 
 dag = ingest_update_proposals()
