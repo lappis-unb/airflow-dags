@@ -136,7 +136,7 @@ class MatomoDagGenerator:  # noqa: D101
             default_args=self.default_dag_args,
             schedule=schedule,
             start_date=datetime(2023, 5, 1),
-            catchup=False,
+            catchup=True,
             doc_md=__doc__,
             tags=["matomo", "extraction"],
         )
@@ -220,7 +220,7 @@ class MatomoDagGenerator:  # noqa: D101
             default_args=self.default_dag_args,
             schedule=schedule,
             start_date=datetime(2023, 5, 1),
-            catchup=False,
+            catchup=True,
             doc_md=__doc__,
             tags=["matomo", "ingestion"],
         )
