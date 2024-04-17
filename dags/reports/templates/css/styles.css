@@ -53,7 +53,7 @@
     padding: 0;
     bottom: 10mm;
     font-size: 60pt;
-    background-color: blue;
+    background-color: #183EFF;
   }
 }
 
@@ -104,7 +104,7 @@ html {
 body {
   margin: 0;
   padding: 0;
-  color: #434343;
+  color: #3C3C3C;
   line-height: 150%;
   font-family: 'DM Sans';
 }
@@ -174,17 +174,17 @@ table {
 thead,
 th {
   color: white;
-  border: 1px solid #1351b4;
+  border: 1px solid #183EFF;
   font-weight: 800;
   text-align: center;
-  background-color: #1351b4;
+  background-color: #183EFF;
 }
 
 td, tr {
-  border: 1px solid #1351b4;
+  border: 1px solid #183EFF;
   padding: 8px;
   text-align: center;
-  background-color: #d5d8ff;
+  background-color: #ffffff;
 }
 
 img {
@@ -195,12 +195,12 @@ img {
 
 .highlight-first-column td:first-child {
   color: white;
-  background-color: #1351b4;
+  background-color: #183EFF;
 }
 
 .highlight-row {
   font-weight: 800;
-  background-color: var(--blue-warm-vivid-70);
+  background-color: #183EFF;
 }
 
 .centered {
@@ -293,19 +293,19 @@ p {text-align: justify;}
 }
 
 .Aceita {
-  color: green
+  color: #00D000
 }
 
 .Retirada {
-  color: lightcoral
+  color: #FF6464
 }
 
 .Rejeitada {
-  color: red
+  color: #FF0000 
 }
 
 .Avaliando {
-  color: blue
+  color: #183EFF
 }
 
 .comment {

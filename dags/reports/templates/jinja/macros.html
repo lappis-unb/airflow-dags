@@ -186,7 +186,6 @@
 
 {% macro render_comments_section(comments) %}
 {% if comments is none %}
-
 <p>
   Esses dados ainda não estão disponíveis.
 </p>
@@ -195,16 +194,25 @@
     {% for proposal in comments %}
         <div class="proposal">
             <h2>{{ proposal.title }}</h2>
-            {% for comment in proposal.comments %}
-                <div class="comment">
-                    <p>
-                        <strong>{{ comment.author_name }} ({{ comment.date_filter }}) <strong class="{{ comment.status }}">{{ comment.status }}</strong>:</strong>
-                        {{ comment.body }}
-                    </p>
-                </div>
-            {% endfor %}
+            {% if proposal.comments|length == 0 %}
+                <p>Esse parágrafo não tem contribuições no momento.</p>
+            {% else %}
+                {% for comment in proposal.comments %}
+                    <div class="comment">
+                        <p>
+                            <strong style="color: black;">{{ comment.author_name }} ({{ comment.date_filter }})</strong> 
+                            <strong class="{{ comment.status }}">{{ comment.status }}</strong>:
+                            {{ comment.body }}
+                        </p>
+                    </div>
+                {% endfor %}
+            {% endif %}
         </div>
     {% endfor %}
 </div>
 {% endif %}
+{% endmacro %}
+
+{% macro paragrafo(text) %}
+<p>&emsp;&emsp;&emsp;&emsp;&emsp;{{ text }}</p>
 {% endmacro %}

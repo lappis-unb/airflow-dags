@@ -48,6 +48,7 @@ class ParticipatoryTextsReport(Report):
                     "data_access": None,
                     "device_graph": None,
                     "map_graph": None,
+                    "state_proportion": None,
                     "comments": {"content": None},
                 }
             )
@@ -77,7 +78,6 @@ class ParticipatoryTextsReport(Report):
                 total_comments_per_proposal,
             )
 
-            participatory_texts_ids = [text["ID"] for text in participatory_texts_file]
             participatory_texts_title = [text["Parágrafos"] for text in participatory_texts_file]
             participatory_texts_comments = [text["Nº de comentários"] for text in participatory_texts_file]
             participatory_texts_votes = [text["Nº de votos"] for text in participatory_texts_file]
@@ -99,10 +99,14 @@ class ParticipatoryTextsReport(Report):
                 {"title": text["title"], "comments": rename_state(text["comments"])}
                 for text in participatory_texts
             ]
+            max_state, min_state, one_state = self.get_state_proportion_data(
+                matomo_user_country_csv, matomo_user_region_csv
+            )
 
             return self.template.render(
                 data={
                     "document": {
+                        "component": self.report_name,
                         "title": f"Relatório {self.report_name}",
                         "date": f"{self.start_date} até {self.end_date}",
                     },
@@ -117,7 +121,6 @@ class ParticipatoryTextsReport(Report):
                         ),
                     },
                     "participatory_texts": {
-                        "ID": participatory_texts_ids,
                         "Parágrafos": participatory_texts_title,
                         "Nº de comentários": participatory_texts_comments,
                         "Nº de votos": participatory_texts_votes,
@@ -140,6 +143,11 @@ class ParticipatoryTextsReport(Report):
                             matomo_user_country_csv,
                             matomo_user_region_csv,
                         ),
+                    },
+                    "state_proportion": {
+                        "estado_maior_proporcao": max_state,
+                        "estado_menor_proporcao": min_state,
+                        "estado_proporcao_igual_um": one_state,
                     },
                     "comments": {"content": comments_data},
                 }

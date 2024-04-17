@@ -1,8 +1,10 @@
+import json
 from datetime import datetime
-from io import BytesIO
+from io import BytesIO, StringIO
 from pathlib import Path
-from typing import Union
+from typing import Tuple, Union
 
+import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 
@@ -95,3 +97,39 @@ class Report:
     def render_template(self, **kwargs):
         """Raises NotImplementedError."""
         raise NotImplementedError
+
+    def get_population_data(self) -> dict:
+        current_script_path = Path(__file__).parent.parent
+        population_json_path = current_script_path / "graphs/matomo/geo/population_uf.json"
+        with population_json_path.open("r") as f:
+            population_data = json.load(f)
+        return population_data["population_estado"]
+
+    def get_state_proportion_data(
+        self, matomo_user_country_csv: str, matomo_user_region_csv: str
+    ) -> Tuple[str, str, str]:
+        region_visits = pd.read_csv(StringIO(matomo_user_region_csv))
+        region_visits = region_visits[region_visits["metadata_country"] == "br"].rename(
+            columns={"metadata_region_name": "UF"}
+        )
+
+        country_visits = pd.read_csv(StringIO(matomo_user_country_csv))
+        total_brazil_visits = country_visits.loc[
+            country_visits["metadata_code"] == "br", "sum_daily_nb_uniq_visitors"
+        ].iloc[0]
+
+        population_data = self.get_population_data()
+        region_visits["access_ratio"] = region_visits.apply(
+            lambda x: (x["sum_daily_nb_uniq_visitors"] / total_brazil_visits)
+            * 100
+            / population_data[x["UF"]],
+            axis=1,
+        )
+
+        max_state = region_visits.loc[region_visits["access_ratio"].idxmax()]["UF"]
+        min_state = region_visits.loc[region_visits["access_ratio"].idxmin()]["UF"]
+        one_state = region_visits.iloc[(region_visits["access_ratio"] - 1).abs().argsort()[:1]]["UF"].values[
+            0
+        ]
+
+        return max_state, min_state, one_state
