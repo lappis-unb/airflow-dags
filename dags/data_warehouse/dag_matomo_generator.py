@@ -18,6 +18,8 @@ from airflow.hooks.base_hook import BaseHook
 from airflow.hooks.postgres_hook import PostgresHook
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
+from airflow.providers.amazon.aws.operators.s3 import S3CreateBucketOperator
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 logger = logging.getLogger(__name__)
 
@@ -60,31 +62,6 @@ def add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataF
     df["writing_day_id"] = writing_day_id
 
     return df
-
-
-def _check_and_create_bucket():
-    """
-    Checks if the specified bucket exists in the MinIO server and creates it if it doesn't exist.
-
-    Returns:
-    -------
-        None
-    """
-    minio = S3Hook(MINIO_CONN)
-    if not minio.check_for_bucket(bucket_name=MINIO_BUCKET):
-        minio.create_bucket(bucket_name=MINIO_BUCKET)
-
-
-def _check_and_create_schema(schema: str = SCHEMA):
-    """
-    Checks if the specified schema exists in the PostgreSQL database and creates it if it doesn't exist.
-
-    Returns:
-    -------
-        None
-    """
-    pg_hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
-    pg_hook.run(f"CREATE SCHEMA IF NOT EXISTS {schema}")
 
 
 class MatomoDagGenerator:  # noqa: D101
@@ -173,11 +150,10 @@ class MatomoDagGenerator:  # noqa: D101
             start = EmptyOperator(task_id="start")
             end = EmptyOperator(task_id="end")
 
-            @task
-            def check_and_create_bucket():
-                _check_and_create_bucket()
+            task_check_and_create_bucket = S3CreateBucketOperator(
+                task_id="check_and_create_bucket", bucket_name=MINIO_BUCKET, aws_conn_id=MINIO_CONN
+            )
 
-            task_check_and_create_bucket = check_and_create_bucket()
             start >> task_check_and_create_bucket
 
             for module, method in self.endpoints:
@@ -253,11 +229,12 @@ class MatomoDagGenerator:  # noqa: D101
             end = EmptyOperator(task_id="end")
             """The main DAG for ingesting data from MinIO into the PostgreSQL database."""
 
-            @task
-            def check_and_create_schema():
-                _check_and_create_schema(SCHEMA)
+            task_check_and_create_schema = SQLExecuteQueryOperator(
+                conn_id=POSTGRES_CONN_ID,
+                task_id="check_and_create_schema",
+                sql=f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}",
+            )
 
-            task_check_and_create_schema = check_and_create_schema()
             start >> task_check_and_create_schema
 
             for module, method in self.endpoints:
