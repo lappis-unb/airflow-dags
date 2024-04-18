@@ -13,7 +13,7 @@ from plugins.graphql.hooks.graphql_hook import GraphQLHook
 # Some important constants
 API_DECIDIM = "api_decidim"
 MINIO_CONN = "minio_conn_id"
-MINIO_BUCKET = "brasil-participativo-confjuv"
+MINIO_BUCKET = "brasil-participativo-etl_assembly_conferencia_juventude"
 LANDING_ZONE_FILE_NAME = "landing_zone/raw_assembleia.json"
 
 
@@ -47,21 +47,21 @@ def _run_graphql_query() -> str:
 
 
 @dag(
-    schedule_interval="@daily",
+    schedule_interval="@once",
     start_date=datetime(2023, 1, 1, tz="UTC"),
     catchup=False,
     default_args={
         "owner": "Rodolfo",
         "depends_on_past": False,
-        "retries": 0,
+        "retries": 3,
         "retry_delay": timedelta(minutes=1),
     },
     max_active_runs=10,
     description="Esta DAG recebe os dados da Conferência da Juventude",
-    tags=["confjuv"],
-    dag_id="confjuv",
+    tags=["etl_assembly_conferencia_juventude"],
+    dag_id="etl_assembly_conferencia_juventude",
 )
-def confjuv():
+def etl_assembly_conferencia_juventude():
     start = EmptyOperator(task_id="start")
 
     with TaskGroup("extraction", tooltip="Extract data from GraphQL to MinIO bucket") as extraction:
@@ -90,4 +90,4 @@ def confjuv():
     start >> extraction >> end
 
 
-confjuv()
+etl_assembly_conferencia_juventude()
