@@ -43,7 +43,7 @@ class BrasilParticipativoGraphs(ReportGraphs):
             width=width,
             height=height,
         )
-        fig.update_traces(marker_color=["#1f77b4", "#ff7f0e"], insidetextanchor="middle")
+        fig.update_traces(marker_color=["#183EFF", "#FFD000"], insidetextanchor="middle")
         return self.b64_encode_graph(fig)
 
     def generate_daily_plot(
@@ -107,7 +107,8 @@ class BrasilParticipativoGraphs(ReportGraphs):
             y=daily_data["proposals"],
             mode="lines+markers",
             name="Propostas",
-            marker=dict(size=8),
+            marker=dict(size=8, color="#FF0000"),  # vermelho
+            line=dict(color="#FF0000"),  # vermelho
         )
 
         fig.add_scatter(
@@ -115,7 +116,8 @@ class BrasilParticipativoGraphs(ReportGraphs):
             y=daily_data["total_comments"],
             mode="lines+markers",
             name="Comentários por Propostas",
-            marker=dict(size=8),
+            marker=dict(size=8, color="#183EFF"),  # azul
+            line=dict(color="#183EFF"),  # azul
         )
 
         fig.add_scatter(
@@ -123,7 +125,8 @@ class BrasilParticipativoGraphs(ReportGraphs):
             y=daily_data["total_votes"],
             mode="lines+markers",
             name="Votos por Propostas",
-            marker=dict(size=8),
+            marker=dict(size=8, color="#00D000"),  # verde
+            line=dict(color="#00D000"),  # verde
         )
 
         fig.update_layout(
@@ -169,18 +172,25 @@ class BrasilParticipativoGraphs(ReportGraphs):
         state_counts = df["proposal_state"].value_counts().reset_index()
         state_counts.columns = ["Estado", "Quantidade"]
 
-        color_map = {"Aceita": "green", "Rejeitada": "red", "Retirada": "yellow", "Em avaliação": "blue"}
+        color_map = {
+            "Aceita": "#00D000",
+            "Rejeitada": "#FF0000",
+            "Retirada": "#FFD000",
+            "Em avaliação": "#183EFF",
+        }
 
         fig = px.pie(
             state_counts,
             names="Estado",
             values="Quantidade",
             hole=0.3,
-            title="Situação das Propostas",
             width=width,
             height=height,
             color="Estado",
             color_discrete_map=color_map,
+        )
+        fig.update_layout(
+            title=dict(text="Situação das Propostas", x=0.5, y=0.95, xanchor="center", yanchor="top")
         )
 
         return self.b64_encode_graph(fig)
@@ -208,52 +218,48 @@ class BrasilParticipativoGraphs(ReportGraphs):
             else:
                 return title
 
-        titles_limited = [limit_title(title) for title in titles]
+        sorted_indices = sorted(range(len(total_comments)), key=lambda k: total_comments[k], reverse=True)
+        top_indices = sorted_indices[:5]
+
+        sorted_titles = [limit_title(titles[i]) for i in top_indices]
+        sorted_status_list_of_lists = [status_list_of_lists[i] for i in top_indices]
 
         fig = go.Figure()
 
-        unique_statuses = set(status for sublist in status_list_of_lists for status in sublist)
+        unique_statuses = set(status for i in top_indices for status in status_list_of_lists[i])
+
         status_name_mapping = {
             "in_discussion": "Em discussão",
             "rejected": "Não incorporado",
             "accepted": "Incorporado",
-        }
-        status_counts = {status: [0] * len(titles_limited) for status in unique_statuses}
-
-        for i, statuses in enumerate(status_list_of_lists):
-            for status in statuses:
-                if status in status_counts:
-                    status_counts[status][i] += 1
-
-        titles_counts = list(zip(titles_limited, total_comments))
-        titles_counts.sort(key=lambda x: x[1], reverse=True)
-        sorted_titles_limited, _ = zip(*titles_counts)
-
-        sorted_status_counts = {
-            status_name_mapping[status]: [
-                count
-                for _, count in sorted(zip(titles_limited, counts), key=lambda x: titles_limited.index(x[0]))
-            ]
-            for status, counts in status_counts.items()
+            None: "Em discussão",
         }
 
-        for status, counts in sorted_status_counts.items():
+        status_colors = {
+            "Em discussão": "#183EFF",
+            "Não incorporado": "#FF0000",
+            "Incorporado": "#00D000",
+        }
+
+        for status in unique_statuses:
+            status_counts = [sorted_status_list_of_lists[i].count(status) for i in range(5)]
             fig.add_trace(
                 go.Bar(
-                    y=sorted_titles_limited,
-                    x=counts,
-                    name=status,
+                    y=sorted_titles,
+                    x=status_counts,
+                    name=status_name_mapping.get(status, "Em discussão"),
                     orientation="h",
-                    marker=dict(line=dict(width=0.5)),
+                    marker=dict(color=status_colors[status_name_mapping.get(status, "Em discussão")]),
                 )
             )
 
         fig.update_layout(
-            barmode="stack",
+            barmode="group",
             yaxis={"categoryorder": "total ascending"},
-            xaxis_title=None,
-            yaxis_title=None,
-            title="Parágrafos mais comentados",
+            bargap=0.3,
+            xaxis_title="Número de comentários",
+            yaxis_title="Parágrafos",
+            title="Top 5 Parágrafos mais Comentados",
             title_x=0.5,
             uniformtext_minsize=8,
             uniformtext_mode="hide",

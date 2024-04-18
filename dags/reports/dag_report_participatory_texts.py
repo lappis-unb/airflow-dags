@@ -189,7 +189,8 @@ def send_email_with_pdf(
     date_end: str,
     url: str,
 ):
-    date_start, date_end = fix_date(date_start, date_end)
+    date_start = datetime.strptime(date_start, "%Y-%m-%d").strftime("%d-%m-%Y")
+    date_end = datetime.strptime(date_end, "%Y-%m-%d").strftime("%d-%m-%Y")
     hook = SmtpHook(SMPT_CONN_ID)
     hook = hook.get_conn()
     body = f"""<p>{email_body}</p>
@@ -200,7 +201,7 @@ def send_email_with_pdf(
         <p>Relatorio gerado apartir da pagina: {url}</p>"""
 
     with TemporaryDirectory("wb") as tmpdir:
-        tmp_file = Path(tmpdir).joinpath(f"./relatorio_{date_start}-{date_end}.pdf")
+        tmp_file = Path(tmpdir).joinpath(f"./relatorio_texto_participativo_{date_start}-{date_end}.pdf")
         with closing(open(tmp_file, "wb")) as file:
             file.write(pdf_bytes)
         hook.send_email_smtp(

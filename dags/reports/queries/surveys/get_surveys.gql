@@ -1,0 +1,49 @@
+query Survey{
+  component(id: 574	){
+    participatorySpace{
+      components{
+        id
+      }
+      title{
+        translation(locale:"pt-BR")
+      }
+    }
+    ...on Surveys{
+      name {
+      	translation(locale: "pt-BR")
+      }
+      surveys(first: 1000){
+        #verificado, page info tem next e previous page, não é util
+        nodes{
+          # verificado
+          createdAt
+          # updatedAt não modifica, tentei varias vezes
+          questionnaire{
+            #titulo da enquete
+            title{
+              translations{
+                #verificado
+                # Nome do formulario
+                text
+              }
+            }
+            questions{
+              answerOptions {
+                # verificado
+                body {
+                  # verificado
+                  translations {
+                    # opcoes de resposta
+                    text
+                  }
+                }
+              }
+            } 
+            # forentity e fortype retornam apenas erro
+            # tos são os termos de serviço
+          }
+        }
+      }
+    }
+  }
+}

@@ -6,7 +6,6 @@ import pytest
 from plugins.reports.graphs.bp.graphs import BrasilParticipativoGraphs
 
 
-# Fixture para criar uma instância da classe BrasilParticipativoGraphs
 @pytest.fixture
 def bp_graphs():
     return BrasilParticipativoGraphs()
@@ -49,9 +48,15 @@ def test_generate_state_ditribution_donut(bp_graphs):
 
 
 def test_generate_top_devices(bp_graphs):
-    titles = ["Paragrafo 1", "Paragrafo 2", "Paragrafo 3"]
-    total_comments = [10, 20, 30]
-    status_list_of_lists = [["in_discussion"], ["rejected"], ["accepted"]]
+    titles = ["Paragrafo 1", "Paragrafo 2", "Paragrafo 3", "Paragrafo 4", "Paragrafo 5"]
+    total_comments = [10, 20, 30, 40, 50]
+    status_list_of_lists = [
+        ["in_discussion"],
+        ["rejected"],
+        ["accepted"],
+        ["in_discussion", "accepted"],
+        ["rejected", "accepted"],
+    ]
 
     result = bp_graphs.generate_top_devices(titles, total_comments, status_list_of_lists)
 

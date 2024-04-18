@@ -106,7 +106,6 @@ class BrasilParticipativoTables:
 
         df = pd.DataFrame(
             data={
-                "proposals_ids": proposals_ids,
                 "proposals_titles": proposals_titles,
                 "proposals_category_titles": proposals_category_titles,
                 "votes_per_proposal": votes_per_proposal,
@@ -118,7 +117,6 @@ class BrasilParticipativoTables:
 
         df_ranking = df_ranking.rename(
             columns={
-                "proposals_ids": "ID",
                 "proposals_titles": "Proposta",
                 "proposals_category_titles": "Categoria",
                 "votes_per_proposal": "Votos",
@@ -166,7 +164,6 @@ class BrasilParticipativoTables:
 
         df = pd.DataFrame(
             data={
-                "id": proposals_ids,
                 "title": proposals_titles,
                 "proposal_total_votes": votes_per_proposal,
                 "total_comments": total_comments_per_proposal,
@@ -178,7 +175,6 @@ class BrasilParticipativoTables:
         df_ranking = df_ranking.rename(
             columns={
                 "title": "Parágrafos",
-                "id": "ID",
                 "total_comments": "Nº de comentários",
                 "proposal_total_votes": "Nº de votos",
             }

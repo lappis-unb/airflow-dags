@@ -27,6 +27,7 @@ class MatomoGraphs(ReportGraphs):
     def generate_device_graph(self, matomo_device_get_type: str):
         df = pd.read_csv(StringIO(matomo_device_get_type))
         matomo_data_sorted = df.sort_values("nb_visits", ascending=False).head(3)
+        color_discrete_map = {"Smartphone": "#183EFF", "Desktop": "#FFD000", "Phablet": "#00D000"}
 
         fig = px.pie(
             matomo_data_sorted,
@@ -35,7 +36,16 @@ class MatomoGraphs(ReportGraphs):
             title="Top 3 Dispositivos mais Utilizados",
             hole=0.3,
             labels={"label": "Dispositivos", "nb_visits": "Numero de Visitas"},
+            color="label",
+            color_discrete_map=color_discrete_map,
         )
+
+        fig.update_layout(
+            title=dict(
+                text="Top 3 Dispositivos mais Utilizados", x=0.5, y=0.95, xanchor="center", yanchor="top"
+            )
+        )
+
         return self.b64_encode_graph(fig)
 
     @decople
@@ -68,9 +78,11 @@ class MatomoGraphs(ReportGraphs):
 
         scale = [
             (0.0, "cyan"),
-            (1.0, "blue"),
+            (0.4, "deepskyblue"),
+            (0.6, "dodgerblue"),
+            (0.8, "blue"),
+            (1.0, "midnightblue"),
         ]
-
         fig = px.choropleth(
             brasil_states_map,
             geojson=brasil_states_map.geometry,
@@ -79,7 +91,7 @@ class MatomoGraphs(ReportGraphs):
             color_continuous_scale=scale,
             range_color=(0, 2),
             labels={"access_ratio": "Visitas"},
-            title="Visitas por Estado no Brasil",
+            title="Taxa de Proporção por Estado no Brasil",
         )
 
         fig.update_geos(fitbounds="locations", visible=False)
@@ -88,8 +100,8 @@ class MatomoGraphs(ReportGraphs):
             margin=dict(l=0, r=0, b=0, t=0),
             coloraxis_colorbar=dict(
                 title="Taxa de Proporção",
-                tickvals=[0, 0.5, 1, 1.5, 2],
-                ticktext=["0.5", "0.75", "1", "1.25", "1.5"],
+                tickvals=[0, 1, 2],
+                ticktext=["Baixa Mobilização", "Média Mobilização", "Alta mobilização"],
             ),
         )
 

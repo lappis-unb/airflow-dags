@@ -82,6 +82,14 @@ class ProposalsReport(Report):
                 votes_per_proposal=bp_df["proposal_total_votes"].fillna(0).astype(int),
                 total_comments_per_proposal=bp_df["proposal_total_comments"].fillna(0).astype(int),
             )
+            max_state, min_state, one_state = self.get_state_proportion_data(
+                matomo_user_country_csv, matomo_user_region_csv
+            )
+            state_proportion_data = {
+                "estado_maior_proporcao": max_state,
+                "estado_menor_proporcao": min_state,
+                "estado_proporcao_igual_um": one_state,
+            }
             map_graph_data = {
                 "file": self.matomo_graphs.generate_brasil_access_map(
                     matomo_user_country_csv,
@@ -97,6 +105,7 @@ class ProposalsReport(Report):
             },
             "introduction": introduction_data,
             "general_data": general_data,
+            "state_proportion": state_proportion_data,
             "daily_graph": daily_graph_data,
             "state_distribution_graph": state_distribution_graph_data,
             "data_access": data_access_data,

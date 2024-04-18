@@ -157,7 +157,9 @@ def send_email_with_pdf(
     date_end: str,
     url: str,
 ):
-    date_start, date_end = fix_date(date_start, date_end)
+    date_start = datetime.strptime(date_start, "%Y-%m-%d").strftime("%d-%m-%Y")
+    date_end = datetime.strptime(date_end, "%Y-%m-%d").strftime("%d-%m-%Y")
+
     hook = SmtpHook(SMPT_CONN_ID)
     hook = hook.get_conn()
     body = f"""<p>{email_body}</p>
