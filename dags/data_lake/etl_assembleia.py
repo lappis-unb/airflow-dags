@@ -13,7 +13,7 @@ from plugins.graphql.hooks.graphql_hook import GraphQLHook
 # Some important constants
 API_DECIDIM = "api_decidim"
 MINIO_CONN = "minio_conn_id"
-MINIO_BUCKET = "brasil-participativo-etl_assembly_conferencia_juventude"
+MINIO_BUCKET = "brasil-participativo-confjuv"
 LANDING_ZONE_FILE_NAME = "landing_zone/raw_assembleia.json"
 
 
