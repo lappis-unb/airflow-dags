@@ -1,3 +1,16 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Índice**
+
+- [Documentação](#documenta%C3%A7%C3%A3o)
+    - [Documentação de DAGs](#documenta%C3%A7%C3%A3o-de-dags)
+    - [Documentação de OnBoarding](#documenta%C3%A7%C3%A3o-de-onboarding)
+    - [Informações Auxiliares](#informa%C3%A7%C3%B5es-auxiliares)
+    - [Volumes](#volumes)
+    - [Criando uma DAG local](#criando-uma-dag-local)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Documentação
 
 ## Documentação de DAGs

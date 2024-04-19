@@ -1,3 +1,14 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Índice**
+
+- [Como contribuir?](#como-contribuir)
+    - [Git workflow](#git-workflow)
+    - [Politica de Commits](#politica-de-commits)
+    - [Revisão e qualidade do código](#revis%C3%A3o-e-qualidade-do-c%C3%B3digo)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Como contribuir?
 
 Antes de iniciar sua contribuição, recomendamos que revise nosso [Onboarding](https://gitlab.com/groups/lappis-unb/decidimbr/servicos-de-dados/-/wikis/Onboarding).
