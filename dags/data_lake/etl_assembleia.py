@@ -1,5 +1,8 @@
+import json
+import logging
 from datetime import timedelta
 from pathlib import Path
+from typing import Any
 
 from airflow.decorators import dag, task
 from airflow.operators.empty import EmptyOperator
@@ -18,6 +21,25 @@ LANDING_ZONE_FILE_NAME = "landing_zone/raw_assembleia.json"
 
 
 # Auxiliary functions
+def _log(title: str, obj: Any) -> None:
+    """
+    Logs the obj in a fancy look.
+
+    Returns:
+    -------
+    None
+    """
+    info = f"==============START {title}'s LOGGING==============="
+    logging.info(info)
+    logging.info(obj)
+    logging.info("==============END LOGGING===============")
+
+
+def _extract_text(translations: dict):
+    if translations["translations"] and isinstance(translations["translations"], list):
+        return translations["translations"][0].get("text")
+
+
 def _get_query() -> str:
     """
     Retrieves the query from the specified file and returns it.
@@ -84,10 +106,39 @@ def etl_assembly_conferencia_juventude():
 
         new_bucket >> extract_data()
 
+    with TaskGroup(
+        "transformation", tooltip="Retrieve the data from MinIO bucket to be transformed"
+    ) as tranformation:
+
+        @task(task_id="transform")
+        def transform():
+            """
+            Retrieves the data from MinIO and saves into a csv file.
+
+            Returns:
+            -------
+            None
+            """
+            minio = S3Hook(aws_conn_id=MINIO_CONN)
+            data = json.loads(minio.read_key(key=LANDING_ZONE_FILE_NAME, bucket_name=MINIO_BUCKET))
+            data = data["data"]["assembly"]
+
+            # Extracts the title
+            title = _extract_text(data["title"])
+            _log("TITULO", title)
+            proposals = data["components"][0]["proposals"]["edges"]
+            meetings = data["components"][1]["meetings"]["nodes"]
+            posts = data["components"][4]["posts"]["nodes"]
+            _log("PROPOSTAS", proposals)
+            _log("MEETINGS", meetings)
+            _log("POSTS", posts)
+
+        transform()
+
     end = EmptyOperator(task_id="end")
 
     # Execution order
-    start >> extraction >> end
+    start >> extraction >> tranformation >> end
 
 
 etl_assembly_conferencia_juventude()
