@@ -1,3 +1,4 @@
+# Documentação
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Índice**
@@ -10,8 +11,6 @@
     - [Criando uma DAG local](#criando-uma-dag-local)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-# Documentação
 
 ## Documentação de DAGs
 
