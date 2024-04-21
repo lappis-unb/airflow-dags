@@ -21,6 +21,38 @@ LANDING_ZONE_FILE_NAME = "landing_zone/raw_assembleia.json"
 
 
 # Auxiliary functions
+
+
+def _sanitize_data(type: str, raw: list, keys: list) -> list:
+    proposals: list = []
+    translation_list = ["title", "body"]
+
+    if type == "proposals":
+        for i in raw:
+            elem = i["node"]
+            data = {}
+            for key in keys:
+                if key in elem:
+                    if key in translation_list:
+                        tmp = _extract_text(elem[key])
+                        data[key] = tmp if tmp is not None else elem[key]
+                        continue
+                    data[key] = elem[key]
+            proposals.append(data)
+    else:
+        for elem in raw:
+            data = {}
+            for key in keys:
+                if key in elem:
+                    if key in translation_list:
+                        tmp = _extract_text(elem[key])
+                        data[key] = tmp if tmp is not None else elem[key]
+                    else:
+                        data[key] = elem[key]
+            proposals.append(data)
+    return proposals
+
+
 def _log(title: str, obj: Any) -> None:
     """
     Logs the obj in a fancy look.
@@ -75,7 +107,7 @@ def _run_graphql_query() -> str:
     default_args={
         "owner": "Rodolfo",
         "depends_on_past": False,
-        "retries": 3,
+        "retries": 0,
         "retry_delay": timedelta(minutes=1),
     },
     max_active_runs=10,
@@ -125,10 +157,33 @@ def etl_assembly_conferencia_juventude():
 
             # Extracts the title
             title = _extract_text(data["title"])
-            _log("TITULO", title)
-            proposals = data["components"][0]["proposals"]["edges"]
-            meetings = data["components"][1]["meetings"]["nodes"]
-            posts = data["components"][4]["posts"]["nodes"]
+            _log("TITLE", title)
+            proposals = _sanitize_data(
+                "proposals",
+                data["components"][0]["proposals"]["edges"],
+                [
+                    "updatedAt",
+                    "createdAt",
+                    "type",
+                    "totalCommentsCount",
+                    "title",
+                    "reference",
+                    "author",
+                    "body",
+                    "id",
+                    "comments",
+                ],
+            )
+            meetings = _sanitize_data(
+                "meetings",
+                data["components"][1]["meetings"]["nodes"],
+                ["id", "startTime", "endTime", "closed", "title", "address"],
+            )
+            posts = _sanitize_data(
+                "posts",
+                data["components"][4]["posts"]["nodes"],
+                ["body", "author", "endTime", "createdAt", "title"],
+            )
             _log("PROPOSTAS", proposals)
             _log("MEETINGS", meetings)
             _log("POSTS", posts)
