@@ -72,7 +72,6 @@ class NotifierDAG:
         self.telegram_conn_id = telegram_config["telegram_conn_id"]
         self.telegram_chat_id = telegram_config["telegram_group_id"]
         self.telegram_topic_id = telegram_config[f"telegram_moderation_{self.notifier_type.value}_topic_id"]
-        self.telegram_topic_id_pre_moderation = telegram_config["telegram_moderation_pre_moderation_topic_id"]
 
         self.most_recent_msg_time = f"most_recent_{self.notifier_type.value}_time_{process_id}"
         self.start_date = self._format_date(start_date)

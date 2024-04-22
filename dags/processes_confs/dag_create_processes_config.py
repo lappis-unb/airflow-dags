@@ -153,7 +153,7 @@ def _split_components_between_configure_and_update(participatory_space):
     return components_to_configure, components_to_update
 
 
-def _configure_telegram_topic(config_name: str, topic_naming_func: Any, component_config):
+def _configure_telegram_topic(topic_naming_func: Any, component_config):
     """Configure a Telegram topic based on the provided configuration.
 
     Args:
@@ -167,21 +167,17 @@ def _configure_telegram_topic(config_name: str, topic_naming_func: Any, componen
         dict: A dictionary containing the configured Telegram topic.
 
     """
-    telegram_topics = {}
     name = " ".join(str(component_config["process_id"]).split("_")).title().strip()
 
-    telegram_topics = {
-        config_name: _create_telegram_topic(
-            component_config["telegram_config"]["telegram_group_id"], topic_naming_func(name)
-        )
-    }
-    return telegram_topics
+    return _create_telegram_topic(
+        component_config["telegram_config"]["telegram_group_id"], topic_naming_func(name)
+    )
 
 
 def _get_telegram_topics(component: dict, old_config: Optional[dict] = None):
-    telegram_topics_keys_configured = set(component["telegram_config"].keys())
+    telegram_topics_keys_configured = set([key for key in component["telegram_config"] if key])
     if old_config:
-        telegram_topics_keys_configured = set(old_config["telegram_config"].keys())
+        telegram_topics_keys_configured = set([key for key in old_config["telegram_config"] if key])
     logging.info("Telgram keys already configured: %s", telegram_topics_keys_configured)
 
     telegram_topics_to_create = set(PROPOSALS_TOPICS_TO_CREATE.keys()).difference(
@@ -189,43 +185,58 @@ def _get_telegram_topics(component: dict, old_config: Optional[dict] = None):
     )
     logging.info("Telgram keys to configure: %s", telegram_topics_to_create)
 
-    return telegram_topics_to_create
+    return telegram_topics_to_create, telegram_topics_keys_configured
 
 
 def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
+    """
+    Update the Telegram configuration for a component.
+
+    Args:
+    ----
+        component (dict): The component's configuration dictionary.
+        old_config (Optional[dict], optional): The old configuration dictionary. Defaults to None.
+
+    Raises:
+    ------
+        TypeError: If old_config is provided and is not a dictionary.
+
+    Returns:
+    -------
+        dict: The updated Telegram configuration for the component.
+    """
     assert isinstance(component, dict)
+    if old_config and not isinstance(old_config, dict):
+        raise TypeError("Parameter old_config needs to be a 'dict'.")
 
     if not component["telegram_config"]["telegram_group_id"]:
-        return component["telegram_config"]
+        return old_config["telegram_config"] if old_config else component["telegram_config"]
 
-    telegram_topics_to_create = _get_telegram_topics(component, old_config)
+    telegram_group_id = (
+        old_config["telegram_config"]["telegram_group_id"]
+        if old_config
+        else component["telegram_config"]["telegram_group_id"]
+    )
 
-    if len(telegram_topics_to_create) == 0:
-        return {**component["telegram_config"], **old_config["telegram_config"]}
+    telegram_topics_to_create, telegram_topics_keys_configured = _get_telegram_topics(component, old_config)
 
-    telegram_topics = {}
-    for topic in telegram_topics_to_create:
-        telegram_topics = {
-            **telegram_topics,
-            **_configure_telegram_topic(
-                config_name=topic,
-                topic_naming_func=PROPOSALS_TOPICS_TO_CREATE.get(topic),
-                component_config=component,
-            ),
-        }
-
-    if old_config:
-        return {
-            **component["telegram_config"],
-            **(old_config["telegram_config"]),
-            "telegram_group_id": component["telegram_group_id"],
-            **telegram_topics,
-        }
-    return {
-        **component["telegram_config"],
-        "telegram_group_id": component["telegram_group_id"],
-        **telegram_topics,
+    new_topics = {
+        topic: _configure_telegram_topic(
+            topic_naming_func=PROPOSALS_TOPICS_TO_CREATE.get(topic),
+            component_config=component,
+        )
+        for topic in telegram_topics_to_create
     }
+
+    old_topics = {
+        topic: (old_config if old_config else component)["telegram_config"][topic]
+        for topic in telegram_topics_keys_configured
+    }
+    result = {"telegram_group_id": telegram_group_id, **new_topics, **old_topics}
+
+    logging.info("Configured telegram for %s\n%s", component["process_id"], result)
+
+    return result
 
 
 def _update_old_config(new_config: dict, old_config: dict):
