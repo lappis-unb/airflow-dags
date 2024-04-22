@@ -1,3 +1,16 @@
+# Mac
+
+.DS_Store
+
+# Yamls Files
+
+dags/**/*.yaml
+dags/**/*.yml
+
+# Testing
+
+coverage_report*
+
 # Project specific
 logs
 mnt

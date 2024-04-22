@@ -1,0 +1,10 @@
+query ComponentsInAssembly($date: String) {
+  assemblies(filter: {publishedSince: $date}) {
+    ... on Assembly {
+      components {
+        id
+        __typename
+      }
+    }
+  }
+}

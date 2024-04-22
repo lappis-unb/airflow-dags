@@ -1,0 +1,22 @@
+query ComponentsInConsultations($date: String) {
+  consultations(filter: {publishedSince: $date}) {
+    ... on Consultation {
+      id
+      __typename
+      startVotingDate
+      endVotingDate
+      groupChatId
+      title {
+        translation(locale: "pt-BR")
+      }
+      slug
+      components {
+        id
+        __typename
+        name {
+          translation(locale: "pt-BR")
+        }
+      }
+    }
+  }
+}

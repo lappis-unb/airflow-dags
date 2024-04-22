@@ -1,0 +1,21 @@
+query Comments($id: String!) {
+  commentable(
+    id: $id
+    type: "Decidim::Comments::Comment"
+    locale: "pt-BR"
+    toggleTranslations: true
+  ) {
+    id
+    comments {
+      id
+      body
+      createdAt
+      updatedAt
+      status
+      author {
+        id
+        name
+      }
+    }
+  }
+}

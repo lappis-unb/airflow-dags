@@ -1,0 +1,22 @@
+query ComponentsInParticipatoryProcess($date: String) {
+  participatoryProcesses(filter: {publishedSince: $date}) {
+    ... on ParticipatoryProcess {
+      id
+      __typename
+      startDate
+      endDate
+      slug
+      groupChatId
+      title {
+        translation(locale: "pt-BR")
+      }
+      components {
+        id
+        __typename
+        name {
+          translation(locale: "pt-BR")
+        }
+      }
+    }
+  }
+}

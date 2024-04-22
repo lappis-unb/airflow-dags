@@ -1,0 +1,313 @@
+@font-face {
+  font-family: Rawline;
+  font-weight: bold;
+  src: url(fonts/rawline-800.ttf);
+}
+@font-face {
+  font-family: Rawline;
+  font-weight: normal;
+  src: url(fonts/rawline-400.ttf);
+}
+@font-face {
+  font-family: Rawline;
+  font-weight: bold;
+  font-style: italic;
+  src: url(fonts/rawline-800i.ttf);
+}
+@font-face {
+  font-family: Rawline;
+  font-weight: normal;
+  font-style: italic;
+  src: url(fonts/rawline-400i.ttf);
+}
+
+@page {
+  margin: 0;
+  padding: 0;
+  size: a4;
+  line-height: 150%;
+  padding: 30mm 30mm 26mm 30mm;
+  background-image: url("./imgs/bp-background-top-bar.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+@page :left {
+  @bottom-left {
+    position: absolute;
+    z-index: 40;
+    margin: 0;
+    padding: 0;
+    left: 0;
+    bottom: 10mm;
+    font-size: 60pt;
+  }
+}
+
+@page :right {
+  @bottom-right {
+    position: absolute;
+    z-index: 40;
+    margin: 0;
+    padding: 0;
+    bottom: 10mm;
+    font-size: 60pt;
+    background-color: #183EFF;
+  }
+}
+
+@page full {
+  margin: 0;
+  padding: 0;
+
+  @bottom-right {
+    content: none;
+  }
+
+  @bottom-left {
+    content: none;
+  }
+
+  background: white;
+  margin: 0;
+}
+
+@page :blank {
+  @bottom-right {
+    content: none;
+  }
+
+  @bottom-left {
+    content: none;
+  }
+}
+
+@page clean {
+  @bottom-right {
+    content: none;
+  }
+
+  @bottom-left {
+    content: none;
+  }
+}
+
+html {
+  counter-reset: h2-counter;
+  font-family: Rawline;
+  font-size: 10pt;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  color: #3C3C3C;
+  line-height: 150%;
+  font-family: 'DM Sans';
+}
+
+h2 {
+  font-size: 12pt;
+  font-weight: bold;
+}
+
+ul{
+  list-style-type: none;
+  position: relative;
+  left: 0;
+}
+.color-black{
+  color: #000;
+}
+
+a{
+  text-decoration: none;
+  color:black;
+}
+.pdf-page{
+  page-break-after: always;
+}
+.cover-content {
+  font-size: 32pt;
+  font-weight: bold;
+  text-align: center;
+}
+.title-1{
+  font-size: 14pt;
+}
+.cover-content h1 {
+  font-size: 22pt;
+  font-weight: bold;
+  margin: 40% 0 30% 0;
+  line-height: normal;
+}
+.cinza-escuro-4 h3 {
+  font-size: 20pt;
+  font-weight: bold;
+  line-height: 1.5;
+}
+.bold{
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.document-date{
+  font-weight:normal;
+  font-size:12pt;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 10px;
+}
+
+#contents {
+  page: clean;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+
+}
+thead,
+th {
+  color: white;
+  border: 1px solid #183EFF;
+  font-weight: 800;
+  text-align: center;
+  background-color: #183EFF;
+}
+
+td, tr {
+  border: 1px solid #183EFF;
+  padding: 8px;
+  text-align: center;
+  background-color: #ffffff;
+}
+
+img {
+  width: 180mm;
+  height: 120mm;
+  margin: 0 auto auto -15mm;
+}
+
+.highlight-first-column td:first-child {
+  color: white;
+  background-color: #183EFF;
+}
+
+.highlight-row {
+  font-weight: 800;
+  background-color: #183EFF;
+}
+
+.centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+}
+.sublist{
+  margin-left: -5%!important;
+  width: 100%;
+}
+.index-title{
+  font-size: 16pt;
+}
+.bold{
+  font-weight: bold;
+}
+.text-center{
+  text-align: center;
+  text-justify: inter-word;
+}
+.mb-1{
+  margin-bottom: 1%;
+}
+.image-label {
+  text-align: center;
+  font-size: 8pt;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 10pt;
+}
+
+.italic {
+  font-weight: 400;
+  font-style: italic;
+}
+
+.image-container {
+  margin: 4mm 0;
+  width: 140mm;
+  height: 400px;
+}
+
+p {text-align: justify;}
+
+.paragraph {
+  text-align: justify;
+}
+
+.flex{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.large-table-element:first-child{
+  width:140mm;
+  margin-top: 0;
+  align-items: center;
+  justify-content: center;
+  page-break-after: always;
+
+}
+.large-table-element{
+  width:140mm;
+  margin-top: 20%;
+  align-items: center;
+  page-break-after: always;
+  justify-content: center;
+
+}
+.second-large-table-element:first-child{
+  page-break-after: always;
+  width: 140mm;
+  margin-top: 0;
+  align-items: center;
+  justify-content: center;
+
+}
+.second-large-table-element{
+  width:140mm;
+  page-break-after: always;
+  margin-top: 20%;
+  align-items: center;
+  justify-content: center;
+
+}
+
+.Aceita {
+  color: #00D000
+}
+
+.Retirada {
+  color: #FF6464
+}
+
+.Rejeitada {
+  color: #FF0000 
+}
+
+.Avaliando {
+  color: #183EFF
+}
+
+.comment {
+  text-indent: 2em;
+}

@@ -1,0 +1,22 @@
+query ComponentsInInitiatives($date: String) {
+  initiatives(filter: {publishedSince: $date}) {
+    ... on Initiative {
+      id
+      __typename
+      signatureStartDate
+      signatureEndDate
+      groupChatId
+      title {
+        translation(locale: "pt-BR")
+      }
+      slug
+      components {
+        id
+        __typename
+        name {
+          translation(locale: "pt-BR")
+        }
+      }
+    }
+  }
+}

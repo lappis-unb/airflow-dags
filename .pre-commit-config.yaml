@@ -1,0 +1,42 @@
+# .pre-commit-config.yaml
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v2.3.0
+  hooks:
+  - id: check-yaml
+  - id: end-of-file-fixer
+  - id: trailing-whitespace
+
+- repo: https://github.com/igorshubovych/markdownlint-cli
+  rev: v0.39.0
+  hooks:
+  - id: markdownlint
+    args:
+      - "--fix"
+
+- repo: https://github.com/psf/black
+  rev: 24.2.0
+  hooks:
+  - id: black
+    args:
+      - "--diff"
+      - "--verbose"
+      - "--color"
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.3.5
+  hooks:
+  - id: ruff
+    args:
+      - "--fix"
+
+- repo: https://github.com/thlorenz/doctoc
+  rev: v2.2.0
+  hooks:
+  - id: doctoc
+    args:
+      - --gitlab
+      - --title=**Índice**
+      - --maxlevel=2
+      - --all
