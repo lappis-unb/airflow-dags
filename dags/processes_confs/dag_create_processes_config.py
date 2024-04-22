@@ -189,9 +189,25 @@ def _get_telegram_topics(component: dict, old_config: Optional[dict] = None):
 
 
 def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
+    """
+    Update the Telegram configuration for a component.
+
+    Args:
+    ----
+        component (dict): The component's configuration dictionary.
+        old_config (Optional[dict], optional): The old configuration dictionary. Defaults to None.
+
+    Raises:
+    ------
+        TypeError: If old_config is provided and is not a dictionary.
+
+    Returns:
+    -------
+        dict: The updated Telegram configuration for the component.
+    """
     assert isinstance(component, dict)
-    if old_config:
-        assert isinstance(old_config, (dict))
+    if old_config and not isinstance(old_config, dict):
+        raise TypeError("Parameter old_config needs to be a 'dict'.")
 
     if not component["telegram_config"]["telegram_group_id"]:
         return old_config["telegram_config"] if old_config else component["telegram_config"]
