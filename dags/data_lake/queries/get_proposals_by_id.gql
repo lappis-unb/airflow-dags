@@ -1,0 +1,80 @@
+query get_proposal_by_id($id: ID!) {
+  participatoryProcesses {
+    title {
+      translations {
+        text
+      }
+    }
+    components {
+      name{
+        translations {
+          text
+        }
+      }
+      id
+      ... on Proposals {
+        proposal (id:$id){
+          id
+          createdAt
+          publishedAt
+          updatedAt
+          attachments {
+            thumbnail
+            type
+            url
+          }
+          author {
+            id
+            name
+            nickname
+            organizationName
+          }
+          body {
+            translations {
+              text
+            }
+          }
+          category {
+            id
+            name {
+              translations {
+                text
+              }
+            }
+          }
+          authorsCount
+          userAllowedToComment
+          endorsementsCount
+          totalCommentsCount
+          versionsCount
+          voteCount
+          commentsHaveAlignment
+          commentsHaveVotes
+          createdInMeeting
+          hasComments
+          official
+          fingerprint {
+            source
+            value
+          }
+          position
+          reference
+          scope {
+            id
+            name {
+              translations {
+                text
+              }
+            }
+          }
+          state
+          title {
+            translations {
+              text
+            }
+          }
+        }
+      }
+    }
+  }
+}
