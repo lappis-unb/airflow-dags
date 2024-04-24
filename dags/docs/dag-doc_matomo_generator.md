@@ -2,6 +2,15 @@
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Índice**
+
+- [Documentação da DAG matomo generator](#documenta%C3%A7%C3%A3o-da-dag-matomo-generator)
+    - [Introdução](#introdu%C3%A7%C3%A3o)
+    - [Informações Gerais](#informa%C3%A7%C3%B5es-gerais)
+    - [Configuração da DAG](#configura%C3%A7%C3%A3o-da-dag)
+    - [Descrição das Tarefas](#descri%C3%A7%C3%A3o-das-tarefas)
+    - [Funções auxiliares](#fun%C3%A7%C3%B5es-auxiliares)
+
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Introdução
@@ -57,7 +66,7 @@ Antes de executar a DAG, certifique-se de configurar corretamente os seguintes p
         - **Nome:** matomo_conn
         - **host:** Mesmas configurações que o anterior.
         - **login:** Mesmas configurações que o anterior.
-        - **password:** Mesmas configurações que o anterior.  
+        - **password:** Mesmas configurações que o anterior.
 
     - **Passo 4:** Abrir o MinIO e criar um bucket com o mesmo nome do schema (matomo-daily-csv)
 

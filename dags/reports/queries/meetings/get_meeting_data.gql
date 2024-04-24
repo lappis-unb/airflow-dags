@@ -10,7 +10,7 @@ query meetingQuery ($id: ID!) {
       translation(locale: "pt-BR")
     }
     ... on Meetings {
-      meetings {    
+      meetings {
         pageInfo{
           hasNextPage
       		endCursor

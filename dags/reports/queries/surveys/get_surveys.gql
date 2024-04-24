@@ -38,7 +38,7 @@ query Survey{
                   }
                 }
               }
-            } 
+            }
             # forentity e fortype retornam apenas erro
             # tos são os termos de serviço
           }
