@@ -1,0 +1,26 @@
+query meetingQuery {
+  participatoryProcesses {
+    title {
+      translations {
+        text
+      }
+    }
+    components(filter: {type: "Meetings"}){
+      id
+      ... on Meetings {
+        id
+        meetings {
+          nodes {
+            id
+            comments{
+              body
+            }
+            	comments{
+                body
+              }
+          }
+        }
+      }
+    }
+  }
+}
