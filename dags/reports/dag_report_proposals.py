@@ -148,6 +148,26 @@ def _generate_report(
     return {"pdf_bytes": pdf_bytes}
 
 
+def send_invalid_email(
+    email,
+    date_start: str,
+    date_end: str,
+):
+    date_start = pendulum.parse(str(date_start), strict=False).strftime("%d/%m/%Y")
+    date_end = pendulum.parse(str(date_end), strict=False).strftime("%d/%m/%Y")
+
+    hook = SmtpHook(SMPT_CONN_ID)
+    hook = hook.get_conn()
+    body = f"""<p>Periodo selecionado, {date_start} até {date_end}, não possui dados no momento.</p>
+               <p>Por favor tente novamente mais tarde.</p>"""
+
+    hook.send_email_smtp(
+        to=email,
+        subject="Periodo invalido",
+        html_content=body,
+    )
+
+
 def send_email_with_pdf(
     email: str,
     pdf_bytes: bytes,
@@ -252,6 +272,14 @@ def generate_report_proposals(email: str, start_date: str, end_date: str, compon
     matomo_devices_detection_task = _get_matomo_extractor(
         get_components_url_task, "DevicesDetection", "getType"
     )
+
+    @task
+    def invalid_email(
+        email,
+        date_start: str,
+        date_end: str,
+    ):
+        send_invalid_email(email, date_start, date_end)
 
     @task(multiple_outputs=True)
     def generate_data(
