@@ -273,6 +273,36 @@ def generate_report_proposals(email: str, start_date: str, end_date: str, compon
         get_components_url_task, "DevicesDetection", "getType"
     )
 
+    @task.branch
+    def validate_data(
+        bp_data,
+        visits_summary,
+        visits_frequency,
+        user_region,
+        user_country,
+        devices_detection,
+    ):
+        bp_data = pd.DataFrame(bp_data)
+        visits_summary = pd.read_csv(StringIO(visits_summary))
+        visits_frequency = pd.read_csv(StringIO(visits_frequency))
+        user_region = pd.read_csv(StringIO(user_region))
+        user_country = pd.read_csv(StringIO(user_country))
+        devices_detection = pd.read_csv(StringIO(devices_detection))
+
+        if any(
+            [
+                bp_data.empty,
+                visits_summary.empty,
+                visits_frequency.empty,
+                user_region.empty,
+                user_country.empty,
+                devices_detection.empty,
+            ]
+        ):
+            return "invalid_email"
+
+        return "generate_data"
+
     @task
     def invalid_email(
         email,
