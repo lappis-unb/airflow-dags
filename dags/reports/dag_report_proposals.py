@@ -1,10 +1,12 @@
 import logging
 from contextlib import closing
 from datetime import datetime, timedelta
+from io import StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pandas as pd
+import pendulum
 import requests
 from airflow.decorators import dag, task
 from airflow.hooks.base import BaseHook
@@ -177,8 +179,8 @@ def send_email_with_pdf(
     date_end: str,
     url: str,
 ):
-    date_start = datetime.strptime(date_start, "%Y-%m-%d").strftime("%d-%m-%Y")
-    date_end = datetime.strptime(date_end, "%Y-%m-%d").strftime("%d-%m-%Y")
+    date_start = pendulum.parse(str(date_start), strict=False).strftime("%d/%m/%Y")
+    date_end = pendulum.parse(str(date_end), strict=False).strftime("%d/%m/%Y")
 
     hook = SmtpHook(SMPT_CONN_ID)
     hook = hook.get_conn()
@@ -357,6 +359,12 @@ def generate_report_proposals(email: str, start_date: str, end_date: str, compon
         component_id, filter_start_date=start_date, filter_end_date=end_date
     )
 
+    invalid_email_task = invalid_email(
+        email,
+        date_start=start_date,
+        date_end=end_date,
+    )
+
     generated_data = generate_data(
         get_components_data_task,
         visits_summary=matomo_visits_summary_task,
@@ -366,6 +374,19 @@ def generate_report_proposals(email: str, start_date: str, end_date: str, compon
         devices_detection=matomo_devices_detection_task,
         filter_start_date=start_date,
         filter_end_date=end_date,
+    )
+
+    (
+        get_components_data_task
+        >> validate_data(
+            get_components_data_task,
+            visits_summary=matomo_visits_summary_task,
+            visits_frequency=matomo_visits_frequency_task,
+            user_region=matomo_user_region_task,
+            user_country=matomo_user_country_task,
+            devices_detection=matomo_devices_detection_task,
+        )
+        >> [generated_data, invalid_email_task]
     )
 
     send_report_email(
