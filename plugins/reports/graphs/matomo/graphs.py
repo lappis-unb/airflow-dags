@@ -23,9 +23,11 @@ class MatomoGraphs(ReportGraphs):
             population_data = json.load(f)
         return population_data["population_uf"]
 
-    @decople
     def generate_device_graph(self, matomo_device_get_type: str):
         df = pd.read_csv(StringIO(matomo_device_get_type))
+        if df.empty:
+            return None
+
         matomo_data_sorted = df.sort_values("nb_visits", ascending=False).head(3)
         color_discrete_map = {"Smartphone": "#183EFF", "Desktop": "#FFD000", "Phablet": "#00D000"}
 
@@ -48,18 +50,20 @@ class MatomoGraphs(ReportGraphs):
 
         return self.b64_encode_graph(fig)
 
-    @decople
     def generate_brasil_access_map(
         self,
         matomo_user_get_country_csv: str,
         matomo_user_get_region_csv: str,
     ):
         region_visits = pd.read_csv(StringIO(matomo_user_get_region_csv))
+        country_visits = pd.read_csv(StringIO(matomo_user_get_country_csv))
+
+        if region_visits.empty or country_visits.empty:
+            return None
+
         region_visits = region_visits[region_visits["metadata_country"] == "br"].rename(
             columns={"metadata_region": "UF"}
         )
-
-        country_visits = pd.read_csv(StringIO(matomo_user_get_country_csv))
         total_brazil_visits = country_visits.loc[
             country_visits["metadata_code"] == "br", "sum_daily_nb_uniq_visitors"
         ].iloc[0]
