@@ -72,6 +72,7 @@ def flatten_structure_with_additional_fields(data):
     flattened_data = []
     for item in data:
         main_title = extract_text(item.get("title", {}).get("translations", []))
+        slug = item.get("slug")
         for component in item.get("components", []):
             component_id = component.get("id", "")
             component_name = extract_text(component.get("name", {}).get("translations", []))
@@ -79,6 +80,7 @@ def flatten_structure_with_additional_fields(data):
                 for proposal in component.get("proposals", {}).get("nodes", []):
                     proposal_data = {
                         "main_title": main_title,
+                        "slug": slug,
                         "component_id": component_id,
                         "component_name": component_name,
                         "proposal_id": proposal["id"],
@@ -193,6 +195,7 @@ def _convert_dtype(df: pd.DataFrame) -> pd.DataFrame:
         "reference": "str",
         "scope": "str",
         "state": "str",
+        "slug":"str",
         "total_comments_count": "int",
         "user_allowed_to_comment": "bool",
         "versions_count": "int",
@@ -446,6 +449,7 @@ def _check_and_create_table(engine):
             f"""
           CREATE TABLE {SCHEMA}.{TABLE_NAME} (
             main_title text NULL,
+            slug text NULL,
             component_id int8 NULL,
             component_name text NULL,
             proposal_id int8 NOT NULL,
@@ -608,7 +612,7 @@ def _task_move_file_s3(context):
     default_args={
         "owner": "Amoêdo/Nitai",
         "depends_on_past": False,
-        "retries": 5,
+        "retries": 0,
         "retry_delay": timedelta(minutes=1),
     },
     schedule="0 23 * * *",
