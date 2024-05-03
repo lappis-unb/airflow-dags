@@ -35,7 +35,12 @@ def _get_query():
 
 ESPACOS = ["processes"]
 
-
+def get_credentials_matomo(matomo_conn:str = "matomo_conn"):
+    matomo_conn = BaseHook.get_connection(matomo_conn)
+    matomo_url = matomo_conn.host
+    token_auth = matomo_conn.password
+    site_id = matomo_conn.login
+    return matomo_url, token_auth, site_id
 @dag(
     default_args=default_args,
     schedule_interval="0 0 * * *",
@@ -64,10 +69,9 @@ def dag_matomo_segmentation():
 
     @task
     def get_segment_matomo():
-        matomo_conn = BaseHook.get_connection("matomo_conn")
-        matomo_url = matomo_conn.host
-        token_auth = matomo_conn.password
-        site_id = matomo_conn.login
+        
+
+        matomo_url, token_auth, site_id = get_credentials_matomo()
 
         params = {
             "module": "API",
@@ -117,15 +121,13 @@ def dag_matomo_segmentation():
     @task(provide_context=True)
     def add_segmentation(**context):
         segmentations = context["ti"].xcom_pull(task_ids="filter_url")
-        matomo_conn = BaseHook.get_connection("matomo_conn")
-        matomo_url = matomo_conn.host
-        token_auth = matomo_conn.password
-        site_id = matomo_conn.login
+        matomo_url, token_auth, site_id = get_credentials_matomo()
         for segmentation in segmentations:
             splited_segmentation = segmentation.split("/")
             name = f"dag_{splited_segmentation[-5]}_{splited_segmentation[-4]}_{splited_segmentation[-2]}"
+            name = name.replace("-", "_")
             if not segmentation.startswith("https://brasilparticipativo.presidencia.gov.br/"):
-                logging.warning("Segmentation not accepted: %s - %s", segmentation, name)
+                logging.warning("Segmentation not accepted: %s \t - %s", segmentation, name)
                 continue
             params = {
                 "module": "API",
@@ -137,7 +139,6 @@ def dag_matomo_segmentation():
                 "name": name,
                 "definition": f"pageUrl=^{segmentation}",
             }
-            print(name, segmentation, site_id, token_auth)
             response = requests.post(matomo_url, params=params)
             if response.status_code == 200:
                 print(response.text)
@@ -151,7 +152,7 @@ def dag_matomo_segmentation():
     _filter_url = filter_url()
     (
         start >> [_get_url_matomo, _get_segment_matomo] >> _filter_url >> add_segmentation() >> end
-    )  # get_segment_matomo() >> end
+    )
     start >> _get_slug_id_teste >> _get_url_matomo
 
 
