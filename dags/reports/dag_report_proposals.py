@@ -160,12 +160,12 @@ def send_invalid_email(
 
     hook = SmtpHook(SMPT_CONN_ID)
     hook = hook.get_conn()
-    body = f"""<p>Periodo selecionado, {date_start} até {date_end}, não possui dados no momento.</p>
+    body = f"""<p>Período selecionado, {date_start} até {date_end}, não possui dados no momento.</p>
                <p>Por favor tente novamente mais tarde.</p>"""
 
     hook.send_email_smtp(
         to=email,
-        subject="Periodo invalido",
+        subject="Período inválido",
         html_content=body,
     )
 
@@ -376,18 +376,16 @@ def generate_report_proposals(email: str, start_date: str, end_date: str, compon
         filter_end_date=end_date,
     )
 
-    (
-        get_components_data_task
-        >> validate_data(
-            get_components_data_task,
-            visits_summary=matomo_visits_summary_task,
-            visits_frequency=matomo_visits_frequency_task,
-            user_region=matomo_user_region_task,
-            user_country=matomo_user_country_task,
-            devices_detection=matomo_devices_detection_task,
-        )
-        >> [generated_data, invalid_email_task]
+    validate_data_task = validate_data(
+        get_components_data_task,
+        visits_summary=matomo_visits_summary_task,
+        visits_frequency=matomo_visits_frequency_task,
+        user_region=matomo_user_region_task,
+        user_country=matomo_user_country_task,
+        devices_detection=matomo_devices_detection_task,
     )
+
+    (get_components_data_task >> validate_data_task >> [generated_data, invalid_email_task])
 
     send_report_email(
         email=email,
