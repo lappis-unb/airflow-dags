@@ -2,8 +2,6 @@ from io import StringIO
 
 import pandas as pd
 
-from plugins.reports.decorators import decople
-
 
 class MatotmoTables:
     """Provides methods to generate specific tables for the matomo report."""

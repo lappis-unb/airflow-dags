@@ -6,7 +6,6 @@ import geopandas as gpd
 import pandas as pd
 import plotly.express as px
 
-from plugins.reports.decorators import decople
 from plugins.reports.graphs.base.graphs import ReportGraphs
 
 
