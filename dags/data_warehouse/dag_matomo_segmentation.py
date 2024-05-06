@@ -122,12 +122,14 @@ def dag_matomo_segmentation():
                     "idSite": site_id,
                     "token_auth": token_auth,
                     "format": "csv",
+                    "filter_limit": "-1",
                 }
                 response = requests.get(matomo_url, params=params)
                 if response.status_code == 200:
                     data = StringIO(response.text)
                     df = pd.read_csv(data)
-                    return df["definition"].str.replace("pageUrl=^", "").values
+                    segmentations = df["definition"].str.replace("pageUrl=^", "").values.tolist()
+                    return segmentations
                 else:
                     raise Exception("deu ruim", response.status_code)
 
@@ -181,6 +183,7 @@ def dag_matomo_segmentation():
                 """
                 urls = context["ti"].xcom_pull(task_ids=f"{space}.get_url_matomo")
                 segments = context["ti"].xcom_pull(task_ids=f"{space}.get_segment_matomo")
+
                 new_segments = set(urls).difference(set(segments))
                 return list(new_segments)
 
@@ -204,7 +207,6 @@ def dag_matomo_segmentation():
                 """
                 segmentations = context["ti"].xcom_pull(task_ids=f"{space}.filter_url")
                 matomo_url, token_auth, site_id = get_credentials_matomo()
-                segmentations = segmentations[:3]
                 for segmentation in segmentations:
                     splited_segmentation = segmentation.split("/")
                     name = (
