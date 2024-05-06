@@ -1,0 +1,8 @@
+query slug_id {
+  assemblies  {
+    slug
+    components{
+      id
+    }  
+	}
+}
