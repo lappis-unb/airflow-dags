@@ -99,7 +99,6 @@ def dag_matomo_segmentation():
                     component_id = item[1]
                     url = f"{bp}/{space}/{slug}/f/{component_id}/"
                     urls.append(url)
-                print("to aqui crl", space)
                 return urls
 
             @task
@@ -183,7 +182,6 @@ def dag_matomo_segmentation():
                 urls = context["ti"].xcom_pull(task_ids=f"{space}.get_url_matomo")
                 segments = context["ti"].xcom_pull(task_ids=f"{space}.get_segment_matomo")
                 new_segments = set(urls).difference(set(segments))
-                print(new_segments)
                 return list(new_segments)
 
             @task(provide_context=True)
@@ -206,6 +204,7 @@ def dag_matomo_segmentation():
                 """
                 segmentations = context["ti"].xcom_pull(task_ids=f"{space}.filter_url")
                 matomo_url, token_auth, site_id = get_credentials_matomo()
+                segmentations = segmentations[:3]
                 for segmentation in segmentations:
                     splited_segmentation = segmentation.split("/")
                     name = (
@@ -213,6 +212,7 @@ def dag_matomo_segmentation():
                         f"{splited_segmentation[-4]}_{splited_segmentation[-2]}"
                     )
                     name = name.replace("-", "_")
+                    #hardcode triste.. mas necessario:(
                     if not segmentation.startswith("https://brasilparticipativo.presidencia.gov.br/"):
                         logging.warning("Segmentation not accepted: %s \t - %s", segmentation, name)
                         continue
@@ -228,8 +228,7 @@ def dag_matomo_segmentation():
                     }
                     response = requests.post(matomo_url, params=params)
                     if response.status_code == 200:
-                        print(response.text)
-                        return response.text
+                        logging.info("Segmentation added: %s", segmentation)
                     else:
                         raise Exception("deu ruim", response.status_code)
 
