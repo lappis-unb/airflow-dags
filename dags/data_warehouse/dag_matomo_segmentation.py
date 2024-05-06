@@ -5,11 +5,11 @@ from pathlib import Path
 
 import pandas as pd
 import requests
-from airflow.models import Variable
-
 from airflow.decorators import dag, task, task_group
 from airflow.hooks.base_hook import BaseHook
+from airflow.models import Variable
 from airflow.operators.empty import EmptyOperator
+
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 
 default_args = {
@@ -61,8 +61,8 @@ spaces = {"processes": "participatoryProcesses", "assemblies": "assemblies"}
 
 @dag(
     default_args=default_args,
-    schedule_interval="0 0 * * *",
-    start_date=datetime(2021, 1, 1),
+    schedule_interval="@daily",
+    start_date=datetime(2023, 1, 1),
     catchup=False,
     tags=["matomo", "segmentation"],
 )
@@ -212,7 +212,7 @@ def dag_matomo_segmentation():
                         f"{splited_segmentation[-4]}_{splited_segmentation[-2]}"
                     )
                     name = name.replace("-", "_")
-                    #hardcode triste.. mas necessario:(
+                    # hardcode triste.. mas necessario:(
                     if not segmentation.startswith("https://brasilparticipativo.presidencia.gov.br/"):
                         logging.warning("Segmentation not accepted: %s \t - %s", segmentation, name)
                         continue
