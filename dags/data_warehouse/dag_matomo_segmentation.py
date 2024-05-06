@@ -5,10 +5,11 @@ from pathlib import Path
 
 import pandas as pd
 import requests
+from airflow.models import Variable
+
 from airflow.decorators import dag, task, task_group
 from airflow.hooks.base_hook import BaseHook
 from airflow.operators.empty import EmptyOperator
-
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 
 default_args = {
@@ -92,8 +93,7 @@ def dag_matomo_segmentation():
                 """
                 slug_id = context["ti"].xcom_pull(task_ids=f"{space}.get_slug_id")
                 urls = []
-                bp = "https://brasilparticipativo.presidencia.gov.br/processes"
-                bp = "https://lab-decide.dataprev.gov.br"
+                bp = Variable.get("url_bp")
                 for item in slug_id:
                     slug = item[0]
                     component_id = item[1]
