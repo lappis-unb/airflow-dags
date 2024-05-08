@@ -1,0 +1,41 @@
+query meetingQuery {
+  participatoryProcesses {
+    title {
+      translations {
+        text
+      }
+    }
+    components{
+      ... on Meetings {
+        meetings {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            title {
+              translation(locale: "pt-BR")
+            }
+            category {
+              id
+              name {
+                translation(locale: "pt-BR")
+              }
+            }
+            typeOfMeeting
+            totalCommentsCount
+            startTime
+            endTime
+            attendeeCount
+            address
+            coordinates {
+              latitude
+              longitude
+            }
+          }
+        }
+      }
+    }
+  }
+}

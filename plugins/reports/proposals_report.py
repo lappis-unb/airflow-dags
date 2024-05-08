@@ -35,67 +35,61 @@ class ProposalsReport(Report):
         matomo_user_region_csv,
     ):
         document_title = f"Relatório {self.report_name}" if general_data else self.report_name
-        introduction_data = None
-        daily_graph_data = None
-        state_distribution_graph_data = None
-        data_access_data = None
-        device_graph_data = None
-        rank_temas_data = None
-        top_proposals_filtered_data = None
-        map_graph_data = None
 
-        if general_data:
-            introduction_data = {
-                "num_proposals": general_data.get("Propostas"),
-                "total_votes": general_data.get("Votos"),
-                "total_comments": general_data.get("Comentários"),
-            }
-            daily_graph_data = {
-                "file": self.bp_graphs.generate_daily_plot(
-                    proposals_publication_date=bp_df["proposal_published_at"],
-                    proposals_ids=bp_df["proposal_id"],
-                    total_comments_per_proposal=bp_df["proposal_total_comments"],
-                    votes_per_proposal=bp_df["proposal_total_votes"],
-                ),
-            }
-            state_distribution_graph_data = {
-                "file": self.bp_graphs.generate_state_distribution_donut(bp_df),
-            }
-            data_access_data = MatotmoTables.generate_table_access_data_overview(
-                matomo_visits_summary_csv, matomo_visits_frequency_csv
-            )
-            device_graph_data = {
-                "file": self.matomo_graphs.generate_device_graph(
-                    matomo_devices_detection_csv,
-                ),
-            }
-            rank_temas_data = BrasilParticipativoTables.generate_table_theme_ranking(
-                proposals_categories=bp_df["proposal_category_title"],
-                proposals_ids=bp_df["proposal_id"],
-                total_comments_per_proposal=bp_df["proposal_total_comments"].fillna(0).astype(int),
-                votes_per_proposal=bp_df["proposal_total_votes"].fillna(0).astype(int),
-            )
-            top_proposals_filtered_data = BrasilParticipativoTables.generate_top_proposals(
-                proposals_ids=bp_df["proposal_id"],
-                proposals_titles=bp_df["proposal_title"],
-                proposals_category_titles=bp_df["proposal_category_title"],
-                votes_per_proposal=bp_df["proposal_total_votes"].fillna(0).astype(int),
-                total_comments_per_proposal=bp_df["proposal_total_comments"].fillna(0).astype(int),
-            )
-            max_state, min_state, one_state = self.get_state_proportion_data(
-                matomo_user_country_csv, matomo_user_region_csv
-            )
-            state_proportion_data = {
-                "estado_maior_proporcao": max_state,
-                "estado_menor_proporcao": min_state,
-                "estado_proporcao_igual_um": one_state,
-            }
-            map_graph_data = {
-                "file": self.matomo_graphs.generate_brasil_access_map(
-                    matomo_user_country_csv,
-                    matomo_user_region_csv,
-                ),
-            }
+        # <---------- BP ---------->
+        introduction_data = {
+            "num_proposals": general_data.get("Propostas"),
+            "total_votes": general_data.get("Votos"),
+            "total_comments": general_data.get("Comentários"),
+        }
+
+        daily_graph_data = self.bp_graphs.generate_daily_plot(
+            proposals_publication_date=bp_df["proposal_published_at"],
+            proposals_ids=bp_df["proposal_id"],
+            total_comments_per_proposal=bp_df["proposal_total_comments"],
+            votes_per_proposal=bp_df["proposal_total_votes"],
+        )
+
+        state_distribution_graph_data = self.bp_graphs.generate_state_distribution_donut(bp_df)
+
+        rank_temas_data = BrasilParticipativoTables.generate_table_theme_ranking(
+            proposals_categories=bp_df["proposal_category_title"],
+            proposals_ids=bp_df["proposal_id"],
+            total_comments_per_proposal=bp_df["proposal_total_comments"].fillna(0).astype(int),
+            votes_per_proposal=bp_df["proposal_total_votes"].fillna(0).astype(int),
+        )
+
+        top_proposals_filtered_data = BrasilParticipativoTables.generate_top_proposals(
+            proposals_ids=bp_df["proposal_id"],
+            proposals_titles=bp_df["proposal_title"],
+            proposals_category_titles=bp_df["proposal_category_title"],
+            votes_per_proposal=bp_df["proposal_total_votes"].fillna(0).astype(int),
+            total_comments_per_proposal=bp_df["proposal_total_comments"].fillna(0).astype(int),
+        )
+
+        data_access_data = MatotmoTables.generate_table_access_data_overview(
+            matomo_visits_summary_csv, matomo_visits_frequency_csv
+        )
+        device_graph_data = {
+            "file": self.matomo_graphs.generate_device_graph(
+                matomo_devices_detection_csv,
+            ),
+        }
+
+        max_state, min_state, one_state = self.get_state_proportion_data(
+            matomo_user_country_csv, matomo_user_region_csv
+        )
+        state_proportion_data = {
+            "estado_maior_proporcao": max_state,
+            "estado_menor_proporcao": min_state,
+            "estado_proporcao_igual_um": one_state,
+        }
+        map_graph_data = {
+            "file": self.matomo_graphs.generate_brasil_access_map(
+                matomo_user_country_csv,
+                matomo_user_region_csv,
+            ),
+        }
 
         return {
             "document": {
@@ -106,8 +100,12 @@ class ProposalsReport(Report):
             "introduction": introduction_data,
             "general_data": general_data,
             "state_proportion": state_proportion_data,
-            "daily_graph": daily_graph_data,
-            "state_distribution_graph": state_distribution_graph_data,
+            "daily_graph": {
+                "file": daily_graph_data,
+            },
+            "state_distribution_graph": {
+                "file": state_distribution_graph_data,
+            },
             "data_access": data_access_data,
             "device_graph": device_graph_data,
             "rank_temas": rank_temas_data,

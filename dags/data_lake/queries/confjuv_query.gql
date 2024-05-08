@@ -1,0 +1,167 @@
+{
+  assembly(id: 25) {
+    title {
+      translations {
+        text
+      }
+    }
+    components {
+      ... on Proposals {
+        proposals {
+          edges {
+            node {
+              updatedAt
+              createdAt
+              type
+              totalCommentsCount
+              title {
+                translations {
+                  text
+                }
+              }
+              reference
+              author {
+                name
+                avatarUrl
+                badge
+                deleted
+                organizationName
+                nickname
+              }
+              id
+              body {
+                translations {
+                  text
+                }
+              }
+              comments {
+                status
+                body
+                id
+                author {
+                  name
+                  avatarUrl
+                  badge
+                  deleted
+                  organizationName
+                  nickname
+                }
+              }
+            }
+          }
+        }
+      }
+      ... on Blogs {
+        posts {
+          nodes {
+            title {
+              translations {
+                text
+              }
+            }
+            body {
+              translations {
+                text
+              }
+            }
+            author {
+              name
+            }
+            createdAt
+          }
+        }
+      }
+      ... on Accountability {
+        results {
+          nodes {
+            id
+            title {
+              translations {
+                text
+              }
+            }
+            status {
+              name {
+                translations {
+                  text
+                }
+              }
+              progress
+            }
+            createdAt
+            scope {
+              name {
+                translations {
+                  text
+                }
+              }
+            }
+            category {
+              name {
+                translations {
+                  text
+                }
+              }
+            }
+          }
+        }
+      }
+      ... on Meetings {
+        meetings {
+          nodes {
+            id
+            startTime
+            endTime
+            closed
+            title {
+              translations {
+                text
+              }
+            }
+            address
+          }
+        }
+      }
+      ... on Debates {
+        debates {
+          nodes {
+            reference
+            comments {
+              author {
+                name
+              }
+              createdAt
+              updatedAt
+              body
+              id
+            }
+            author {
+              avatarUrl
+              badge
+              id
+              name
+              nickname
+              organizationName
+              profilePath
+            }
+            createdAt
+            updatedAt
+            description {
+              translations {
+                text
+              }
+            }
+            hasComments
+            image
+            totalCommentsCount
+            title {
+              translations {
+                text
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
