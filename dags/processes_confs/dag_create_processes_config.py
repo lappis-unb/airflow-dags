@@ -206,19 +206,26 @@ def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
         dict: The updated Telegram configuration for the component.
     """
     assert isinstance(component, dict)
-    if old_config and not isinstance(old_config, dict):
+    if old_config is None:
+        old_config = dict()
+
+    if not isinstance(old_config, dict):
         raise TypeError("Parameter old_config needs to be a 'dict'.")
 
     if not component["telegram_config"]["telegram_group_id"]:
         return old_config["telegram_config"] if old_config else component["telegram_config"]
 
-    telegram_group_id = (
-        old_config["telegram_config"]["telegram_group_id"]
-        if old_config
-        else component["telegram_config"]["telegram_group_id"]
-    )
+    new_telegram_group_id = component["telegram_config"]["telegram_group_id"]
 
-    telegram_topics_to_create, telegram_topics_keys_configured = _get_telegram_topics(component, old_config)
+    if old_config.get("telegram_config", {}).get("telegram_group_id", None) != new_telegram_group_id:
+        telegram_topics_to_create, telegram_topics_keys_configured = (
+            set(PROPOSALS_TOPICS_TO_CREATE.keys()),
+            set(),
+        )
+    else:
+        telegram_topics_to_create, telegram_topics_keys_configured = _get_telegram_topics(
+            component, old_config
+        )
 
     new_topics = {
         topic: _configure_telegram_topic(
@@ -232,7 +239,7 @@ def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
         topic: (old_config if old_config else component)["telegram_config"][topic]
         for topic in telegram_topics_keys_configured
     }
-    result = {"telegram_group_id": telegram_group_id, **new_topics, **old_topics}
+    result = {"telegram_group_id": new_telegram_group_id, **new_topics, **old_topics}
 
     logging.info("Configured telegram for %s\n%s", component["process_id"], result)
 
