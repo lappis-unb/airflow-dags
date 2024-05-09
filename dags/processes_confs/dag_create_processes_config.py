@@ -239,7 +239,12 @@ def _update_telegram_config(component: dict, old_config: Optional[dict] = None):
         topic: (old_config if old_config else component)["telegram_config"][topic]
         for topic in telegram_topics_keys_configured
     }
-    result = {"telegram_group_id": new_telegram_group_id, **new_topics, **old_topics}
+    result = {
+        "telegram_conn_id": TELEGRAM_CONN_ID,
+        "telegram_group_id": new_telegram_group_id,
+        **new_topics,
+        **old_topics,
+    }
 
     logging.info("Configured telegram for %s\n%s", component["process_id"], result)
 
