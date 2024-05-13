@@ -36,8 +36,6 @@ def get_credentials_matomo(matomo_conn: str = "matomo_conn"):
     return matomo_url, token_auth, site_id
 
 
-spaces = {"processes": "participatoryProcesses", "assemblies": "assemblies"}
-
 
 def _task_get_segment_matomo():
     """
