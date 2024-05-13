@@ -1,5 +1,7 @@
-import pandas as pd
 from datetime import datetime, timedelta
+
+import pandas as pd
+
 
 def add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataFrame:
     """
@@ -29,4 +31,3 @@ def add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataF
     df["writing_day_id"] = writing_day_id
 
     return df
-
