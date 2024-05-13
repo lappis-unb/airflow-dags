@@ -19,7 +19,7 @@ def _get_query():
     -------
       str: The query string.
     """
-    query = Path(__file__).parent.joinpath("./queries/get_meeting_data.gql").open().read()
+    query = Path(__file__).parent.joinpath("./queries/get_meeting_comment_data.gql").open().read()
     return query
 
 
@@ -126,7 +126,7 @@ def _get_response_graphql(date, next_date):
 
 @dag(
     default_args={
-        "owner": "Eric/Laura",
+        "owner": "Laura/Eric",
         "depends_on_past": False,
         "retries": 1,
         "retry_delay": timedelta(minutes=1),
@@ -136,10 +136,10 @@ def _get_response_graphql(date, next_date):
     start_date=datetime(2023, 11, 10),
     max_active_runs=1,
     description=__doc__,
-    tags=["decidim", "reports", "meetings", "bp"],
-    dag_id="etl_meetings",
+    tags=["decidim", "reports", "meetings", "bp", "meetings_comment"],
+    dag_id="etl_meetings_comment",
 )
-def etl_meetings():
+def etl_meetings_comment():
     """DAG que extrai dados de reunioes de um GraphQL API e os armazena em um bucket MinIO."""
 
     @task_group(group_id="minio_tasks")
@@ -184,4 +184,4 @@ def etl_meetings():
     start >> minio_tasks() >> _extract_data >> end
 
 
-etl_meetings()
+etl_meetings_comment()
