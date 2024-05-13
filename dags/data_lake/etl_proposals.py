@@ -195,7 +195,7 @@ def _convert_dtype(df: pd.DataFrame) -> pd.DataFrame:
         "reference": "str",
         "scope": "str",
         "state": "str",
-        "slug":"str",
+        "slug": "str",
         "total_comments_count": "int",
         "user_allowed_to_comment": "bool",
         "versions_count": "int",
