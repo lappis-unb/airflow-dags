@@ -207,6 +207,10 @@ def _save_df_postgres(space, method, df):
     -------
         None
     """
+    if df.empty:
+        logging.warning("DataFrame vazio, não será salvo no PostgreSQL.")
+        return
+
     engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
     name_table = f"{space}_{method[1]}_{method[0]}".lower()
     df.to_sql(
@@ -216,6 +220,8 @@ def _save_df_postgres(space, method, df):
         index=False,
         schema=SCHEMA,
     )
+    logging.info("Dados %d salvos na tabela %s.%s", len(df), SCHEMA, name_table)
+
 
 
 def _get_df_from_minio(filename):
@@ -250,7 +256,7 @@ METHODS = [
 ]
 
 DEFAULT_ARGS = {
-    "owner": "airflow",
+    "owner": "Amoedo",
     "email_on_failure": False,
     "email_on_retry": False,
     "retries": 0,
@@ -268,7 +274,7 @@ SCHEMA = "raw"
     default_args=DEFAULT_ARGS,
     schedule_interval="@daily",
     start_date=datetime(2023, 1, 1),
-    catchup=False,
+    catchup=True,
     tags=["matomo", "segmentation"],
 )
 def components_matomo():
