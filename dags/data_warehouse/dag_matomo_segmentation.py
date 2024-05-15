@@ -261,7 +261,7 @@ DEFAULT_ARGS = {
     "owner": "Amoedo",
     "email_on_failure": False,
     "email_on_retry": False,
-    "retries": 0,
+    "retries": 3,
     "retry_delay": timedelta(minutes=5),
 }
 DECIDIM_CONN_ID = "api_decidim"

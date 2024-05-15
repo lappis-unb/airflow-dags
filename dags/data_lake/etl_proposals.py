@@ -612,7 +612,7 @@ def _task_move_file_s3(context):
     default_args={
         "owner": "Amoêdo/Nitai",
         "depends_on_past": False,
-        "retries": 0,
+        "retries": 3,
         "retry_delay": timedelta(minutes=1),
     },
     schedule="0 23 * * *",
