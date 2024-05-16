@@ -463,6 +463,7 @@ def test__check_and_create_table():
                 f"""
           CREATE TABLE {SCHEMA}.{TABLE_NAME} (
             main_title text NULL,
+            slug text NULL,
             component_id int8 NULL,
             component_name text NULL,
             proposal_id int8 NOT NULL,
