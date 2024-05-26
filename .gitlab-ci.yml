@@ -129,7 +129,9 @@ sonarcloud-check:
 # <------------- GENERATE dbt DAG ------------->
 compile_dbt_project:
   stage: compile_dbt
-  image: ghcr.io/dbt-labs/dbt-postgres:latest
+  image:
+    name: ghcr.io/dbt-labs/dbt-postgres:latest
+    entrypoint: ["/bin/bash", "-c"]
   script:
     - apt-get update
     - apt-get install -y wireguard iproute2
@@ -149,7 +151,9 @@ compile_dbt_project:
 
 process_manifest:
   stage: generate_dbt_dag
-  image: python:3.9
+  image:
+    name: python:3.9
+    entrypoint: ["/bin/bash", "-c"]
   script:
     - python $PYTHON_SCRIPT --manifest_path $DBT_PROJECT_DIR/target/manifest.json --project_path $DBT_PROJECT_DIR --profile_path $DBT_PROFILE_DIR --dag_folder_path dbt/
   artifacts:
