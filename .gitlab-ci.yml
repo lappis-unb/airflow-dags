@@ -129,7 +129,7 @@ sonarcloud-check:
 # <------------- GENERATE dbt DAG ------------->
 compile_dbt_project:
   stage: compile_dbt
-  image: python:3.9
+  image: ghcr.io/dbt-labs/dbt-postgres:latest
   script:
     - apt-get update
     - apt-get install -y wireguard iproute2
