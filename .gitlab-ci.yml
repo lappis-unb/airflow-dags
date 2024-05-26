@@ -131,7 +131,6 @@ compile_dbt_project:
   stage: compile_dbt
   image:
     name: ghcr.io/dbt-labs/dbt-postgres:latest
-    entrypoint: ["/bin/bash", "-c"]
   script:
     - apt-get update
     - apt-get install -y wireguard iproute2
