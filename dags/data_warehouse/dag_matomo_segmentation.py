@@ -69,7 +69,7 @@ def _task_get_segment_matomo():
         raise e
 
 
-def _task_get_data_matomo(all_segments, method, space, **context):
+def _task_get_data_matomo(all_segments, method, space, period, **context):
     """
     Get data from Matomo API for the specified segments.
 
@@ -93,7 +93,7 @@ def _task_get_data_matomo(all_segments, method, space, **context):
         params = {
             "module": "API",
             "idSite": site_id,
-            "period": "day",
+            "period": period,
             "date": date,
             "format": "csv",
             "token_auth": token_auth,
@@ -213,7 +213,7 @@ def _save_df_postgres(space, method, df):
         return
 
     engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
-    name_table = f"{space}_{method[1]}_{method[0]}".lower()
+    name_table = f"{method[1]}_{method[0]}".lower()
     df.to_sql(
         name=name_table,
         con=engine,
@@ -245,6 +245,24 @@ def _get_df_from_minio(filename):
     return df
 
 
+def add_period(df, period):
+    """
+    Adds a period column to the DataFrame.
+
+    Args:
+    ----
+        df (pandas.DataFrame): The DataFrame to add the period column to.
+        period (str): The period to add to the DataFrame.
+
+    Returns:
+    -------
+        pandas.DataFrame: The DataFrame with the period column added.
+
+    """
+    df["period"] = period
+    return df
+
+
 # Constantes
 
 METHODS = [
@@ -255,6 +273,11 @@ METHODS = [
     ("Referrers", "getAll"),
     ("UserCountry", "getCountry"),
     ("UserCountry", "getRegion"),
+    ("VisitFrequency", "get"),
+    ("DevicesDetection", "getType"),
+    ("DevicesDetection", "getBrand"),
+    ("DevicesDetection", "getModel"),
+    ("DevicesDetection", "getBrowsers"),
 ]
 
 DEFAULT_ARGS = {
@@ -272,110 +295,126 @@ SPACES = ["assemblies", "processes"]
 BUCKET_NAME = "teste-bucket"
 SCHEMA = "raw"
 TIMEOUT = 20  # 20 segundos
+SCHEDULER_INTERVALS = {
+    "day": "0 5 * * *",
+    "week": "0 5 * * 1",
+    "month": "0 5 1 * *",
+}
 
 
-@dag(
-    default_args=DEFAULT_ARGS,
-    schedule_interval="@daily",
-    start_date=datetime(2023, 1, 1),
-    catchup=True,
-    tags=["matomo", "segmentation"],
-)
-def components_matomo():
-    """
-    Airflow DAG for performing data segmentation with Matomo.
+def dag_generator(period, scheduler_interval):
 
-    This DAG retrieves data from Matomo for different segments, spaces, and methods.
-    It saves the data as JSON files in a MinIO bucket and also saves the data to PostgreSQL.
-
-    The DAG consists of the following tasks:
-    - start: Dummy task to start the DAG.
-    - end: Dummy task to end the DAG.
-    - create_bucket: Task to create a bucket in MinIO.
-    - create_schema: Task to create a schema in PostgreSQL.
-    - get_segment_matomo: Task to retrieve the segment data from Matomo.
-    - group (task group): Task group for processing data for each space.
-        - get_data_matomo: Task to retrieve and save data to MinIO for each method.
-        - task_save_postgres: Task to save data to PostgreSQL for each method.
-
-    The tasks are connected in the following order:
-    start >> [create_bucket, create_schema] >> segment >> group >> end
-    """
-    start = EmptyOperator(task_id="start")
-    end = EmptyOperator(task_id="end")
-
-    create_bucket = S3CreateBucketOperator(
-        task_id="create_bucket",
-        bucket_name=BUCKET_NAME,
-        aws_conn_id=MINIO_CONN,
+    @dag(
+        default_args=DEFAULT_ARGS,
+        schedule_interval=scheduler_interval,
+        start_date=datetime(2023, 1, 1),
+        catchup=True,
+        tags=["matomo", "segmentation"],
+        dag_id=f"components_matomo_{period}",
     )
+    def components_matomo():
+        """
+        Airflow DAG for performing data segmentation with Matomo.
 
-    create_schema = SQLExecuteQueryOperator(
-        task_id="create_schema",
-        sql=f"CREATE SCHEMA IF NOT EXISTS {SCHEMA};",
-        conn_id=POSTGRES_CONN,
-    )
+        This DAG retrieves data from Matomo for different segments, spaces, and methods.
+        It saves the data as JSON files in a MinIO bucket and also saves the data to PostgreSQL.
 
-    @task
-    def get_segment_matomo():
-        return _task_get_segment_matomo()
+        The DAG consists of the following tasks:
+        - start: Dummy task to start the DAG.
+        - end: Dummy task to end the DAG.
+        - create_bucket: Task to create a bucket in MinIO.
+        - create_schema: Task to create a schema in PostgreSQL.
+        - get_segment_matomo: Task to retrieve the segment data from Matomo.
+        - group (task group): Task group for processing data for each space.
+            - get_data_matomo: Task to retrieve and save data to MinIO for each method.
+            - task_save_postgres: Task to save data to PostgreSQL for each method.
 
-    segment = get_segment_matomo()
-    start >> [create_bucket, create_schema] >> segment
+        The tasks are connected in the following order:
+        start >> [create_bucket, create_schema] >> segment >> group >> end
+        """
+        start = EmptyOperator(task_id="start")
+        end = EmptyOperator(task_id="end")
 
-    for space in SPACES:
+        create_bucket = S3CreateBucketOperator(
+            task_id="create_bucket",
+            bucket_name=BUCKET_NAME,
+            aws_conn_id=MINIO_CONN,
+        )
 
-        @task_group(group_id=space)
-        def group(space):
-            for method in METHODS:
+        create_schema = SQLExecuteQueryOperator(
+            task_id="create_schema",
+            sql=f"CREATE SCHEMA IF NOT EXISTS {SCHEMA};",
+            conn_id=POSTGRES_CONN,
+        )
 
-                @task(task_id=f"save_minio_{method[1]}_{method[0]}", pool="matomo_pool", provide_context=True)
-                def get_data_matomo(segments: List[str], space: str, method: tuple, **context):
-                    """
-                    Retrieves data from Matomo for the given segments, space, and method.
+        @task
+        def get_segment_matomo():
+            return _task_get_segment_matomo()
 
-                    Adds temporal columns to the data based on the execution date.
-                    Saves the data as a JSON file in a MinIO bucket.
+        segment = get_segment_matomo()
+        start >> [create_bucket, create_schema] >> segment
 
-                    Args:
-                    ----
-                        segments (List[str]): List of segment names.
-                        space (str): Space name.
-                        method (tuple): Tuple containing method information.
-                        **context: Additional context passed by Airflow.
+        for space in SPACES:
 
-                    Returns:
-                    -------
-                        None
-                    """
-                    data = _task_get_data_matomo(segments, method, space, **context)
-                    data = add_temporal_columns(data, context["execution_date"])
-                    filename = _get_file_name(space, method, context)
-                    S3Hook(aws_conn_id=MINIO_CONN).load_string(
-                        string_data=data.to_json(orient="records"),
-                        key=filename,
-                        bucket_name=BUCKET_NAME,
-                        replace=True,
+            @task_group(group_id=space)
+            def group(space):
+                for method in METHODS:
+
+                    @task(
+                        task_id=f"save_minio_{method[1]}_{method[0]}",
+                        pool="matomo_pool",
+                        provide_context=True,
                     )
+                    def get_data_matomo(segments: List[str], space: str, method: tuple, period, **context):
+                        """
+                        Retrieves data from Matomo for the given segments, space, and method.
 
-                @task(task_id=f"save_postgres_{method[1]}_{method[0]}", provide_context=True)
-                def task_save_postgres(space, method, **context):
-                    """
-                    Task to save data to PostgreSQL.
+                        Adds temporal columns to the data based on the execution date.
+                        Saves the data as a JSON file in a MinIO bucket.
 
-                    Args:
-                    ----
-                        space (str): The space parameter.
-                        method (str): The method parameter.
-                        **context: Additional context parameters.
-                    """
-                    filename: str = _get_file_name(space, method, context)
-                    df: pd.DataFrame = _get_df_from_minio(filename)
-                    _save_df_postgres(space, method, df)
+                        Args:
+                        ----
+                            segments (List[str]): List of segment names.
+                            space (str): Space name.
+                            method (tuple): Tuple containing method information.
+                            **context: Additional context passed by Airflow.
 
-                get_data_matomo(segment, space, method) >> task_save_postgres(space, method)
+                        Returns:
+                        -------
+                            None
+                        """
+                        data = _task_get_data_matomo(segments, method, space, period, **context)
+                        data = add_temporal_columns(data, context["execution_date"])
+                        data = add_period(data, period)
+                        filename = _get_file_name(space, method, context)
+                        S3Hook(aws_conn_id=MINIO_CONN).load_string(
+                            string_data=data.to_json(orient="records"),
+                            key=filename,
+                            bucket_name=BUCKET_NAME,
+                            replace=True,
+                        )
 
-        group(space=space) >> end
+                    @task(task_id=f"save_postgres_{method[1]}_{method[0]}", provide_context=True)
+                    def task_save_postgres(space, method, **context):
+                        """
+                        Task to save data to PostgreSQL.
+
+                        Args:
+                        ----
+                            space (str): The space parameter.
+                            method (str): The method parameter.
+                            **context: Additional context parameters.
+                        """
+                        filename: str = _get_file_name(space, method, context)
+                        df: pd.DataFrame = _get_df_from_minio(filename)
+                        _save_df_postgres(space, method, df)
+
+                    get_data_matomo(segment, space, method, period) >> task_save_postgres(space, method)
+
+            group(space=space) >> end
+
+    return components_matomo()
 
 
-components_matomo()
+for key, value in SCHEDULER_INTERVALS.items():
+    dag_generator(key, value)
