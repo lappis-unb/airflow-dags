@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime, timedelta
 from io import StringIO
@@ -20,6 +21,10 @@ from inflection import underscore
 from plugins.matomo.hook import MatomoHook
 
 
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i : i + n]
 
 
 def _task_get_segment_matomo():
@@ -65,33 +70,56 @@ def _task_get_data_matomo(all_segments, method, space, period, **context):
     -------
         pandas.DataFrame: Concatenated DataFrame containing the data for all segments.
     """
-    matomo_url, token_auth, site_id = get_credentials_matomo()
+    matomo_hook = MatomoHook(MATOMO_CONN_ID)
     segments = _get_segments(all_segments, space)
+    method = f"{method[0]}.{method[1]}"
     date = context["execution_date"].strftime("%Y-%m-%d")
 
     dfs = []
-    for segment in segments:
-        params = {
+    bulk_segments = [
+        {
             "module": "API",
-            "idSite": site_id,
             "period": period,
             "date": date,
-            "format": "csv",
-            "token_auth": token_auth,
             "segment": f"pageUrl=={segment}",
-            "method": f"{method[0]}.{method[1]}",
+            "method": method,
         }
-        response = requests.get(matomo_url, params=params, timeout=TIMEOUT)
-        if not _verify_response(segment, response):
-            continue
+        for segment in segments
+    ]
+    for bulk_segment in chunks(bulk_segments, 10):
+        """
+        Using matomo bulk request there are 3 possible results:
+            1. List with dicts
+            2. List with list of dicts
+            3. Empty list
+        The first case happens when there is only one line per segment for the requested method.
+        The second case happens when there is multiple lines per segment for the requested method.
+        The third case happens when there is no data availeble.
+        """
+        response = matomo_hook.secure_bulk_request(bulk_segment, response_format="json")
+        data_list: list[dict | list[dict]] = json.loads(response)
+        current_segments = [item["segment"] for item in bulk_segment]
 
-        df = _transform_response_to_df(method, space, date, segment, response)
-        dfs.append(df)
-    return pd.concat(dfs)
+        if all([isinstance(i, dict) for i in data_list]):
+            df = _transform_response_to_df(
+                data=data_list, method=method, space=space, date=date, segment=current_segments
+            )
+            dfs.append(df)
+        elif all([isinstance(i, list) for i in data_list]):
+            for item, segment in zip(data_list, current_segments):
+                df = _transform_response_to_df(
+                    data=item, method=method, space=space, date=date, segment=segment
+                )
+                dfs.append(df)
+        else:
+            raise Exception
+
+    df = pd.concat(dfs, ignore_index=True)
+    return df
 
 
 def _transform_response_to_df(
-    method: tuple, space: str, date: str, segment: str, response: dict
+    data: list[dict], method: tuple, space: str, date: str, segment: str | list[str]
 ) -> pd.DataFrame:
     """
     Transforms the response from an API call into a pandas DataFrame.
@@ -108,34 +136,13 @@ def _transform_response_to_df(
     -------
         pd.DataFrame: The transformed data as a pandas DataFrame.
     """
-    data = StringIO(response.text)
-    df = pd.read_csv(data)
+    df = pd.DataFrame(data)
     df["space"] = space
-    df["url"] = segment
-    df["method"] = method[1]
+    df["method"] = method
     df["date"] = date
+    df["url"] = segment
+
     return df
-
-
-def _verify_response(segment, response):
-    """
-    Verify the response status of a request.
-
-    Args:
-    ----
-        segmento (str): The segment name.
-        response (requests.Response): The response object.
-
-    Returns:
-    -------
-        bool: True if the response status is successful, False otherwise.
-    """
-    try:
-        response.raise_for_status()
-        return True
-    except requests.exceptions.RequestException:
-        logging.error("Erro na solicitação, segmento: %s", segment)
-        return False
 
 
 def _get_segments(all_segments, space):
