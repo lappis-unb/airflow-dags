@@ -5,8 +5,8 @@ from typing import List, Tuple
 
 import pandas as pd
 import requests
+from airflow.datasets import Dataset
 from airflow.decorators import dag, task, task_group
-from airflow.hooks.base_hook import BaseHook
 from airflow.hooks.postgres_hook import PostgresHook
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
@@ -15,25 +15,11 @@ from airflow.providers.amazon.aws.operators.s3 import (
 )
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from data_warehouse.tools import add_temporal_columns
+from inflection import underscore
+
+from plugins.matomo.hook import MatomoHook
 
 
-def get_credentials_matomo(matomo_conn: str = "matomo_conn"):
-    """
-    Retrieves the credentials required to connect to the Matomo API.
-
-    Args:
-    ----
-        matomo_conn (str): The name of the Airflow connection for Matomo.
-
-    Returns:
-    -------
-        tuple: A tuple containing the Matomo URL, token authentication, and site ID.
-    """
-    matomo_conn = BaseHook.get_connection(matomo_conn)
-    matomo_url = matomo_conn.host
-    token_auth = matomo_conn.password
-    site_id = matomo_conn.login
-    return matomo_url, token_auth, site_id
 
 
 def _task_get_segment_matomo():
@@ -189,13 +175,12 @@ def _get_file_name(space: str, method: Tuple[str, str], context: dict) -> str:
     return name_file
 
 
-def _save_df_postgres(space, method, df):
+def _save_df_postgres(method, df):
     """
     Save a DataFrame to a PostgreSQL table.
 
     Args:
     ----
-        space (str): The space name.
         method (tuple): A tuple containing the method information.
         df (pandas.DataFrame): The DataFrame to be saved.
 
@@ -276,24 +261,24 @@ METHODS = [
 ]
 
 DEFAULT_ARGS = {
-    "owner": "Amoedo",
+    "owner": "Amoedo/Paulo",
     "email_on_failure": False,
     "email_on_retry": False,
-    "retries": 3,
+    "retries": 5,
     "retry_delay": timedelta(minutes=5),
 }
 DECIDIM_CONN_ID = "api_decidim"
 POSTGRES_CONN_ID = "conn_postgres"
+MATOMO_CONN_ID = "matomo_conn"
 MINIO_CONN = "minio_conn_id"
-POSTGRES_CONN = "conn_postgres"
-SPACES = ["assemblies", "processes"]
-BUCKET_NAME = "teste-bucket"
+BUCKET_NAME = "matomo"
 SCHEMA = "raw"
-TIMEOUT = 20  # 20 segundos
+SPACES = ["assemblies", "processes"]
+TIMEOUT = 60  # 60 segundos
 SCHEDULER_INTERVALS = {
-    "day": "0 5 * * *",
-    "week": "0 5 * * 1",
-    "month": "0 5 1 * *",
+    "day": "@daily",
+    "week": "@weekly",
+    "month": "@monthly",
 }
 
 
@@ -339,7 +324,7 @@ def dag_generator(period, scheduler_interval):
         create_schema = SQLExecuteQueryOperator(
             task_id="create_schema",
             sql=f"CREATE SCHEMA IF NOT EXISTS {SCHEMA};",
-            conn_id=POSTGRES_CONN,
+            conn_id=POSTGRES_CONN_ID,
         )
 
         @task
@@ -356,7 +341,7 @@ def dag_generator(period, scheduler_interval):
                 for method in METHODS:
 
                     @task(
-                        task_id=f"save_minio_{method[1]}_{method[0]}",
+                        task_id=f"save_minio_{underscore(method[0])}_{underscore(method[1])}".lower(),
                         pool="matomo_pool",
                         provide_context=True,
                     )
@@ -389,7 +374,11 @@ def dag_generator(period, scheduler_interval):
                             replace=True,
                         )
 
-                    @task(task_id=f"save_postgres_{method[1]}_{method[0]}", provide_context=True)
+                    @task(
+                        task_id=f"save_postgres_{underscore(method[0])}_{underscore(method[1])}".lower(),
+                        provide_context=True,
+                        outlets=[Dataset(f"{underscore(method[0])}_{underscore(method[1])}".lower())],
+                    )
                     def task_save_postgres(space, method, **context):
                         """
                         Task to save data to PostgreSQL.
@@ -402,7 +391,7 @@ def dag_generator(period, scheduler_interval):
                         """
                         filename: str = _get_file_name(space, method, context)
                         df: pd.DataFrame = _get_df_from_minio(filename)
-                        _save_df_postgres(space, method, df)
+                        _save_df_postgres(method, df)
 
                     get_data_matomo(segment, space, method, period) >> task_save_postgres(space, method)
 
