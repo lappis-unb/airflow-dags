@@ -47,20 +47,15 @@ def _task_get_segment_matomo():
     ------
         Exception: If the API request fails.
     """
-    matomo_url, token_auth, site_id = get_credentials_matomo()
+    matomo_hook = MatomoHook(MATOMO_CONN_ID)
 
-    params = {
-        "module": "API",
-        "method": "SegmentEditor.getAll",
-        "idSite": site_id,
-        "token_auth": token_auth,
-        "format": "csv",
-        "filter_limit": "-1",
-    }
+    filters = {"filter_limit": -1}
+
     try:
-        response = requests.get(matomo_url, params=params, timeout=TIMEOUT)
-        response.raise_for_status()
-        data = StringIO(response.text)
+        response = matomo_hook.secure_request(
+            module="SegmentEditor", method="getAll", filters=filters, response_format="csv"
+        )
+        data = StringIO(response)
         df = pd.read_csv(data)
         segments = df["definition"].str.replace("pageUrl=^", "").values.tolist()
         return segments
