@@ -193,7 +193,7 @@ def _save_df_postgres(method, df):
         return
 
     engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
-    name_table = f"{method[1]}_{method[0]}".lower()
+    name_table = f"{underscore(method[0])}_{underscore(method[1])}".lower()
     df.to_sql(
         name=name_table,
         con=engine,
@@ -247,17 +247,10 @@ def add_period(df, period):
 
 METHODS = [
     ("VisitsSummary", "get"),
-    ("Actions", "getPageUrls"),
-    ("Actions", "getPageTitles"),
-    ("Actions", "getOutlinks"),
-    ("Referrers", "getAll"),
-    ("UserCountry", "getCountry"),
-    ("UserCountry", "getRegion"),
     ("VisitFrequency", "get"),
+    ("UserCountry", "getRegion"),
+    ("UserCountry", "getCountry"),
     ("DevicesDetection", "getType"),
-    ("DevicesDetection", "getBrand"),
-    ("DevicesDetection", "getModel"),
-    ("DevicesDetection", "getBrowsers"),
 ]
 
 DEFAULT_ARGS = {
@@ -283,7 +276,6 @@ SCHEDULER_INTERVALS = {
 
 
 def dag_generator(period, scheduler_interval):
-
     @dag(
         default_args=DEFAULT_ARGS,
         schedule_interval=scheduler_interval,
