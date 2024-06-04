@@ -21,10 +21,10 @@ from datetime import timedelta
 
 import bs4
 from airflow.decorators import dag, task
+from airflow.models import Variable
 from airflow.providers.telegram.hooks.telegram import TelegramHook
 from bs4 import BeautifulSoup
 from requests.exceptions import HTTPError
-from airflow.models import Variable
 
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 
@@ -216,6 +216,7 @@ def yaml_to_dag(process_config: dict):
         dag_id="notify_set_off_proposals",
         schedule="0 23 * * *",
     )(False)
+
 
 for config in eval(Variable.get("DAG_ON_OFF_CONFIG", [{}])):
     yaml_to_dag(config)
