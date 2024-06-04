@@ -20,6 +20,7 @@ from airflow.operators.empty import EmptyOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.amazon.aws.operators.s3 import S3CreateBucketOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+from data_warehouse.tools import add_temporal_columns
 
 logger = logging.getLogger(__name__)
 
@@ -32,36 +33,6 @@ SCHEMA = "raw"
 
 def _generate_s3_filename(module, method, period, execution_date):
     return f"{module}_{method}_{period}_{execution_date.strftime('%Y-%m-%d')}.csv"
-
-
-def add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataFrame:
-    """
-    Adds temporal columns to the DataFrame based on the execution date.
-
-    Args:
-    ----
-        df (pd.DataFrame): The original DataFrame without temporal columns.
-        execution_date (datetime): The execution date to base the temporal columns on.
-
-    Returns:
-    -------
-        pd.DataFrame: The DataFrame with added temporal columns.
-    """
-    event_day_id = int(execution_date.strftime("%Y%m%d"))
-    available_day = execution_date + timedelta(days=1)
-    available_day_id = int(available_day.strftime("%Y%m%d"))
-    available_month_id = int(available_day.strftime("%Y%m"))
-    available_year_id = int(available_day.strftime("%Y"))
-    writing_day_id = int(datetime.now().strftime("%Y%m%d"))
-
-    # Add the temporal columns to the DataFrame
-    df["event_day_id"] = event_day_id
-    df["available_day_id"] = available_day_id
-    df["available_month_id"] = available_month_id
-    df["available_year_id"] = available_year_id
-    df["writing_day_id"] = writing_day_id
-
-    return df
 
 
 class MatomoDagGenerator:  # noqa: D101
@@ -220,7 +191,7 @@ class MatomoDagGenerator:  # noqa: D101
             default_args=self.default_dag_args,
             schedule=schedule,
             start_date=datetime(2023, 5, 1),
-            catchup=True,
+            catchup=False,
             doc_md=__doc__,
             tags=["matomo", "ingestion"],
         )

@@ -5,6 +5,7 @@ query teste ($start_date: String!, $end_date: String!) {
         text
       }
     }
+    slug
     components{
       id
       ... on Proposals   {

@@ -21,6 +21,7 @@ from datetime import timedelta
 
 import bs4
 from airflow.decorators import dag, task
+from airflow.models import Variable
 from airflow.providers.telegram.hooks.telegram import TelegramHook
 from bs4 import BeautifulSoup
 from requests.exceptions import HTTPError
@@ -213,21 +214,9 @@ def yaml_to_dag(process_config: dict):
     DecidimNotifierDAGGenerator().generate_dag(
         **process_config,
         dag_id="notify_set_off_proposals",
-        schedule="0 22 * * *",
+        schedule="0 23 * * *",
     )(False)
 
 
-yaml_to_dag(
-    {
-        "component_id": 284,
-        "process_id": "planoclima",
-        "start_date": "2024-01-26",
-        "end_date": None,
-        "decidim_url": "https://lab-decide.dataprev.gov.br/admin/participatory_processes/planoclima/components/283/edit",
-        "telegram_config": {
-            "telegram_group_id": -1002122697479,
-            "telegram_moderation_proposals_topic_id": None,
-            "telegram_conn_id": "telegram_decidim",
-        },
-    }
-)
+for config in eval(Variable.get("DAG_ON_OFF_CONFIG", [{}])):
+    yaml_to_dag(config)
