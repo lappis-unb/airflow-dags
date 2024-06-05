@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: propostas_mais_votadas
+    description: "Modelo que contém as propostas mais votadas"
+    columns:
+      - name: proposta_id
+        description: "ID da proposta"
+      - name: titulo
+        description: "Título da proposta"
+      - name: votos
+        description: "Número de votos da proposta"
+  - name: temas_mais_votados
+    description: "Modelo que contém os temas mais votados"
+    columns:
+      - name: tema_id
+        description: "ID do tema"
+      - name: nome_tema
+        description: "Nome do tema"
+      - name: votos
+        description: "Número de votos do tema"
+  - name: top_20_propostas_mais_votadas
+    description: "Modelo que contém as 20 propostas mais votadas"
+    columns:
+      - name: proposta_id
+        description: "ID da proposta"
+      - name: nome_do_da_proposta
+        description: "Nome da proposta"
+      - name: votos
+        description: "Top 20 propostas mais votadas"
+  - name: estado_da_proposta
+    description: "Modelo que contém a porcentagem do estado da proposta"
+    columns:
+      - name: proposta_id
+        description: "ID da proposta"
+      - name: estado
+        description: "Estado atual da proposta"
+      - name: data_atualizacao
+        description: "Data de atualização do estado da proposta"
