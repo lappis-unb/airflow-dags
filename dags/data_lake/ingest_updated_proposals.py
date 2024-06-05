@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List
 
 import pandas as pd
+from airflow import Dataset
 from airflow.decorators import dag, task
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
@@ -331,6 +332,8 @@ PROCESSED_ZONE = "processed"
 TABLE_NAME = "updated_proposals"
 SCHEMA = "raw"
 
+postgres_dataset = Dataset(f"postgres://conn_postgres/{SCHEMA}.{TABLE_NAME}")
+
 
 @dag(
     default_args=default_args,
@@ -468,7 +471,7 @@ def ingest_update_proposals():
         conn_id="conn_postgres",
     )
 
-    @task(provide_context=True)
+    @task(provide_context=True, outlets=[postgres_dataset])
     def insert_updated_proposals(**context):
         """
         Task to insert updated proposals into a PostgreSQL database.
