@@ -214,7 +214,7 @@ def yaml_to_dag(process_config: dict):
     DecidimNotifierDAGGenerator().generate_dag(
         **process_config,
         dag_id="notify_set_off_proposals",
-        schedule="0 23 * * *",
+        schedule="0 22 * * *",
     )(False)
 
 
