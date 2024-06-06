@@ -80,7 +80,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
             tags=["decidim"],
             is_paused_upon_creation=False,
         )
-        def notify_on_n_off_proposals(
+        def notify_on_n_off_fields(
             proposals_status: bool,
         ):  # pylint: disable=missing-function-docstring
             # due to Airflow DAG __doc__
@@ -108,7 +108,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
 
                 return dict_output
 
-            def _find_form_input_id(dict_form: bs4.element.Tag):
+            def _find_form_input_id(dict_form: bs4.element.Tag, pattern: str):
                 """Find a form input id using regex.
 
                 Args:
@@ -129,7 +129,6 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                 # component[step_settings][29][creation_enabled]
                 # component[step_settings][10][creation_enabled]
 
-                pattern = r"component\[.*step_settings\](\[[0-9]{1,}\]){0,1}\[creation_enabled\]"
                 pattern_match = [component for component in dict_form if re.match(pattern, component)]
                 logging.info(pattern_match)
                 pattern_match = sorted(pattern_match)
@@ -141,7 +140,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                 return form_input_id
 
             @task
-            def set_proposals_availability(proposals_status: bool):
+            def set_fields_availability(proposals_status: bool):
                 """Airflow task that makes a request to set status of `Participantes podem criar propostas`.
 
                 It means that a decidim component became available or unavailable
@@ -164,14 +163,20 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                 # logging.info(f"HTML Form:\n{html_form}")
                 logging.info("Requesting page form from %s", self.decidim_url)
 
-                dict_form = _convert_html_form_to_dict(html_form)
-                form_input_id = _find_form_input_id(dict_form)
+                proposals_pattern = r"component\[.*step_settings\](\[[0-9]{1,}\]){0,1}\[creation_enabled\]"
+                comments_pattern = r"component\[.*step_settings\](\[[0-9]{1,}\]){0,1}\[comments_blocked\]"
 
-                # set proposals availability
+                dict_form = _convert_html_form_to_dict(html_form)
+                proposals_form_input_id = _find_form_input_id(dict_form, proposals_pattern)
+                comments_form_input_id = _find_form_input_id(dict_form, comments_pattern)
+
+                # set fields availability
                 if proposals_status:
-                    dict_form[form_input_id] = ["1"]
+                    dict_form[proposals_form_input_id] = ["1"]
+                    dict_form[comments_form_input_id] = ["0"]
                 else:
-                    dict_form[form_input_id] = ["0"]
+                    dict_form[proposals_form_input_id] = ["0"]
+                    dict_form[comments_form_input_id] = ["1"]
 
                 data = list(dict_form.items())
                 session.post(self.decidim_url.rstrip("/edit"), data=data)
@@ -187,9 +192,9 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                         input checkbox `Participantes podem criar propostas`.
                 """
                 if proposals_status:
-                    message = "✅ <b>[ATIVADO]</b> \n\n<i>Participantes podem criar propostas</i>"
+                    message = "✅ <b>[ATIVADO]</b> \n\n<i>Participantes podem criar propostas e comentar</i>"
                 else:
-                    message = "🚫 <b>[DESATIVADO]</b> \n\n<i>Participantes não podem criar propostas</i>"
+                    message = "🚫 <b>[DESATIVADO]</b> \n\n<i>Participantes não podem criar propostas nem comentar</i>"  # noqa: E501
 
                 TelegramHook(
                     telegram_conn_id=self.telegram_conn_id,
@@ -201,22 +206,22 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                     }
                 )
 
-            set_proposals_availability(proposals_status) >> send_telegram(proposals_status)
+            set_fields_availability(proposals_status) >> send_telegram(proposals_status)
 
-        return notify_on_n_off_proposals
+        return notify_on_n_off_fields
 
 
 def yaml_to_dag(process_config: dict):
     """Recive the path to configuration file and generate an airflow dag."""
     DecidimNotifierDAGGenerator().generate_dag(
         **process_config,
-        dag_id="notify_set_on_proposals",
+        dag_id="notify_set_on_fields",
         schedule="0 8 * * *",
     )(True)
 
     DecidimNotifierDAGGenerator().generate_dag(
         **process_config,
-        dag_id="notify_set_off_proposals",
+        dag_id="notify_set_off_fields",
         schedule="0 22 * * *",
     )(False)
 
