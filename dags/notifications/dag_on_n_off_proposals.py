@@ -127,9 +127,12 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                 # name="component[default_step_settings][creation_enabled]"
                 # component[step_settings][27][creation_enabled]
                 # component[step_settings][29][creation_enabled]
+                # component[step_settings][10][creation_enabled]
+
                 pattern = r"component\[.*step_settings\](\[[0-9]{1,}\]){0,1}\[creation_enabled\]"
-                pattern_match = re.findall(pattern, str(dict_form))
-                logging.info(dict_form)
+                pattern_match = [component for component in dict_form if re.match(pattern, component)]
+                logging.info(pattern_match)
+                pattern_match = sorted(pattern_match)
 
                 form_input_id = pattern_match.pop(0)
 
@@ -214,7 +217,7 @@ def yaml_to_dag(process_config: dict):
     DecidimNotifierDAGGenerator().generate_dag(
         **process_config,
         dag_id="notify_set_off_proposals",
-        schedule="0 23 * * *",
+        schedule="0 22 * * *",
     )(False)
 
 
