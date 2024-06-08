@@ -1,7 +1,7 @@
 stages:
-  # - lint
-  # - tests
-  # - sonarcloud
+  - lint
+  - tests
+  - sonarcloud
   - compile_dbt
   - generate_dbt_dag
   - commit_dbt_dag
@@ -18,119 +18,118 @@ variables:
   GIT_CI_EMAIL: "ci@lappis.rocks"
   
 
-# # <------------- Definicao de Anchors ------------->
+# <------------- Definicao de Anchors ------------->
 
-# default:
-#   image: python:3.10-slim
-#   retry: 0
-#   before_script:
-#     - pip install -r requirements.txt # Install dependencies
-#     - pip install -r requirements.testing.txt # Install testing dependencies
+default:
+  image: python:3.10-slim
+  retry: 0
+  before_script:
+    - pip install -r requirements.txt # Install dependencies
+    - pip install -r requirements.testing.txt # Install testing dependencies
 
-# .default_rule_python: &default_rule_python
-#   only:
-#     - merge_requests
-#     - branches
+.default_rule_python: &default_rule_python
+  only:
+    - merge_requests
+    - branches
 
-# .default_pytest: &default_pytest
-#   <<: *default_rule_python
-#   script:
-#     - pytest . --junitxml=pytest_report.xml
-#   coverage: '/^TOTAL.+?(\d+\%)$/'
-#   artifacts:
-#     when: always
-#     paths:
-#       - pytest_report.xml
-#     reports:
-#       junit: pytest_report.xml
+.default_pytest: &default_pytest
+  <<: *default_rule_python
+  script:
+    - pytest . --junitxml=pytest_report.xml
+  coverage: '/^TOTAL.+?(\d+\%)$/'
+  artifacts:
+    when: always
+    paths:
+      - pytest_report.xml
+    reports:
+      junit: pytest_report.xml
 
 
-# # <------------- Linters ------------->
+# <------------- Linters ------------->
 
-# lint-ruff:
-#   stage: lint
-#   <<: *default_rule_python
-#   script:
-#     - ruff .
+lint-ruff:
+  stage: lint
+  <<: *default_rule_python
+  script:
+    - ruff .
 
-# lint-black:
-#   stage: lint
-#   <<: *default_rule_python
-#   script:
-#     - pip install black
-#     - black . --check --verbose --color
+lint-black:
+  stage: lint
+  <<: *default_rule_python
+  script:
+    - pip install black
+    - black . --check --verbose --color
 
-# lint-markdown:
-#   stage: lint
-#   image: node:20-bullseye
-#   inherit:
-#     default: false
-#   rules:
-#     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-#     - changes:
-#         - ./**/*.md
-#   variables:
-#     SHOW_ERRORS: "true"
-#   script:
-#     - echo "---------- Stage 1 - Install Prerequisites ----------"
-#     - apt-get update
-#     - apt-get install curl
-#     - npm install -g markdownlint-cli
+lint-markdown:
+  stage: lint
+  image: node:20-bullseye
+  inherit:
+    default: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - changes:
+        - ./**/*.md
+  variables:
+    SHOW_ERRORS: "true"
+  script:
+    - echo "---------- Stage 1 - Install Prerequisites ----------"
+    - apt-get update
+    - apt-get install curl
+    - npm install -g markdownlint-cli
 
-#     - echo "---------- Stage 2 - Run markdownlint (v0.32.2) ----------"
-#     - bash -c "$(curl -fsSL https://raw.githubusercontent.com/CICDToolbox/markdown-lint/master/pipeline.sh)"
+    - echo "---------- Stage 2 - Run markdownlint (v0.32.2) ----------"
+    - bash -c "$(curl -fsSL https://raw.githubusercontent.com/CICDToolbox/markdown-lint/master/pipeline.sh)"
 
-# # <------------- Testing ------------->
+# <------------- Testing ------------->
 
-# # pytest-3.8:
-# #   stage: tests
-# #   image: python:3.8-slim
-# #   <<: *default_pytest
-
-# pytest-3.9:
+# pytest-3.8:
 #   stage: tests
-#   image: python:3.9-slim
+#   image: python:3.8-slim
 #   <<: *default_pytest
 
-# pytest-3.10:
-#   stage: tests
-#   image: python:3.10-slim
-#   <<: *default_pytest
+pytest-3.9:
+  stage: tests
+  image: python:3.9-slim
+  <<: *default_pytest
 
-# pytest-3.11:
-#   stage: tests
-#   image: python:3.11-slim
-#   <<: *default_pytest
+pytest-3.10:
+  stage: tests
+  image: python:3.10-slim
+  <<: *default_pytest
 
-# # <------------- QA ------------->
+pytest-3.11:
+  stage: tests
+  image: python:3.11-slim
+  <<: *default_pytest
 
-# sonarcloud-check:
-#   stage: sonarcloud
-#   image:
-#     name: sonarsource/sonar-scanner-cli:latest
-#     entrypoint: [""]
-#   inherit:
-#     default: false
-#   dependencies:
-#     - pytest-3.9
-#     - pytest-3.10
-#     - pytest-3.11
-#   cache:
-#     key: "${CI_JOB_NAME}"
-#     paths:
-#       - .sonar/cache
-#   script:
-#     - sonar-scanner -X
-#   only:
-#     - merge_requests
-#     - main
-#     - development
+# <------------- QA ------------->
+
+sonarcloud-check:
+  stage: sonarcloud
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  inherit:
+    default: false
+  dependencies:
+    - pytest-3.9
+    - pytest-3.10
+    - pytest-3.11
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - sonar-scanner -X
+  only:
+    - merge_requests
+    - main
+    - development
 
 # <------------- GENERATE dbt DAG ------------->
 compile_dbt_project:
   stage: compile_dbt
-  image:
-    name: ghcr.io/dbt-labs/dbt-postgres:latest
+  image: python:3.9
   script:
     - apt-get update
     - apt-get install -y wireguard iproute2
@@ -139,7 +138,7 @@ compile_dbt_project:
     - pip install dbt-postgres
     - cd $DBT_PROJECT_DIR
     - dbt deps
-    - dbt compile
+    - dbt compile -t prod
     - wg-quick down wg0
   artifacts:
     paths:
@@ -150,9 +149,7 @@ compile_dbt_project:
 
 process_manifest:
   stage: generate_dbt_dag
-  image:
-    name: python:3.9
-    entrypoint: ["/bin/bash", "-c"]
+  image: python:3.9
   script:
     - python $PYTHON_SCRIPT --manifest_path $DBT_PROJECT_DIR/target/manifest.json --project_path $DBT_PROJECT_DIR --profile_path $DBT_PROFILE_DIR --dag_folder_path dbt/
   artifacts:
