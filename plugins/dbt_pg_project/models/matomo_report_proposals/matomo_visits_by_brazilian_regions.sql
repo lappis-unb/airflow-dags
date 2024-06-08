@@ -6,6 +6,9 @@
                 "columns": ["component_id", "period", "date", "country"],
             }
         ],
+        meta={
+            "datasets_trigger": "user_country_get_country_bronze,user_country_get_region_bronze"
+        }
     )
 }}
 

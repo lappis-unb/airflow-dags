@@ -6,6 +6,9 @@
                 "columns": ["component_id", "period", "date"],
             }
         ],
+        meta={
+            "datasets_trigger": "visits_summary_get_bronze,visit_frequency_get_bronze"
+        }
     )
 }}
 

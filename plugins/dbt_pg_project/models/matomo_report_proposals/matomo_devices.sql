@@ -6,6 +6,9 @@
                 "columns": ["component_id", "period", "date"],
             }
         ],
+        meta={
+            "datasets_trigger": "devices_detection_get_type_bronze"
+        }
     )
 }}
 
