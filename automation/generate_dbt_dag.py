@@ -1,5 +1,7 @@
 import argparse
+import glob
 import json
+import os
 from contextlib import closing
 from pathlib import Path
 
@@ -8,15 +10,15 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Process dbt manifest and generate Airflow DAG.")
     parser.add_argument(
         "--manifest_path",
-        default="dbt_pg_project/target/manifest.json",
+        default="plugins/dbt_pg_project/target/manifest.json",
         required=False,
         help="Path to the dbt manifest file",
     )
     parser.add_argument(
-        "--project_path", default="dbt_pg_project", required=False, help="Path to the dbt project"
+        "--project_path", default="plugins/dbt_pg_project", required=False, help="Path to the dbt project"
     )
     parser.add_argument(
-        "--profile_path", default="dbt_pg_project", required=False, help="Path to the dbt profile"
+        "--profile_path", default="plugins/dbt_pg_project", required=False, help="Path to the dbt profile"
     )
     parser.add_argument(
         "--dag_folder_path",
@@ -24,6 +26,14 @@ def parse_args():
         required=False,
         help="Folder path where generated DAGs will be saved",
     )
+
+    parser.add_argument(
+        "--clean_folder_path",
+        default="true",
+        required=False,
+        help="Cleans dag folder before the generation of DAGs",
+    )
+
     return parser.parse_args()
 
 
@@ -120,13 +130,17 @@ def get_models_dependecies(upstreams, nodes_type_map, datasets_map):
     return dependencies
 
 
-def generate_airflow_dags(dag_folder_path, manifest, dbt_project_path, dbt_profile_path):
+def generate_airflow_dags(
+    dag_folder_path, manifest, dbt_project_path, dbt_profile_path, clean_folder_before_generate: bool
+):
     upstreams, nodes_type_map, datasets_map = parse_manifest(manifest)
     models_dependecies = get_models_dependecies(upstreams, nodes_type_map, datasets_map)
 
     dag_path = Path(dag_folder_path)
     if not dag_path.exists():
         dag_path.mkdir(parents=True, exist_ok=True)
+
+    files_to_write = {}
 
     for node, dependencies in models_dependecies.items():
         tasks_str = "\n".join(
@@ -144,20 +158,32 @@ def generate_airflow_dags(dag_folder_path, manifest, dbt_project_path, dbt_profi
             dag_content = dag_template_file.read()
         assert dag_content is not None
 
-        with open(dag_path.joinpath(f"{dag_name}.py"), "w") as f:
-            f.write(
-                dag_content.format(
-                    dag_id=dag_name,
-                    tasks_str=tasks_str,
-                    node_type=nodes_type_map[node],
-                    dependencies_str=dependencies_str,
-                    dag_trigger=generate_airflow_schedule(dependencies["model_dependecies"], nodes_type_map),
-                    outlet_dataset=f"{node}_model",
-                )
-            )
+        files_to_write[dag_path.joinpath(f"{dag_name}.py")] = dag_content.format(
+            dag_id=dag_name,
+            tasks_str=tasks_str,
+            node_type=nodes_type_map[node],
+            dependencies_str=dependencies_str,
+            dag_trigger=generate_airflow_schedule(dependencies["model_dependecies"], nodes_type_map),
+            outlet_dataset=f"{node}_model",
+        )
+
+    if clean_folder_before_generate:
+        files = glob.glob(f"{Path(dag_folder_path).absolute().as_posix()}/*.py")
+        for f in files:
+            os.remove(f)
+
+    for filename, file_content in files_to_write.items():
+        with closing(open(filename, "w")) as file:
+            file.write(file_content)
 
 
 if __name__ == "__main__":
     args = parse_args()
     manifest = get_manifest(args.manifest_path)
-    generate_airflow_dags(args.dag_folder_path, manifest, args.project_path, args.profile_path)
+    generate_airflow_dags(
+        args.dag_folder_path,
+        manifest,
+        args.project_path,
+        args.profile_path,
+        args.clean_folder_path.lower() == "true",
+    )
