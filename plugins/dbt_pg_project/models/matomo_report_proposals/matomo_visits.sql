@@ -1,9 +1,13 @@
-{{ config(
-    materialized = 'table',
-    indexes=[
-      {'columns': ['component_id', 'period', 'date'],}
-    ]
-)}}
+{{
+    config(
+        materialized="table",
+        indexes=[
+            {
+                "columns": ["component_id", "period", "date"],
+            }
+        ],
+    )
+}}
 
 
 select
@@ -15,9 +19,10 @@ select
     gv.bounce_rate,
     gf.nb_visits_returning,
     gf.nb_visits_new
-from
-    raw.get_visitssummary gv
-    inner join raw.get_visitfrequency as gf on gv.url = gf.url
+from {{ source("matomo", "visits_summary_get") }} gv
+inner join
+    {{ source("matomo", "visit_frequency_get") }} as gf
+    on gv.url = gf.url
     and gv."date" = gf."date"
     and gv.event_day_id = gf.event_day_id
     and gv."period" = gf."period"
