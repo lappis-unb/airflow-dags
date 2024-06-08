@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: matomo
+    schema: raw
+    tables:
+      - name: visits_summary_get
+      - name: visit_frequency_get
+      - name: devices_detection_get_type
+      - name: user_country_get_region
+      - name: user_country_get_country
