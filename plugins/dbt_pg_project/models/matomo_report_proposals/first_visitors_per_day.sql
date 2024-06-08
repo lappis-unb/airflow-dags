@@ -2,10 +2,7 @@
     materialized = 'table',
     indexes=[
       {'columns': ['component_id'],}
-    ],
-    meta={
-        "datasets_trigger": "visit_frequency_get"
-    }
+    ]
 )}}
 
 

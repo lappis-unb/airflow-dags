@@ -1,7 +1,17 @@
 dbt_pg_project:
+  target: local
   outputs:
-    dev:
-      host: 192.168.3.22
+    local:
+      type: postgres
+      host: localhost
+      port: 25570
+      dbname: airflow
+      user: airflow
+      pass: airflow
+      schema: raw
+      threads: 4
+    prod:
+      host: "{{ env_var('DBT_POSTGRES_HOST') }}"
       port: 5432
       dbname: analytics
       user: "{{ env_var('DBT_POSTGRES_USER') }}"
@@ -9,4 +19,3 @@ dbt_pg_project:
       schema: dbt
       threads: 4
       type: postgres
-  target: dev
