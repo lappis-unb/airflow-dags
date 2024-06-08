@@ -5,7 +5,7 @@ dbt_pg_project:
       type: postgres
       host: localhost
       port: 25570
-      dbname: airflow
+      dbname: data_warehouse
       user: airflow
       pass: airflow
       schema: raw
