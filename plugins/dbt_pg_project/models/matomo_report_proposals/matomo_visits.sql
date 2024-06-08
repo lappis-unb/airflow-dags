@@ -1,7 +1,7 @@
 {{ config(
     materialized = 'table',
     indexes=[
-      {'columns': ['component_id'],}
+      {'columns': ['component_id', 'period', 'date'],}
     ]
 )}}
 
@@ -20,9 +20,4 @@ from
     inner join raw.get_visitfrequency as gf on gv.url = gf.url
     and gv."date" = gf."date"
     and gv.event_day_id = gf.event_day_id
-    and gv.available_day_id = gf.available_day_id
-    and gv.available_month_id = gf.available_month_id
-    and gv.available_year_id = gf.available_year_id
-    and gv.writing_day_id = gf.writing_day_id
     and gv."period" = gf."period"
-where gv."period" = 'day'
