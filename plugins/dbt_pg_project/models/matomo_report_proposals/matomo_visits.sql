@@ -19,7 +19,7 @@ select
     gv."date",
     gv."space",
     gv.nb_uniq_visitors,
-    gv.bounce_rate,
+    cast(split_part(gv.bounce_rate, '%', 1) as float4) as bounce_rate,
     gf.nb_visits_returning,
     gf.nb_visits_new
 from {{ source("matomo", "visits_summary_get") }} gv
