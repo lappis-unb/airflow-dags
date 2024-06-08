@@ -376,7 +376,7 @@ def dag_generator(period, scheduler_interval):
                     @task(
                         task_id=f"save_postgres_{underscore(method[0])}_{underscore(method[1])}".lower(),
                         provide_context=True,
-                        outlets=[Dataset(f"{underscore(method[0])}_{underscore(method[1])}".lower())],
+                        outlets=[Dataset(f"{underscore(method[0])}_{underscore(method[1])}_bronze".lower())],
                     )
                     def task_save_postgres(space, method, **context):
                         """
