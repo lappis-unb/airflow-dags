@@ -40,6 +40,7 @@ from plugins.graphql.hooks.graphql_hook import GraphQLHook
 DECIDIM_CONN_ID = "api_decidim"
 PAGE_FORM_CLASS = "form edit_component"
 
+
 def _convert_html_form_to_dict(html_form: bs4.element.Tag) -> defaultdict:
     """Convert html <form> and <input> tags to python dictionary.
 
@@ -63,6 +64,7 @@ def _convert_html_form_to_dict(html_form: bs4.element.Tag) -> defaultdict:
 
     return dict_output
 
+
 def _find_form_input_id(dict_form: bs4.element.Tag, pattern: str):
     """Find a form input id using regex.
 
@@ -79,11 +81,6 @@ def _find_form_input_id(dict_form: bs4.element.Tag, pattern: str):
     ------
         IndexError: If does not found a component of creation enabled.
     """
-    # name="component[default_step_settings][creation_enabled]"
-    # component[step_settings][27][creation_enabled]
-    # component[step_settings][29][creation_enabled]
-    # component[step_settings][10][creation_enabled]
-
     pattern_match = [component for component in dict_form if re.match(pattern, component)]
     logging.info(pattern_match)
     pattern_match = sorted(pattern_match)
@@ -94,10 +91,12 @@ def _find_form_input_id(dict_form: bs4.element.Tag, pattern: str):
 
     return form_input_id
 
+
 def set_comment_permmision(dict_form: dict, status: bool):
     comments_pattern = r"component\[.*step_settings\](\[[0-9]{1,}\]){0,1}\[comments_blocked\]"
     comments_form_input_id = _find_form_input_id(dict_form, comments_pattern)
     dict_form[comments_form_input_id] = [f"{int(not status)}"]
+
 
 def set_proposals_permmision(dict_form: dict, status: bool):
     proposals_pattern = r"component\[.*step_settings\](\[[0-9]{1,}\]){0,1}\[creation_enabled\]"
@@ -196,7 +195,6 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                     case "3":
                         set_proposals_permmision(dict_form, permission_status)
                         set_comment_permmision(dict_form, permission_status)
-
 
                 data = list(dict_form.items())
                 session.post(self.decidim_url.rstrip("/edit"), data=data)
