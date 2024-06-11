@@ -7,7 +7,7 @@
             }
         ],
         meta={
-            "datasets_trigger": "user_country_get_country_bronze,user_country_get_region_bronze"
+            "datasets_trigger": "bronze_user_country_get_country,bronze_user_country_get_region"
         }
     )
 }}

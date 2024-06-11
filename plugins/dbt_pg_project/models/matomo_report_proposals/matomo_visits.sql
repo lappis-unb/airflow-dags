@@ -7,7 +7,7 @@
             }
         ],
         meta={
-            "datasets_trigger": "visits_summary_get_bronze,visit_frequency_get_bronze"
+            "datasets_trigger": "bronze_visits_summary_get,bronze_visit_frequency_get"
         }
     )
 }}

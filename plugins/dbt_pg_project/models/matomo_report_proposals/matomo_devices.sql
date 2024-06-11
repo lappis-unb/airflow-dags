@@ -7,7 +7,7 @@
             }
         ],
         meta={
-            "datasets_trigger": "devices_detection_get_type_bronze"
+            "datasets_trigger": "bronze_devices_detection_get_type"
         }
     )
 }}
