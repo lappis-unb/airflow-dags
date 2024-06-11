@@ -1,6 +1,11 @@
-{{ config(
-    materialized='table',
-) }}
+{{
+    config(
+        materialized="table",
+        meta={
+            "datasets_trigger": "postgres://conn_postgres/raw.updated_proposals"
+        }
+    )
+}}
 
 WITH latest_updates AS (
    SELECT

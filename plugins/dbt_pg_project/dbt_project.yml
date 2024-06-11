@@ -33,3 +33,6 @@ models:
   dbt_pg_project:
     # Config indicated by + and applies to all files under models/example/
 
+vars:
+  start_date: '2023-01-01'
+  end_date: '2024-12-31'
