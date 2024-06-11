@@ -28,10 +28,9 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--clean_folder_path",
-        default="true",
-        required=False,
-        help="Cleans dag folder before the generation of DAGs",
+        "--keep_previous_dags",
+        action="store_true",
+        help="Flag to not erase the dags folder before the generation of new DAGs",
     )
 
     return parser.parse_args()
@@ -185,5 +184,5 @@ if __name__ == "__main__":
         manifest,
         args.project_path,
         args.profile_path,
-        args.clean_folder_path.lower() == "true",
+        not args.keep_previous_dags,
     )
