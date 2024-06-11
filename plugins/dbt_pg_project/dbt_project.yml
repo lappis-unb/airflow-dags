@@ -31,5 +31,13 @@ clean-targets:         # directories to be removed by `dbt clean`
 # files using the `{{ config(...) }}` macro.
 models:
   dbt_pg_project:
-    # Config indicated by + and applies to all files under models/example/
+    1.bronze:
+      +materialized: table
+      +schema: bronze
+    2.silver:
+      +materialized: table
+      +schema: silver
+    3.gold:
+      +materialized: table
+      +schema: gold
 
