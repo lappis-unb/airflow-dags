@@ -127,9 +127,6 @@ O diagrama ilustra o fluxo de integração e entrega contínuas (CI/CD) para um 
    - Após a criação do DAG, o CI/CD irá commitar as mesmas geradas no próprio repositório do projeto, assim ele é publicado e disponibilizado para execução. Isso garante que todas as etapas do processamento de dados estejam prontas para serem executadas.
 <br>
 
-6. **K8S (Kubernetes):**
-   - O projeto DBT é então implantado em um ambiente Kubernetes. O Kubernetes orquestra a execução das tarefas definidas no DAG, gerenciando os contêineres necessários para executar o pipeline de dados de maneira eficiente e escalável. O Kubernetes também permite que o fluxo seja repetido sempre que o usuário faz um novo commit na main. Isso garante que todas as alterações no código sejam automaticamente integradas e entregues de maneira contínua e consistente.
-
 ### Resumo das Interações
 
 - **User -> Main Branch:** O usuário faz um commit que é enviado para o main.
