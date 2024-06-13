@@ -73,7 +73,7 @@ A seguir, o passo a passo dos comandos para instalação do DBT e do provedor qu
 - **Instalar DBT e dbt-postgres:**
 
     ```bash
-    pip install dbt-core dbt-postgres
+    pip install dbt-postgres
     ```
 
     Este comando instala o DBT e o provedor Postgres, respectivamente. Durante esta etapa, pode ser solicitado alguns dados referentes ao banco de dados ao qual você deseja se conectar. Esses dados podem ser configurados posteriormente no arquivo **profiles.yml** caso não estejam prontos no momento.
