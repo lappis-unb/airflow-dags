@@ -107,6 +107,7 @@ O diagrama ilustra o fluxo de integração e entrega contínuas (CI/CD) para um 
 
 1. **User (Usuário):**
    - O usuário é o ponto de partida. Ele faz modificações no código do projeto e, em seguida, realiza um commit dessas alterações.
+   O pipeline de CI/CD será executado apenas para as branches main e development, que possuem uma configuração associada ao Airflow. Como ambas as branches são protegidas, a ação que desencadeará a execução do pipeline será um Merge Request (MR).
 <br>
 
 2. **Main Branch :**
