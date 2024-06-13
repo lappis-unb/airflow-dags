@@ -68,7 +68,9 @@ A seguir, o passo a passo dos comandos para criação e ativação do ambiente v
 
 #### Projeto DBT
 
-A seguir, o passo a passo dos comandos para instalação do DBT e do provedor que utilizaremos para o projeto, que é o **dbt-postgres**. Observação: é recomendável estar dentro do diretório **airflow-dags/plugins** para manter a organização do projeto.
+A seguir, o passo a passo dos comandos para instalação do DBT e do provedor que utilizaremos para o projeto, que é o **dbt-postgres**.
+
+Para garantir que o Apache Airflow consiga acessar e executar os modelos do dbt, é essencial que o projeto dbt seja colocado dentro do diretório plugins do Airflow. O Airflow tem acesso direto aos arquivos localizados nas pastas dags e plugins, e dessa forma, a estrutura correta do diretório deve ser respeitada.
 
 - **Instalar DBT e dbt-postgres:**
 
@@ -78,7 +80,11 @@ A seguir, o passo a passo dos comandos para instalação do DBT e do provedor qu
 
     Este comando instala o DBT e o provedor Postgres, respectivamente. Durante esta etapa, pode ser solicitado alguns dados referentes ao banco de dados ao qual você deseja se conectar. Esses dados podem ser configurados posteriormente no arquivo **profiles.yml** caso não estejam prontos no momento.
 <br>
+
 - **Estrutura do Projeto DBT:**
+
+    Resaltando, especificamente para essa automação, o projeto dbt deve ser colocado no caminho `plugins/<nome_do_projeto_dbt>`. Isso permite que o Airflow execute as tarefas do dbt corretamente, garantindo que os modelos sejam processados conforme necessário.
+
     - Os modelos DBT devem ser armazenados no diretório: `<nome_do_projeto_dbt>/models`.
     - Os testes são definidos no arquivo: `*_tests.yml`.
 
