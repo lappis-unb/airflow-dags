@@ -37,3 +37,11 @@ models:
         description: "Estado atual da proposta"
       - name: data_atualizacao
         description: "Data de atualização do estado da proposta"
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: updated_proposals
+        identifier: updated_proposals
+        database: conn_postgres

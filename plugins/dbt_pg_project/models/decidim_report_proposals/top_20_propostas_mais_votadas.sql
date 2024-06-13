@@ -7,7 +7,6 @@
     )
 }}
 
-
 WITH latest_updates AS (
    SELECT
        proposal_id,
@@ -17,17 +16,13 @@ WITH latest_updates AS (
        COALESCE(total_comments_count, 0) AS total_comments_count,
        ROW_NUMBER() OVER (PARTITION BY proposal_id ORDER BY proposal_updated_at DESC) AS rn
    FROM
-       raw.updated_proposals
-   WHERE
-       proposal_updated_at BETWEEN '{{ var("start_date") }}' AND '{{ var("end_date") }}'
+       {{ source('raw', 'updated_proposals') }}
 )
 SELECT
    proposal_title,
    category_name,
    vote_count,
-   total_comments_count,
-   '{{ var("start_date") }}' AS data_inicial,
-   '{{ var("end_date") }}' AS data_final
+   total_comments_count
 FROM
    latest_updates
 WHERE
