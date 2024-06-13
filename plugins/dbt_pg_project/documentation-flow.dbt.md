@@ -108,11 +108,11 @@ O diagrama ilustra o fluxo de integração e entrega contínuas (CI/CD) para um 
 1. **User (Usuário):**
    - O usuário é o ponto de partida. Ele faz modificações no código do projeto e, em seguida, realiza um commit dessas alterações.
 
-2. **Main Branch (Ramo Principal):**
-   - O commit feito pelo usuário é enviado para o ramo principal do repositório de código. Este é o local central onde o código-fonte do projeto é mantido.
+2. **Main Branch :**
+   - O commit feito pelo usuário é enviado para a main do repositório de código. Este é o local central onde o código-fonte do projeto é mantido.
 
 3. **CI/CD:**
-   - A ação de commit no ramo principal dispara automaticamente um pipeline de CI/CD (Continuous Integration/Continuous Deployment). O CI/CD é responsável por automatizar o processo de integração e entrega do código.
+   - A ação de commit na main dispara automaticamente um pipeline de CI/CD (Continuous Integration/Continuous Deployment). O CI/CD é responsável por automatizar o processo de integração e entrega do código.
 
 4. **Compiles the project and parse manifest into DAG (Compila o projeto e analisa o manifesto para criar um DAG):**
    - O sistema de CI/CD compila o projeto DBT. Durante essa etapa, ele lê e analisa o manifesto do DBT para gerar um DAG. O DAG representa a sequência de tarefas (tasks) que precisam ser executadas para processar os dados conforme definido no projeto DBT.
@@ -121,11 +121,11 @@ O diagrama ilustra o fluxo de integração e entrega contínuas (CI/CD) para um 
    - Após a criação do DAG, ele é publicado e disponibilizado para execução. Isso garante que todas as etapas do processamento de dados estejam prontas para serem executadas.
 
 6. **K8S (Kubernetes):**
-   - O projeto DBT é então implantado em um ambiente Kubernetes. O Kubernetes orquestra a execução das tarefas definidas no DAG, gerenciando os contêineres necessários para executar o pipeline de dados de maneira eficiente e escalável. O Kubernetes também permite que o fluxo seja repetido sempre que o usuário faz um novo commit no ramo principal. Isso garante que todas as alterações no código sejam automaticamente integradas e entregues de maneira contínua e consistente.
+   - O projeto DBT é então implantado em um ambiente Kubernetes. O Kubernetes orquestra a execução das tarefas definidas no DAG, gerenciando os contêineres necessários para executar o pipeline de dados de maneira eficiente e escalável. O Kubernetes também permite que o fluxo seja repetido sempre que o usuário faz um novo commit na main. Isso garante que todas as alterações no código sejam automaticamente integradas e entregues de maneira contínua e consistente.
 
 ### Resumo das Interações
 
-- **User -> Main Branch:** O usuário faz um commit que é enviado para o ramo principal.
-- **Main Branch -> CI/CD:** O commit no ramo principal dispara o pipeline de CI/CD.
+- **User -> Main Branch:** O usuário faz um commit que é enviado para o main.
+- **Main Branch -> CI/CD:** O commit na main dispara o pipeline de CI/CD.
 - **CI/CD -> DAG:** O sistema de CI/CD compila o projeto e gera um DAG a partir do manifesto do DBT.
 - **DAG -> K8S:** O DAG é publicado e o Kubernetes executa as tarefas definidas no DAG.
