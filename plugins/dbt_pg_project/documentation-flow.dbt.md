@@ -93,7 +93,7 @@ o fluxo de integração e entrega contínuas (CI/CD) para um projeto DBT com Kub
 
 <center> <b>Figura 01:</b> Fluxo de orquestração do projeto dbt.</center>
 
-<!--![Fluxo de orquestração do projeto dbt](./assets/image.png)-->
+![Fluxo de orquestração do projeto dbt](./assets/image.png)
 
 O diagrama ilustra o fluxo de integração e entrega contínuas (CI/CD) para um projeto DBT com Kubernetes (K8S). Vamos descrever cada etapa detalhadamente:
 
