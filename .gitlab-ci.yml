@@ -1,21 +1,23 @@
-stages:
-  - lint
-  - tests
-  - sonarcloud
-  - compile_dbt
-  - generate_dbt_dag
-  - commit_dbt_dag
+""" yml que tem como objetivo fazer a integração constante (CI) de DAGs, caminhos especificados.
+"""
+stages: # Estagios enconrados neste yml
+  - lint # Formatacao de codigo 
+  - tests # Testes do codigo
+  - sonarcloud # Revisor de codigo
+  - compile_dbt # Compila dag pelo dbt
+  - generate_dbt_dag # Gerador de dag pelo dbt
+  - commit_dbt_dag # comita a dbt dag
 
 variables:
   SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
   GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
 
-  DBT_PROJECT_DIR: "${CI_PROJECT_DIR}/plugins/dbt_pg_project"
-  DBT_PROFILE_DIR: "${CI_PROJECT_DIR}/plugins/dbt_pg_project"
-  PYTHON_SCRIPT: "${CI_PROJECT_DIR}/automation/generate_dbt_dag.py"
-  DAG_REPO_PATH: "${CI_PROJECT_DIR}/dags/dbt/"
-  GIT_CI_USER: "CI Bot"
-  GIT_CI_EMAIL: "ci@lappis.rocks"
+  DBT_PROJECT_DIR: "${CI_PROJECT_DIR}/plugins/dbt_pg_project" # Diretorio definido para o dbtproject
+  DBT_PROFILE_DIR: "${CI_PROJECT_DIR}/plugins/dbt_pg_project" # Diretorio definido para o dbtprofile
+  PYTHON_SCRIPT: "${CI_PROJECT_DIR}/automation/generate_dbt_dag.py" # Diretorio definido para o generatedbtDAg
+  DAG_REPO_PATH: "${CI_PROJECT_DIR}/dags/dbt/" # Diretorio definido para o repositorio DAG
+  GIT_CI_USER: "CI Bot" # Usuario do GIT para CI
+  GIT_CI_EMAIL: "ci@lappis.rocks" # e-mail do GIT para CI
   
 
 # <------------- Definicao de Anchors ------------->
@@ -128,47 +130,58 @@ sonarcloud-check:
 
 # <------------- GENERATE dbt DAG ------------->
 compile_dbt_project:
-  stage: compile_dbt
-  image: python:3.9
+""" Esta parte:
+ - Instala e conecta o wireguard VPN para compilar o projeto no dbt
+ - Instala dependencias do dbt
+ - Compila o projeto dbt
+ - Desconecta a VPN
+"""
+  stage: compile_dbt # Estagio de compilação do dobt
+  image: python:3.9 # Gerando uma imagem para a versão 3.9 python
   script:
-    - apt-get update
-    - apt-get install -y wireguard iproute2
-    - echo -e "[Interface]\nAddress = 192.168.200.10/32\nSaveConfig = true\nListenPort = 51760\nPrivateKey = $WIREGUARD_PRIVATE_KEY\n\n[Peer]\nPublicKey = $WIREGUARD_PEER_KEY\nAllowedIPs = 192.168.3.0/27\nEndpoint = 200.152.47.48:51820\nPersistentKeepalive = 15\n" > /etc/wireguard/wg0.conf
-    - wg-quick up wg0
-    - pip install dbt-postgres
-    - cd $DBT_PROJECT_DIR
-    - dbt deps
-    - dbt compile
-    - wg-quick down wg0
-  artifacts:
+    - apt-get update 
+    - apt-get install -y wireguard iproute2k # Instalando pacotes necessarios para conectar com wireguard
+    - echo -e "[Interface]\nAddress = 192.168.200.10/32\nSaveConfig = true\nListenPort = 51760\nPrivateKey = $WIREGUARD_PRIVATE_KEY\n\n[Peer]\nPublicKey = $WIREGUARD_PEER_KEY\nAllowedIPs = 192.168.3.0/27\nEndpoint = 200.152.47.48:51820\nPersistentKeepalive = 15\n" > /etc/wireguard/wg0.conf # Setup de VPN
+    - wg-quick up wg0 # Conecta a wireguard VPN
+    - pip install dbt-postgres # Instala o dbt-postgres
+    - cd $DBT_PROJECT_DIR # Vai para o diretorio project dir
+    - dbt deps # Instala dependencias do dbt (tipo um pipinstall so que para dbt)
+    - dbt compile # Compila o projeto dbt
+    - wg-quick down wg0 # desconecta a VPN wireguard
+  artifacts: # Artefatos são saidas do estagio que podem ser acessados por outros estagios
     paths:
-      - $DBT_PROJECT_DIR/target/manifest.json
-  only:
+      - $DBT_PROJECT_DIR/target/manifest.json # Arquivo gerado (manifesto) que fica dentro do dbt
+  only: # Em quais branchs será rodado esse estagio
     - main
     - development
 
 process_manifest:
-  stage: generate_dbt_dag
-  image: python:3.9
+""" Aqui é gerado o dbt_dag
+"""
+  stage: generate_dbt_dag # Nome do estagio
+  image: python:3.9 # versão da imagem python
   script:
-    - python $PYTHON_SCRIPT --manifest_path $DBT_PROJECT_DIR/target/manifest.json --project_path $DBT_PROJECT_DIR --profile_path $DBT_PROFILE_DIR --dag_folder_path dbt/
+  # Os paths aqui são definidos em generate_dbt_dag.py
+    - python $PYTHON_SCRIPT --manifest_path $DBT_PROJECT_DIR/target/manifest.json --project_path $DBT_PROJECT_DIR --profile_path $DBT_PROFILE_DIR --dag_folder_path dbt/ # Esta chamando os scripts path (Definidos no inicio deste arquivo) que serão utlizados nesse estagio
   artifacts:
     paths:
-      - dbt/*.py
-  only:
+      - dbt/*.py # puxa todos os arquivos .py gerados pelo script
+  only: # Em quais branchs será rodado este estagio
     - main
     - development
 
 commit_generated_file:
-  stage: commit_dbt_dag
-  image: python:3.9
+""" Estagio de geração do commit da dag
+"""
+  stage: commit_dbt_dag # Nome do estagio
+  image: python:3.9 # Versão da imagem python
   script:
-    - git config --global user.email "$GIT_CI_EMAIL"
-    - git config --global user.name "$GIT_CI_USER"
-    - git checkout $CI_COMMIT_REF_NAME
-    - mv dbt $DAG_REPO_PATH
-    - git add $DAG_REPO_PATH
-    - git diff-index --quiet HEAD || (git commit -m "automation(dbt_dag) Add airflow DAG from dbt manifest [ci skip]" && git push https://dbtAutomation:$CI_JOB_TOKEN@gitlab.com/lappis-unb/decidimbr/servicos-de-dados/airflow-dags.git $CI_COMMIT_REF_NAME)
-  only:
+    - git config --global user.email "$GIT_CI_EMAIL" # Email do nosso bot de CI, definido no inicio deste arquivo
+    - git config --global user.name "$GIT_CI_USER" # Email do nosso usuario de CI, definido no inicio deste arquivo
+    - git checkout $CI_COMMIT_REF_NAME # Checkout da branch
+    - mv dbt $DAG_REPO_PATH # Move a pasta criada para o PATH onde ficam as DAGs do projeto
+    - git add $DAG_REPO_PATH # Adicionando os arquivos e preparando para commit 
+    - git diff-index --quiet HEAD || (git commit -m "automation(dbt_dag) Add airflow DAG from dbt manifest [ci skip]" && git push https://dbtAutomation:$CI_JOB_TOKEN@gitlab.com/lappis-unb/decidimbr/servicos-de-dados/airflow-dags.git $CI_COMMIT_REF_NAME) # Verifica se foram feitas mudanças nos arquivos adicionados, se tiver ele commita, se não ele não faz nada. Ele também da skip no pipelina de ci para não rodar inumeras vezes
+  only: # Em quais Branchs será rodado este estagio
     - main
     - development
