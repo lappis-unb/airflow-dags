@@ -2,7 +2,7 @@
     config(
         materialized="table",
         meta={
-            "datasets_trigger": "postgres://conn_postgres/raw.updated_proposals"
+            "datasets_trigger": "updated_proposals"
         }
     )
 }}

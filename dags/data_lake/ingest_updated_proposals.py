@@ -332,7 +332,7 @@ PROCESSED_ZONE = "processed"
 TABLE_NAME = "updated_proposals"
 SCHEMA = "raw"
 
-postgres_dataset = Dataset(f"postgres://conn_postgres/{SCHEMA}.{TABLE_NAME}")
+postgres_dataset = Dataset(f"{TABLE_NAME}")
 
 
 @dag(
