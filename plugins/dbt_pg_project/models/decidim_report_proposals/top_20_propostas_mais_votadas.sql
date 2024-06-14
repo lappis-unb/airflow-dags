@@ -29,4 +29,3 @@ WHERE
    rn = 1
 ORDER BY
    vote_count DESC
-LIMIT 20
