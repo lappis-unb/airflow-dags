@@ -225,7 +225,7 @@ def _get_df_from_minio(filename):
 
     """
     key = S3Hook(aws_conn_id=MINIO_CONN).read_key(
-        key=filename,
+        key=f"{MATOMO_PATH}/{filename}",
         bucket_name=BUCKET_NAME,
     )
     df = pd.read_json(key)
@@ -271,7 +271,8 @@ DECIDIM_CONN_ID = "api_decidim"
 POSTGRES_CONN_ID = "conn_postgres"
 MATOMO_CONN_ID = "matomo_conn"
 MINIO_CONN = "minio_conn_id"
-BUCKET_NAME = "matomo"
+MATOMO_PATH = "dag_components_matomo"
+BUCKET_NAME = "brasil-participativo"
 SCHEMA = "raw"
 SPACES = ["assemblies", "processes"]
 TIMEOUT = 60  # 60 segundos
@@ -368,7 +369,7 @@ def dag_generator(period, scheduler_interval):
                         filename = _get_file_name(space, method, context)
                         S3Hook(aws_conn_id=MINIO_CONN).load_string(
                             string_data=data.to_json(orient="records"),
-                            key=filename,
+                            key=f"{MATOMO_PATH}/{filename}",
                             bucket_name=BUCKET_NAME,
                             replace=True,
                         )
