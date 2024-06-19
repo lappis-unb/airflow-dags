@@ -26,7 +26,8 @@ logger = logging.getLogger(__name__)
 
 
 MINIO_CONN = "minio_conn_id"
-MINIO_BUCKET = "matomo-extractions-csv"
+MINIO_BUCKET = "brasil-participativo"
+MATOMO_PATH = "dag_extractions_matomo"
 POSTGRES_CONN_ID = "conn_postgres"
 SCHEMA = "raw"
 
@@ -99,7 +100,10 @@ class MatomoDagGenerator:  # noqa: D101
 
         filename = _generate_s3_filename(module, method, period, execution_date)
         minio = S3Hook(MINIO_CONN)
-        minio.load_string(string_data=data, key=filename, bucket_name=MINIO_BUCKET, replace=True)
+        minio.load_string(string_data=data,
+                          key=f"{MATOMO_PATH}/{filename}",
+                          bucket_name=MINIO_BUCKET,
+                          replace=True)
 
     def generate_extraction_dag(self, period: str, schedule: str):
         @dag(
@@ -155,7 +159,7 @@ class MatomoDagGenerator:  # noqa: D101
             execution_date (datetime): The execution date for the DAG run.
         """
         filename = _generate_s3_filename(module, method, period, execution_date)
-        csv_path = S3Hook(MINIO_CONN).download_file(bucket_name=MINIO_BUCKET, key=filename)
+        csv_path = S3Hook(MINIO_CONN).download_file(bucket_name=MINIO_BUCKET, key=f"{MATOMO_PATH}/{filename}")
 
         # Read the CSV content into a pandas DataFrame
         df = pd.read_csv(csv_path)
