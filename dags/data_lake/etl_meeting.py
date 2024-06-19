@@ -30,15 +30,15 @@ def _get_query():
 
 DECIDIM_CONN_ID = "api_decidim"
 MINIO_CONN_ID = "minio_conn_id"
-MINIO_BUCKET = "brasil-participativo-meeting-csv"
+MINIO_BUCKET = "brasil-participativo"
 COMPONENT_TYPE_TO_EXTRACT = "Meetings"
 TABLE_NAME = "meetings"
 SCHEMA = "raw"
 PRIMARY_KEY = "meeting_id"
 RETRIES = 0
-LANDING_ZONE_FILE_NAME = "data_meetings/meetings.json"
-PROCESSING_FILE_NAME = "processing/meetings.csv"
-PROCESSED_FILE_NAME = "processed/meetings.csv"
+LANDING_ZONE_FILE_NAME = "dag_meetings/landing_zone/meetings.json"
+PROCESSING_FILE_NAME = "dag_meetings/processing/meetings.csv"
+PROCESSED_FILE_NAME = "dag_meetings/processed/meetings.csv"
 POSTGRES_CONN_ID = "conn_postgres"
 QUERY = _get_query()
 

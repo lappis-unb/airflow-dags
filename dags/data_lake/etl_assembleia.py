@@ -34,7 +34,6 @@ SCHEMA = "raw_confjuv"
 
 # Auxiliary functions
 
-
 def _get_proposals_csv_data():
     """
     Reads a CSV file from an S3 bucket and returns a pandas DataFrame.
