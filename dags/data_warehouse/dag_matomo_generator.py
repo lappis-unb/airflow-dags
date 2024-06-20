@@ -97,13 +97,11 @@ class MatomoDagGenerator:  # noqa: D101
             )
 
     def save_to_minio(self, data, module, method, period, execution_date):
-
         filename = _generate_s3_filename(module, method, period, execution_date)
         minio = S3Hook(MINIO_CONN)
-        minio.load_string(string_data=data,
-                          key=f"{MATOMO_PATH}/{filename}",
-                          bucket_name=MINIO_BUCKET,
-                          replace=True)
+        minio.load_string(
+            string_data=data, key=f"{MATOMO_PATH}/{filename}", bucket_name=MINIO_BUCKET, replace=True
+        )
 
     def generate_extraction_dag(self, period: str, schedule: str):
         @dag(

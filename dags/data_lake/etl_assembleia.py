@@ -34,6 +34,7 @@ SCHEMA = "raw_confjuv"
 
 # Auxiliary functions
 
+
 def _get_proposals_csv_data():
     """
     Reads a CSV file from an S3 bucket and returns a pandas DataFrame.
@@ -328,14 +329,12 @@ def etl_assembly_conferencia_juventude():
     start = EmptyOperator(task_id="start")
 
     with TaskGroup("extraction", tooltip="Extract data from GraphQL to MinIO bucket") as extraction:
-
         new_bucket = S3CreateBucketOperator(
             task_id="create_bucket", bucket_name=MINIO_BUCKET, aws_conn_id=MINIO_CONN
         )
 
         @task(task_id="extract_data")
         def extract_data(**kwargs):
-
             query_data = _run_graphql_query()
 
             S3Hook(aws_conn_id=MINIO_CONN).load_string(
@@ -451,7 +450,6 @@ def etl_assembly_conferencia_juventude():
         save_to_csv() >> delete_landing_zone_file()
 
     with TaskGroup("load", tooltip="Loads the data from CSV file and stores into a database") as load:
-
         empty_file = EmptyOperator(task_id="empty_file")
 
         @task.branch(task_id="check_empty_file", provide_context=True)

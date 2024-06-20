@@ -490,7 +490,6 @@ def etl_meetings():
 
     @task_group(group_id="minio_tasks")
     def minio_tasks():
-
         create_bucket = S3CreateBucketOperator(
             task_id="create_bucket", bucket_name=MINIO_BUCKET, aws_conn_id=MINIO_CONN_ID
         )

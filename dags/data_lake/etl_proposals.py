@@ -628,7 +628,6 @@ def etl_proposals():
 
     @task_group(group_id="minio_tasks")
     def minio_tasks():
-
         @task.branch()
         def verify_bucket():
             """
