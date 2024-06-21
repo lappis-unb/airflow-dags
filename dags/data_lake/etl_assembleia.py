@@ -29,7 +29,7 @@ PROPOSALS_PROCESSING_ZONE_FILE = "dag_confjuv/processing_zone/proposals.csv"
 MEETING_PROCESSING_ZONE_FILE = "dag_confjuv/processing_zone/meeting.csv"
 POSTS_PROCESSING_ZONE_FILE = "dag_confjuv/processing_zone/posts.csv"
 POSTGRES_CONN_ID = "conn_postgres"
-SCHEMA = "raw_confjuv"
+SCHEMA = "raw"
 
 
 # Auxiliary functions
