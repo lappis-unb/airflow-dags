@@ -259,7 +259,6 @@ class ComponentBaseHook:
         start_date_filter: Optional[datetime] = None,
         end_date_filter: Optional[datetime] = None,
     ):
-
         comments = self.get_comments_threads(root_comments=root_comments, root_component_id=root_component_id)
         df = pd.DataFrame(comments)
         logging.info("Dataframe shape of comments: %s", df.shape)

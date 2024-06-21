@@ -23,13 +23,13 @@ MINIO_CONN = "minio_conn_id"
 PROPOSALS_TABLE_NAME = "confjuv_proposals"
 MEETINGS_TABLE_NAME = "confjuv_meetings"
 POSTS_TABLE_NAME = "confjuv_posts"
-MINIO_BUCKET = "brasil-participativo-confjuv"
-LANDING_ZONE_FILE_NAME = "landing_zone/raw_assembleia.json"
-PROPOSALS_PROCESSING_ZONE_FILE = "processing_zone/proposals.csv"
-MEETING_PROCESSING_ZONE_FILE = "processing_zone/meeting.csv"
-POSTS_PROCESSING_ZONE_FILE = "processing_zone/posts.csv"
+MINIO_BUCKET = "brasil-participativo"
+LANDING_ZONE_FILE_NAME = "dag_confjuv/landing_zone/raw_assembleia.json"
+PROPOSALS_PROCESSING_ZONE_FILE = "dag_confjuv/processing_zone/proposals.csv"
+MEETING_PROCESSING_ZONE_FILE = "dag_confjuv/processing_zone/meeting.csv"
+POSTS_PROCESSING_ZONE_FILE = "dag_confjuv/processing_zone/posts.csv"
 POSTGRES_CONN_ID = "conn_postgres"
-SCHEMA = "raw_confjuv"
+SCHEMA = "raw"
 
 
 # Auxiliary functions
@@ -329,14 +329,12 @@ def etl_assembly_conferencia_juventude():
     start = EmptyOperator(task_id="start")
 
     with TaskGroup("extraction", tooltip="Extract data from GraphQL to MinIO bucket") as extraction:
-
         new_bucket = S3CreateBucketOperator(
             task_id="create_bucket", bucket_name=MINIO_BUCKET, aws_conn_id=MINIO_CONN
         )
 
         @task(task_id="extract_data")
         def extract_data(**kwargs):
-
             query_data = _run_graphql_query()
 
             S3Hook(aws_conn_id=MINIO_CONN).load_string(
@@ -452,7 +450,6 @@ def etl_assembly_conferencia_juventude():
         save_to_csv() >> delete_landing_zone_file()
 
     with TaskGroup("load", tooltip="Loads the data from CSV file and stores into a database") as load:
-
         empty_file = EmptyOperator(task_id="empty_file")
 
         @task.branch(task_id="check_empty_file", provide_context=True)
