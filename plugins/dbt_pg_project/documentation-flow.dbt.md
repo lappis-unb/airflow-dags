@@ -199,13 +199,6 @@ O diagrama ilustra o fluxo de integração e entrega contínuas (CI/CD) para um 
 
 5. **Publishes DAG (Publica o DAG):**
    - Após a criação do DAG, o CI/CD irá commitar as mesmas geradas no próprio repositório do projeto, assim ele é publicado e disponibilizado para execução. Isso garante que todas as etapas do processamento de dados estejam prontas para serem executadas.
-<br>
-
-**Airflow Datasets**
-
-No Apache Airflow, o conceito de Datasets permite criar dependências explícitas entre DAGs baseadas nos dados que elas produzem ou consomem. Isso facilita a orquestração de pipelines complexos onde a execução de uma DAG depende dos dados produzidos por outra DAG.
-
-**1. Definindo um Dataset**
 
 ### Airflow Datasets
 
@@ -245,6 +238,38 @@ def ingestao_dag():
     ingest_task()
 
 ingestao_dag()
+```
+
+#### 2. **Configurando a DAG de Transformação (DBT)**
+
+A DAG de transformação, que foi compilada a partir do dbt, consumirá o Dataset produzido pela DAG de ingestão. Isso é configurado utilizando o parâmetro `inlets` nas tarefas da DAG.
+
+```python
+from airflow import DAG
+from airflow.operators.dummy import DummyOperator
+from airflow.datasets import Dataset
+from airflow.decorators import dag, task
+from datetime import datetime
+
+my_dataset = Dataset('s3://my-bucket/my-dataset')
+
+@dag(
+    start_date=datetime(2023, 1, 1),
+    schedule_interval='@daily',
+    catchup=False,
+    tags=['transformacao']
+)
+def transformacao_dbt_dag():
+    # parâmetro inlets abaixo
+    @task(inlets=[my_dataset])
+    def transform_task():
+        # Lógica de transformação de dados aqui (compilada do dbt)
+        pass
+
+    transform_task()
+
+transformacao_dbt_dag()
+
 ```
 
 ### Resumo
