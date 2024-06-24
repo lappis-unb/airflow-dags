@@ -66,6 +66,26 @@ A seguir, o passo a passo dos comandos para criação e ativação do ambiente v
     <nome_do_virtual_env>\Scripts\activate
     ```
 
+<br>
+
+**Utilizando o Conda**
+
+O Conda pode ser uma solução alternativa, com mais flexibilidade e controle sobre os ambientes de desenvolvimento. Com o conda instalado, siga os seguintes passos, para a criação de um ambiente virtual:
+
+- **Criar o ambiente virtual:**
+
+    ```bash
+    conda create -n <nome_do_virtual_env> python=3.10
+    ```
+
+- **Ativando o ambiente virtual:**
+
+    ```bash
+    conda activate <nome_do_virtual_env>
+    ```
+
+Substitua `<nome_do_virtual_env>` pelo nome desejado para o seu ambiente virtual.
+
 #### Projeto DBT
 
 A seguir, o passo a passo dos comandos para instalação do DBT e do provedor que utilizaremos para o projeto, que é o **dbt-postgres**.
