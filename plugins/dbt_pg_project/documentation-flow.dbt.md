@@ -107,6 +107,59 @@ Para garantir que o Apache Airflow consiga acessar e executar os modelos do dbt,
 
     - Os modelos DBT devem ser armazenados no diretório: `<nome_do_projeto_dbt>/models`.
     - Os testes são definidos no arquivo: `*_tests.yml`.
+    - O arquivo profiles define as configurações de conexão para o seu projeto dbt e deve ser encontrado preferencialmente na raiz do projeto, com o nome: `profiles.yml`.
+
+### Exemplo de `profiles.yml`
+
+```yaml
+default:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      user: my_user
+      password: my_password
+      port: 5432
+      dbname: my_database
+      schema: public
+      threads: 4
+      keepalives_idle: 0
+      sslmode: prefer
+      search_path: public
+    prod:
+      type: postgres
+      host: prod-hostname
+      user: my_user
+      password: my_password
+      port: 5432
+      dbname: my_database
+      schema: public
+      threads: 4
+      keepalives_idle: 0
+      sslmode: require
+      search_path: public
+```
+
+### Descrição dos Campos:
+
+- **default**: Nome do perfil que será usado. Neste exemplo, é `default`.
+- **target**: O ambiente alvo padrão que será usado ao executar dbt. Pode ser `dev` ou `prod`.
+- **outputs**: Define as configurações de conexão para diferentes ambientes (`dev` e `prod`).
+
+#### Configuração para cada ambiente:
+
+- **type**: O tipo de banco de dados. Neste exemplo, é `postgres` (PostgreSQL).
+- **host**: O endereço do host do banco de dados.
+- **user**: O nome de usuário para conectar ao banco de dados.
+- **password**: A senha para o usuário do banco de dados.
+- **port**: A porta em que o banco de dados está escutando (geralmente 5432 para PostgreSQL).
+- **dbname**: O nome do banco de dados ao qual se conectar.
+- **schema**: O esquema dentro do banco de dados onde as tabelas serão criadas.
+- **threads**: O número de threads para usar ao executar dbt.
+- **keepalives_idle**: O tempo em segundos antes de enviar pacotes keepalive na conexão.
+- **sslmode**: O modo SSL para a conexão (`prefer` para dev e `require` para prod neste exemplo).
+- **search_path**: O caminho de busca para esquemas dentro do banco de dados.
 
 ### Observações Finais
 
