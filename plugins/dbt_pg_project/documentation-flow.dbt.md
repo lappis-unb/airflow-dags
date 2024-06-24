@@ -201,6 +201,58 @@ O diagrama ilustra o fluxo de integração e entrega contínuas (CI/CD) para um 
    - Após a criação do DAG, o CI/CD irá commitar as mesmas geradas no próprio repositório do projeto, assim ele é publicado e disponibilizado para execução. Isso garante que todas as etapas do processamento de dados estejam prontas para serem executadas.
 <br>
 
+**Airflow Datasets**
+
+No Apache Airflow, o conceito de Datasets permite criar dependências explícitas entre DAGs baseadas nos dados que elas produzem ou consomem. Isso facilita a orquestração de pipelines complexos onde a execução de uma DAG depende dos dados produzidos por outra DAG.
+
+**1. Definindo um Dataset**
+
+### Airflow Datasets
+
+No Apache Airflow, o conceito de Datasets permite criar dependências explícitas entre DAGs baseadas nos dados que elas produzem ou consomem. Isso facilita a orquestração de pipelines complexos onde a execução de uma DAG depende dos dados produzidos por outra DAG.
+
+### Configuração de Datasets no Airflow
+
+#### 1. **Definindo um Dataset e configurando a DAG de Ingestão**
+
+Um Dataset no Airflow é representado por um URI que identifica de maneira única o conjunto de dados. O URI pode ser um caminho de arquivo, uma tabela de banco de dados, ou qualquer outro identificador de recurso.
+
+A DAG de ingestão será responsável por produzir dados. Ao final do processamento, ela marcará o Dataset como atualizado. Isso é feito utilizando o parâmetro `outlets` nas tarefas da DAG.
+
+```python
+from airflow import DAG
+from airflow.operators.dummy import DummyOperator
+from airflow.decorators import dag, task
+from airflow.datasets import Dataset
+from datetime import datetime
+
+# Definindo o dataset
+my_dataset = Dataset('s3://my-bucket/my-dataset')
+
+@dag(
+    start_date=datetime(2023, 1, 1),
+    schedule_interval='@daily',
+    catchup=False,
+    tags=['ingestao']
+)
+def ingestao_dag():
+    # parâmetro outlets abaixo
+    @task(outlets=[my_dataset])
+    def ingest_task():
+        # Lógica de ingestão de dados aqui
+        pass
+
+    ingest_task()
+
+ingestao_dag()
+```
+
+### Resumo
+
+1. **Defina um Dataset**: Crie um URI único para identificar o conjunto de dados.
+2. **Configure a DAG de Ingestão**: Marque o Dataset como atualizado após a ingestão de dados utilizando o parâmetro `outlets`.
+3. **Configure a DAG de Transformação (DBT)**: Consuma o Dataset atualizado pela DAG de ingestão utilizando o parâmetro `inlets`.
+
 ### Resumo das Interações
 
 - **User -> Main Branch:** O usuário faz um commit que é enviado para o main.
