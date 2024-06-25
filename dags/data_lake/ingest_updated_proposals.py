@@ -335,8 +335,8 @@ SCHEMA = "raw"
 @dag(
     default_args=default_args,
     schedule_interval="0 22 * * *",
-    start_date=datetime(2021, 1, 1),
-    catchup=False,
+    start_date=datetime(2023, 5, 1),
+    catchup=True,
     tags=["data_lake"],
 )
 def ingest_update_proposals():
