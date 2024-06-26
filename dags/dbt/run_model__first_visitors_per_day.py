@@ -27,8 +27,8 @@ with DAG(
 
     first_visitors_per_day_task = BashOperator(
         task_id='run_first_visitors_per_day',
-        bash_command='cd /usr/local/airflow/plugins/dbt_pg_project && dbt run \
-        --profiles-dir /usr/local/airflow/plugins/dbt_pg_project --select first_visitors_per_day',
+        bash_command='cd /opt/airflow/plugins/plugins/dbt_pg_project && dbt run \
+        --profiles-dir /opt/airflow/plugins/plugins/dbt_pg_project --select first_visitors_per_day',
         env={
             'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
             'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
