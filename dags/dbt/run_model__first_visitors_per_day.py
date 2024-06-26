@@ -27,9 +27,13 @@ with DAG(
 
     first_visitors_per_day_task = BashOperator(
         task_id='run_first_visitors_per_day',
-        bash_command='cd /builds/lappis-unb/decidimbr/servicos-de-dados/airflow-dags/plugins/dbt_pg_project && dbt run \
-        --profiles-dir /builds/lappis-unb/decidimbr/servicos-de-dados/airflow-dags/plugins/dbt_pg_project --select first_visitors_per_day',
-        env={'DBT_POSTGRES_PASSWORD': Variable.get("dex_demo_pg_password")}
+        bash_command='cd /usr/local/airflow/plugins/dbt_pg_project && dbt run \
+        --profiles-dir /usr/local/airflow/plugins/dbt_pg_project --select first_visitors_per_day',
+        env={
+            'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
+            'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
+            'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password")
+        }
     )
 
     first_visitors_per_day_task >> end_task
