@@ -169,6 +169,8 @@ commit_generated_file:
     - git config --global user.email "$GIT_CI_EMAIL"
     - git config --global user.name "$GIT_CI_USER"
     - git checkout $CI_COMMIT_REF_NAME
+    - apt-get update -y
+    - apt-get install -y rsync
     - rsync -a --delete dbt/ $DAG_REPO_PATH/dbt/
     - git add $DAG_REPO_PATH
     - git diff-index --quiet HEAD || (git commit -m "automation(dbt_dag) Add airflow DAG from dbt manifest [ci skip]" && git push https://dbtAutomation:$CI_JOB_TOKEN@gitlab.com/lappis-unb/decidimbr/servicos-de-dados/airflow-dags.git $CI_COMMIT_REF_NAME)
