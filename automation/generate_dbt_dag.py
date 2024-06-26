@@ -42,7 +42,11 @@ def generate_airflow_task(node_type, node_name, dbt_project_path, dbt_profile_pa
 {indentation}{indentation}task_id='{task_id}',
 {indentation}{indentation}bash_command='cd {dbt_project_path} && dbt {dbt_command} \\
 {indentation}{indentation}--profiles-dir {dbt_profile_path} --select {node_name}',
-{indentation}{indentation}env={{'DBT_POSTGRES_PASSWORD': Variable.get("dex_demo_pg_password")}}
+{indentation}{indentation}env={{
+{indentation}{indentation}{indentation}'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
+{indentation}{indentation}{indentation}'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
+{indentation}{indentation}{indentation}'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password")
+{indentation}{indentation}}}
 {indentation})"""
     return task
 
