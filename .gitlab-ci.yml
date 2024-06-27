@@ -2,10 +2,24 @@ stages:
   - lint
   - tests
   - sonarcloud
+  - compile_dbt
+  - generate_dbt_dag
+  - commit_dbt_dag
 
 variables:
   SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
   GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+
+  DBT_PROJECT_DIR: "${CI_PROJECT_DIR}/plugins/dbt_pg_project"
+
+  AIRFLOW_DBT_PROJECT_DIR: "/opt/airflow/plugins/plugins/dbt_pg_project"
+  AIRFLOW_DBT_PROFILE_DIR: "/opt/airflow/plugins/plugins/dbt_pg_project"
+
+  PYTHON_SCRIPT: "${CI_PROJECT_DIR}/automation/generate_dbt_dag.py"
+  DAG_REPO_PATH: "${CI_PROJECT_DIR}/dags/"
+  GIT_CI_USER: "CI Bot"
+  GIT_CI_EMAIL: "ci@lappis.rocks"
+  
 
 # <------------- Definicao de Anchors ------------->
 
@@ -112,5 +126,54 @@ sonarcloud-check:
     - sonar-scanner -X
   only:
     - merge_requests
+    - main
+    - development
+
+# <------------- GENERATE dbt DAG ------------->
+compile_dbt_project:
+  stage: compile_dbt
+  image: python:3.9
+  script:
+    - apt-get update
+    - apt-get install -y wireguard iproute2
+    - echo -e "[Interface]\nAddress = 192.168.200.10/32\nSaveConfig = true\nListenPort = 51760\nPrivateKey = $WIREGUARD_PRIVATE_KEY\n\n[Peer]\nPublicKey = $WIREGUARD_PEER_KEY\nAllowedIPs = 192.168.3.0/27\nEndpoint = 200.152.47.48:51820\nPersistentKeepalive = 15\n" > /etc/wireguard/wg0.conf
+    - wg-quick up wg0
+    - pip install dbt-postgres
+    - cd $DBT_PROJECT_DIR
+    - dbt deps
+    - dbt compile
+    - wg-quick down wg0
+  artifacts:
+    paths:
+      - $DBT_PROJECT_DIR/target/manifest.json
+  only:
+    - main
+    - development
+
+process_manifest:
+  stage: generate_dbt_dag
+  image: python:3.9
+  script:
+    - python $PYTHON_SCRIPT --manifest_path $DBT_PROJECT_DIR/target/manifest.json --project_path $AIRFLOW_DBT_PROJECT_DIR --profile_path $AIRFLOW_DBT_PROFILE_DIR --dag_folder_path dbt/
+  artifacts:
+    paths:
+      - dbt/*.py
+  only:
+    - main
+    - development
+
+commit_generated_file:
+  stage: commit_dbt_dag
+  image: python:3.9
+  script:
+    - git config --global user.email "$GIT_CI_EMAIL"
+    - git config --global user.name "$GIT_CI_USER"
+    - git checkout $CI_COMMIT_REF_NAME
+    - apt-get update -y
+    - apt-get install -y rsync
+    - rsync -a --delete dbt/ $DAG_REPO_PATH/dbt/
+    - git add $DAG_REPO_PATH
+    - git diff-index --quiet HEAD || (git commit -m "automation(dbt_dag) Add airflow DAG from dbt manifest [ci skip]" && git push https://dbtAutomation:$CI_JOB_TOKEN@gitlab.com/lappis-unb/decidimbr/servicos-de-dados/airflow-dags.git $CI_COMMIT_REF_NAME)
+  only:
     - main
     - development

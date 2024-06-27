@@ -1,0 +1,29 @@
+# fmt: off
+# ruff: noqa
+
+from airflow import DAG
+from airflow.datasets import Dataset
+from airflow.models import Variable
+from airflow.operators.bash_operator import BashOperator
+from airflow.operators.empty import EmptyOperator
+from airflow.utils.dates import days_ago
+
+default_args = {{
+    'owner': 'DBT-Genrated',
+}}
+
+with DAG(
+    "{dag_id}",
+    default_args=default_args,
+    schedule={dag_trigger},
+    start_date=days_ago(1),
+    tags=["dbt", "{node_type}"],
+) as dag:
+
+    end_task = EmptyOperator(
+        task_id="end",
+        outlets=[Dataset("{outlet_dataset}")],
+    )
+{tasks_str}
+
+{dependencies_str}

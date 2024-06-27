@@ -3,7 +3,6 @@ from functools import wraps
 
 
 def decople(func):
-
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:

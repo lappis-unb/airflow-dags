@@ -33,15 +33,15 @@ def _get_query():
 
 DECIDIM_CONN_ID = "api_decidim"
 MINIO_CONN_ID = "minio_conn_id"
-MINIO_BUCKET = "brasil-participativo-daily-csv"
+MINIO_BUCKET = "brasil-participativo"
 COMPONENT_TYPE_TO_EXTRACT = "Proposals"
 TABLE_NAME = "proposals"
 SCHEMA = "raw"
 PRIMARY_KEY = "proposal_id"
 RETRIES = 0
-LANDING_ZONE_FILE_NAME = "landing_zone/proposals_{date_file}.json"
-PROCESSING_FILE_NAME = "processing/proposals_{date_file}.csv"
-PROCESSED_FILE_NAME = "processed/proposals_{date_file}.csv"
+LANDING_ZONE_FILE_NAME = "dag_proposals/landing_zone/proposals_{date_file}.json"
+PROCESSING_FILE_NAME = "dag_proposals/processing/proposals_{date_file}.csv"
+PROCESSED_FILE_NAME = "dag_proposals/processed/proposals_{date_file}.csv"
 POSTGRES_CONN_ID = "conn_postgres"
 QUERY = _get_query()
 
@@ -628,7 +628,6 @@ def etl_proposals():
 
     @task_group(group_id="minio_tasks")
     def minio_tasks():
-
         @task.branch()
         def verify_bucket():
             """

@@ -1,0 +1,12 @@
+dbt_pg_project:
+  outputs:
+    dev:
+      host: "{{ env_var('DBT_POSTGRES_HOST') }}"
+      port: 5432
+      dbname: analytics
+      user: "{{ env_var('DBT_POSTGRES_USER') }}"
+      pass: "{{ env_var('DBT_POSTGRES_PASSWORD') }}"
+      schema: dbt
+      threads: 4
+      type: postgres
+  target: dev
