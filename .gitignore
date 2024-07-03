@@ -3,7 +3,6 @@
 plugins/dbt_pg_project/target/
 plugins/dbt_pg_project/dbt_packages/
 plugins/dbt_pg_project/logs/
-plugins/dbt_pg_project/package-lock.yml
 plugins/dbt_pg_project/.env
 dags/dbt/test.py
 _aux*

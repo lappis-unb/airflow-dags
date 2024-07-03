@@ -12,8 +12,8 @@ variables:
 
   DBT_PROJECT_DIR: "${CI_PROJECT_DIR}/plugins/dbt_pg_project"
 
-  AIRFLOW_DBT_PROJECT_DIR: "/opt/airflow/plugins/plugins/dbt_pg_project"
-  AIRFLOW_DBT_PROFILE_DIR: "/opt/airflow/plugins/plugins/dbt_pg_project"
+  AIRFLOW_DBT_PROJECT_DIR: "/opt/airflow/dags-config/repo/plugins/dbt_pg_project"
+  AIRFLOW_DBT_PROFILE_DIR: "/opt/airflow/dags-config/repo/plugins/dbt_pg_project"
 
   PYTHON_SCRIPT: "${CI_PROJECT_DIR}/automation/generate_dbt_dag.py"
   DAG_REPO_PATH: "${CI_PROJECT_DIR}/dags/"
@@ -54,7 +54,7 @@ lint-ruff:
   stage: lint
   <<: *default_rule_python
   script:
-    - ruff .
+    - ruff check .
 
 lint-black:
   stage: lint
