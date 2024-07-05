@@ -26,7 +26,7 @@ from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.telegram.hooks.telegram import TelegramHook
-
+from psycopg2 import OperationalError
 from plugins.telegram.decorators import telegram_retry
 
 
@@ -121,12 +121,14 @@ class NotifierDAG:
         """
         assert isinstance(dag_start_date, str)
 
-        update_datetime = Variable.get(self.most_recent_msg_time, None)
-        if update_datetime:
+        try:
+            update_datetime = Variable.get(self.most_recent_msg_time)
             assert isinstance(update_datetime, str)
-            return pendulum.parse(str(update_datetime), strict=False)
+            return pendulum.parse(str(update_datetime))
 
-        date = pendulum.parse(str(dag_start_date), strict=False)
+        except KeyError:
+            date = pendulum.parse(dag_start_date)
+
         return date
 
     @telegram_retry(max_retries=20)
