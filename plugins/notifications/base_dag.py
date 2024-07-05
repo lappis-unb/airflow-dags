@@ -26,7 +26,7 @@ from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.telegram.hooks.telegram import TelegramHook
-from psycopg2 import OperationalError
+
 from plugins.telegram.decorators import telegram_retry
 
 
