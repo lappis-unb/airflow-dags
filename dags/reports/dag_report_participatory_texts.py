@@ -162,8 +162,8 @@ def _generate_report(
     report_name = filtered_data["participatory_space_name"]
 
     template_path = Path(__file__).parent.joinpath("./templates/template_participatory_texts.html")
-    start_date = pendulum.parse(str(filtered_data["start_date"]), strict=False)
-    end_date = pendulum.parse(str(filtered_data["end_date"]), strict=False)
+    start_date = pendulum.parse(str(filtered_data["start_date"]))
+    end_date = pendulum.parse(str(filtered_data["end_date"]))
     start_date, end_date = fix_date(start_date, end_date)
 
     report_generator = ParticipatoryTextsReport(report_name, template_path, start_date, end_date)

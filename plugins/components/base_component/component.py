@@ -269,7 +269,7 @@ class ComponentBaseHook:
             )
             return df
 
-        parse_date = lambda date: pendulum.parse(str(date), strict=False)
+        parse_date = lambda date: pendulum.parse(str(date))
 
         df["creation_date"] = df["creation_date"].apply(parse_date)
         df["update_date"] = df["update_date"].apply(parse_date)

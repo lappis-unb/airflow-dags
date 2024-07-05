@@ -155,8 +155,8 @@ def send_invalid_email(
     date_start: str,
     date_end: str,
 ):
-    date_start = pendulum.parse(str(date_start), strict=False).strftime("%d/%m/%Y")
-    date_end = pendulum.parse(str(date_end), strict=False).strftime("%d/%m/%Y")
+    date_start = pendulum.parse(str(date_start)).strftime("%d/%m/%Y")
+    date_end = pendulum.parse(str(date_end)).strftime("%d/%m/%Y")
 
     hook = SmtpHook(SMPT_CONN_ID)
     hook = hook.get_conn()
@@ -179,8 +179,8 @@ def send_email_with_pdf(
     date_end: str,
     url: str,
 ):
-    date_start = pendulum.parse(str(date_start), strict=False).strftime("%d/%m/%Y")
-    date_end = pendulum.parse(str(date_end), strict=False).strftime("%d/%m/%Y")
+    date_start = pendulum.parse(str(date_start)).strftime("%d/%m/%Y")
+    date_end = pendulum.parse(str(date_end)).strftime("%d/%m/%Y")
 
     hook = SmtpHook(SMPT_CONN_ID)
     hook = hook.get_conn()
