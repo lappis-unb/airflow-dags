@@ -54,7 +54,7 @@ lint-ruff:
   stage: lint
   <<: *default_rule_python
   script:
-    - ruff .
+    - ruff check .
 
 lint-black:
   stage: lint
