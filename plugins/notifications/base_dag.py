@@ -119,17 +119,12 @@ class NotifierDAG:
         -------
             pendulum.DateTime: The update date.
         """
-        assert isinstance(dag_start_date, str)
+        update_datetime = Variable.get(self.most_recent_msg_time)
 
-        try:
-            update_datetime = Variable.get(self.most_recent_msg_time)
-            assert isinstance(update_datetime, str)
-            return pendulum.parse(str(update_datetime))
+        assert update_datetime is not None
+        assert isinstance(update_datetime, str)
 
-        except KeyError:
-            date = pendulum.parse(dag_start_date)
-
-        return date
+        return pendulum.parse(update_datetime)
 
     @telegram_retry(max_retries=20)
     def _send_telegram_notification(self, telegram_conn_id, telegram_chat_id, telegram_topic_id, message):
