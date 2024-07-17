@@ -1,0 +1,22 @@
+query get_updat_at_proposals($page: String) {
+  participatoryProcesses {
+    components {
+      ... on Proposals {
+        proposals(
+          order: { publishedAt: "asc" }
+          after: $page
+        ) {
+          pageInfo {
+            hasNextPage
+            startCursor
+            endCursor
+          }
+          nodes {
+            id
+            updatedAt
+          }
+        }
+      }
+    }
+  }
+}

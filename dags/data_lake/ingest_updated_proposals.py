@@ -54,7 +54,7 @@ def _add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.Data
     return df
 
 
-def _get_query(relative_path: str = "./queries/get_updat_at_proposals.gql"):
+def _get_query(relative_path: str = "./queries/get_updated_at_proposals.gql"):
     """
     Retrieves the query from the specified file and returns it.
 
@@ -66,7 +66,7 @@ def _get_query(relative_path: str = "./queries/get_updat_at_proposals.gql"):
     return query
 
 
-def _extract_id_date_from_response(response: str) -> pd.DataFrame:
+def _extract_id_date_from_response(responses: list[dict]) -> pd.DataFrame:
     """
     Extracts the id and date information from the given response.
 
@@ -79,17 +79,18 @@ def _extract_id_date_from_response(response: str) -> pd.DataFrame:
         pd.DataFrame: A DataFrame containing the extracted id and date information.
     """
     proposals_lists = []
-    for process in response["data"]["participatoryProcesses"]:
-        components = process.get("components")
-        nodes_lists = [component.get("proposals", {}).get("nodes") or [] for component in components]
+    for response in responses:
+        for process in response["data"]["participatoryProcesses"]:
+            components = process.get("components")
+            nodes_lists = [component.get("proposals", {}).get("nodes") or [] for component in components]
 
-        for nodes in nodes_lists:
-            proposals_lists.append(nodes)
-    df_ids = pd.concat(pd.json_normalize(i) for i in proposals_lists)
+            for nodes in nodes_lists:
+                proposals_lists.append(nodes)
+        df_ids = pd.concat(pd.json_normalize(i) for i in proposals_lists)
     return df_ids
 
 
-def _get_response_gql(query: str, response_text: bool = False, **variables):
+def _get_response_gql(query: str, paginated=False, **variables):
     """
     Executes the GraphQL query to get the date and id of the update proposals.
 
@@ -104,18 +105,13 @@ def _get_response_gql(query: str, response_text: bool = False, **variables):
         The response from the GraphQL query.
     """
     hook = GraphQLHook(DECIDIM_CONN_ID)
-    session = hook.get_session()
-    response = session.post(
-        hook.api_url,
-        json={
-            "query": query,
-            "variables": variables,
-        },
-    )
-    dado = response.text
-    if response_text:
-        return dado
-    return json.loads(dado)
+    logging.info(query)
+    if paginated:
+        response = [*hook.run_graphql_paginated_query(query, variables=variables)]
+    else:
+        response = hook.run_graphql_query(query, variables=variables)
+
+    return response
 
 
 def _filter_ids_by_ds_nodash(ids: pd.DataFrame, date: str) -> pd.DataFrame:
@@ -131,7 +127,12 @@ def _filter_ids_by_ds_nodash(ids: pd.DataFrame, date: str) -> pd.DataFrame:
     -------
         pd.DataFrame: The filtered DataFrame containing only the rows with the specified date.
     """
-    ids = ids[ids["updatedAt"].apply(lambda x: x[:10].replace("-", "")) == date]
+    date_filter = datetime.strptime(date, "%Y%m%d") - timedelta(days=1)  # To process the previous day.
+
+
+    ids = ids[
+        ids["updatedAt"].apply(lambda x: str(x[:10].replace("-", ""))) == date_filter.strftime("%Y%m%d")
+    ]
     return list(ids["id"].values)
 
 
@@ -334,9 +335,9 @@ SCHEMA = "raw"
 
 @dag(
     default_args=default_args,
-    schedule_interval="0 22 * * *",
+    schedule_interval="0 1 * * *",
     start_date=datetime(2023, 5, 1),
-    catchup=True,
+    catchup=False,
     tags=["data_lake"],
 )
 def ingest_update_proposals():
@@ -353,7 +354,7 @@ def ingest_update_proposals():
             dict: A dictionary containing the extracted date and ID information.
         """
         query = _get_query()
-        response = _get_response_gql(query)
+        response = _get_response_gql(query, paginated=True)
         response = _extract_id_date_from_response(response)
         return response
 
@@ -371,7 +372,7 @@ def ingest_update_proposals():
         -------
             pd.DataFrame: The filtered DataFrame of IDs.
         """
-        ids = _filter_ids_by_ds_nodash(ids, context["ds_nodash"])
+        ids = _filter_ids_by_ds_nodash(ids, context["data_interval_end"].strftime("%Y%m%d"))
         return ids
 
     check_and_create_bucket = S3CreateBucketOperator(
@@ -400,7 +401,7 @@ def ingest_update_proposals():
             response = _get_response_gql(query, response_text=True, id=_id)
             hook = S3Hook(MINIO_CONN)
             hook.load_string(
-                response,
+                json.dumps(response),
                 key=f"updated_proposals/{LANDING_ZONE}/{ds_nodash}_{_id}.json",
                 bucket_name=MINIO_BUCKET,
                 replace=True,
