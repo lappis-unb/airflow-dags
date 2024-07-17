@@ -15,6 +15,8 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
 
+import logging
+
 default_args = {
     "owner": "Amoêdo",
     "depends_on_past": False,
@@ -127,11 +129,15 @@ def _filter_ids_by_ds_nodash(ids: pd.DataFrame, date: str) -> pd.DataFrame:
     -------
         pd.DataFrame: The filtered DataFrame containing only the rows with the specified date.
     """
-    date_filter = datetime.strptime(date, "%Y%m%d") - timedelta(days=1)  # To process the previous day.
-
+    date_filter = pd.Timestamp(
+        datetime.strptime(date, "%Y%m%d") - timedelta(days=1)
+    )  # To process the previous day.
+    ids["updatedAt"] = pd.to_datetime(ids["updatedAt"])
 
     ids = ids[
-        ids["updatedAt"].apply(lambda x: str(x[:10].replace("-", ""))) == date_filter.strftime("%Y%m%d")
+        (ids["updatedAt"].dt.year == date_filter.year)
+        & (ids["updatedAt"].dt.month == date_filter.month)
+        & (ids["updatedAt"].dt.day == date_filter.day)
     ]
     return list(ids["id"].values)
 
