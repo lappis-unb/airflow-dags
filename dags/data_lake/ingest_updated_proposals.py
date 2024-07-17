@@ -358,7 +358,7 @@ def ingest_update_proposals():
         response = _extract_id_date_from_response(response)
         return response
 
-    @task(provide_context=True)
+    @task
     def get_current_updated_ids(ids: pd.DataFrame, **context):
         """
         Filter the given DataFrame of IDs based on the current execution date.
@@ -381,7 +381,7 @@ def ingest_update_proposals():
         aws_conn_id=MINIO_CONN,
     )
 
-    @task(provide_context=True)
+    @task
     def get_updated_proposals(ids: List[str], **context):
         """
         Retrieves and stores updated proposals in the landing zone.
@@ -407,7 +407,7 @@ def ingest_update_proposals():
                 replace=True,
             )
 
-    @task(provide_context=True)
+    @task
     def transform_updated_proposals(**context):
         """
         Transforms and ingests updated proposals into the data lake.
@@ -434,7 +434,7 @@ def ingest_update_proposals():
                 replace=True,
             )
 
-    @task.branch(provide_context=True)
+    @task.branch
     def check_ids(**context):
         """
         Check if there are any updated IDs available.
@@ -469,7 +469,7 @@ def ingest_update_proposals():
         conn_id="conn_postgres",
     )
 
-    @task(provide_context=True)
+    @task
     def insert_updated_proposals(**context):
         """
         Task to insert updated proposals into a PostgreSQL database.
@@ -505,7 +505,7 @@ def ingest_update_proposals():
         aws_conn_id=MINIO_CONN,
     )
 
-    @task(provide_context=True)
+    @task
     def move_to_processed_zone(**context):
         """
         Moves the updated proposals to the processed zone.
