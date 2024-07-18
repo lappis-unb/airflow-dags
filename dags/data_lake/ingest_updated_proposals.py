@@ -14,8 +14,11 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
-
+import numpy as np 
+from airflow.configuration import conf
 import logging
+from os import environ
+import itertools
 
 default_args = {
     "owner": "Amoêdo",
@@ -25,6 +28,10 @@ default_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
 
 def _add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataFrame:
     """
@@ -82,13 +89,8 @@ def _extract_id_date_from_response(responses: list[dict]) -> pd.DataFrame:
     """
     proposals_lists = []
     for response in responses:
-        for process in response["data"]["participatoryProcesses"]:
-            components = process.get("components")
-            nodes_lists = [component.get("proposals", {}).get("nodes") or [] for component in components]
-
-            for nodes in nodes_lists:
-                proposals_lists.append(nodes)
-        df_ids = pd.concat(pd.json_normalize(i) for i in proposals_lists)
+        proposals_lists.extend(response["data"]["component"]["proposals"]["nodes"])
+    df_ids = pd.DataFrame(proposals_lists)
     return df_ids
 
 
@@ -116,7 +118,7 @@ def _get_response_gql(query: str, paginated=False, **variables):
     return response
 
 
-def _filter_ids_by_ds_nodash(ids: pd.DataFrame, date: str) -> pd.DataFrame:
+def _filter_ids_by_ds_nodash(ids_dataframes: pd.DataFrame, date: str) -> pd.DataFrame:
     """
     Filter the given DataFrame based on the provided date.
 
@@ -132,6 +134,7 @@ def _filter_ids_by_ds_nodash(ids: pd.DataFrame, date: str) -> pd.DataFrame:
     date_filter = pd.Timestamp(
         datetime.strptime(date, "%Y%m%d") - timedelta(days=1)
     )  # To process the previous day.
+    ids = pd.concat(ids_dataframes)
     ids["updatedAt"] = pd.to_datetime(ids["updatedAt"])
 
     ids = ids[
@@ -328,6 +331,20 @@ def _get_create_table():
     return create_table.format(schema=SCHEMA, table_name=TABLE_NAME)
 
 
+def _get_components_ids():
+    hook = GraphQLHook(DECIDIM_CONN_ID)
+    query = _get_query("./queries/get_proposals_ids.gql")
+    result = hook.run_graphql_query(query)
+
+    propsals_ids = []
+    participatory_processes = result["data"]["participatoryProcesses"]
+
+    for participatory_process in participatory_processes:
+        propsals_ids.extend([x["id"] for x in participatory_process["components"]])
+
+    return list(chunks(propsals_ids, min(int(conf.get("core", "MAX_MAP_LENGTH", fallback='1024'), 10))))
+
+
 QUERY = _get_query()
 DECIDIM_CONN_ID = "api_decidim"
 MINIO_CONN = "minio_conn_id"
@@ -351,7 +368,11 @@ def ingest_update_proposals():
     end = EmptyOperator(task_id="end", trigger_rule="none_failed")
 
     @task
-    def get_date_id_update_proposals():
+    def get_component_ids():
+        return _get_components_ids()
+
+    @task
+    def get_date_id_update_proposals(components_ids: list[int]):
         """
         Retrieves the date and ID information for updating proposals.
 
@@ -360,8 +381,10 @@ def ingest_update_proposals():
             dict: A dictionary containing the extracted date and ID information.
         """
         query = _get_query()
-        response = _get_response_gql(query, paginated=True)
-        response = _extract_id_date_from_response(response)
+        data = []
+        for id in components_ids:
+            data.extend(_get_response_gql(query, paginated=True, id=id))
+        response = _extract_id_date_from_response(data)
         return response
 
     @task
@@ -541,7 +564,8 @@ def ingest_update_proposals():
             )
 
     _check_ids = check_ids()
-    _get_date_id_update_proposals = get_date_id_update_proposals()
+    _get_ids = get_component_ids()
+    _get_date_id_update_proposals = get_date_id_update_proposals.expand(components_ids=_get_ids)
     _transform_updated_proposals = transform_updated_proposals()
     start >> _get_date_id_update_proposals
     _get_current_updated_ids = get_current_updated_ids(_get_date_id_update_proposals)

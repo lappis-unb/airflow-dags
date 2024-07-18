@@ -1,8 +1,7 @@
-query get_updat_at_proposals($page: String) {
-  participatoryProcesses {
-    components {
-      ... on Proposals {
-        proposals(
+query get_updat_at_proposals($id: ID!, $page: String!) {
+  component(id: $id) {
+    ... on Proposals {
+      proposals(
           order: { publishedAt: "asc" }
           after: $page
         ) {
@@ -16,7 +15,6 @@ query get_updat_at_proposals($page: String) {
             updatedAt
           }
         }
-      }
     }
   }
 }
