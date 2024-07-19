@@ -122,7 +122,7 @@ def _get_response_gql(query: str, paginated=False, **variables):
     return response
 
 
-def _filter_ids_by_ds_nodash(ids_dataframes: pd.DataFrame, date: str) -> pd.DataFrame:
+def _filter_ids_by_date(ids_dataframes: pd.DataFrame, date: str) -> pd.DataFrame:
     """
     Filter the given DataFrame based on the provided date.
 
@@ -167,7 +167,8 @@ def collect_responses(ids: List[str], zone: str, ds_nodash: str, suffix: str = "
     s3 = S3Hook(MINIO_CONN)
     responses = []
     for _id in ids:
-        response = s3.read_key(f"updated_proposals/{zone}/{ds_nodash}_{_id}.{suffix}", MINIO_BUCKET)
+        path = f"updated_proposals/{zone}/{ds_nodash}_{_id}.{suffix}"
+        response = s3.read_key(path, MINIO_BUCKET)
         if suffix == "json":
             response = json.loads(response)
         responses.append(response)
