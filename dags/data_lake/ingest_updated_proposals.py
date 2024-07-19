@@ -215,37 +215,32 @@ def flatten_structure_with_additional_fields(data, extract_by_id: bool = False):
     proposal_component = "proposals"
     if extract_by_id:
         proposal_component = "proposal"
-    data = data["data"]["participatoryProcesses"]
+    data = data["data"]["component"]
+    proposal_data_from_response = data[proposal_component]
 
     # Function to handle the extraction of text from nested translation dictionaries
     def extract_text(translations):
         if translations and isinstance(translations, list):
             return translations[0].get("text")
 
-    flattened_data = []
-    for item in data:
-        main_title = extract_text(item.get("title", {}).get("translations", []))
-        for component in item.get("components", []):
-            component_id = component.get("id", "")
-            component_name = extract_text(component.get("name", {}).get("translations", []))
-            if proposal_component in component:
-                if extract_by_id:
-                    proposal = component.get(proposal_component)
-                    if proposal:
-                        proposal_data = get_proposal_dic(
-                            extract_text, main_title, component_id, component_name, proposal
-                        )
-                        flattened_data.append(proposal_data)
-                else:
-                    for proposal in component.get("proposals", {}).get("nodes", []):
-                        proposal_data = get_proposal_dic(
-                            extract_text, main_title, component_id, component_name, proposal
-                        )
-                        flattened_data.append(proposal_data)
-    return flattened_data
+    main_title = extract_text(data["participatorySpace"].get("title", {}).get("translations", []))
+    component_id = data.get("id")
+    component_name = extract_text(data.get("name", {}).get("translations", []))
+
+    if extract_by_id and proposal_data_from_response:
+        return get_proposal_dic(
+            extract_text,
+            main_title,
+            component_id,
+            component_name,
+            proposal_data_from_response,
+            data["participatorySpace"]["id"],
+        )
 
 
-def get_proposal_dic(extract_text, main_title, component_id, component_name, proposal):
+def get_proposal_dic(
+    extract_text, main_title, component_id, component_name, proposal, participatory_space_id
+):
     """
     Constructs a dictionary containing various data fields extracted from a proposal.
 
@@ -263,6 +258,7 @@ def get_proposal_dic(extract_text, main_title, component_id, component_name, pro
     """
     proposal_data = {
         "main_title": main_title,
+        "participatory_space_id": participatory_space_id,
         "component_id": component_id,
         "component_name": component_name,
         "proposal_id": proposal["id"],
