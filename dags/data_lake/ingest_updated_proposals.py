@@ -1,11 +1,13 @@
 import io
 import json
+import logging
 from datetime import datetime, timedelta
 from io import StringIO
 from pathlib import Path
 from typing import List
 
 import pandas as pd
+from airflow.configuration import conf
 from airflow.decorators import dag, task
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
@@ -14,11 +16,6 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 from plugins.graphql.hooks.graphql_hook import GraphQLHook
-import numpy as np 
-from airflow.configuration import conf
-import logging
-from os import environ
-import itertools
 
 default_args = {
     "owner": "Amoêdo",
@@ -28,10 +25,12 @@ default_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
+
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
-        yield lst[i:i + n]
+        yield lst[i : i + n]
+
 
 def _add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataFrame:
     """
@@ -89,7 +88,12 @@ def _extract_id_date_from_response(responses: list[dict]) -> pd.DataFrame:
     """
     proposals_lists = []
     for response in responses:
-        proposals_lists.extend(response["data"]["component"]["proposals"]["nodes"])
+        proposals_lists.extend(
+            [
+                {"component_id": response["data"]["component"]["id"], **component}
+                for component in response["data"]["component"]["proposals"]["nodes"]
+            ]
+        )
     df_ids = pd.DataFrame(proposals_lists)
     return df_ids
 
@@ -142,7 +146,7 @@ def _filter_ids_by_ds_nodash(ids_dataframes: pd.DataFrame, date: str) -> pd.Data
         & (ids["updatedAt"].dt.month == date_filter.month)
         & (ids["updatedAt"].dt.day == date_filter.day)
     ]
-    return list(ids["id"].values)
+    return list(ids[["component_id", "id"]].values)
 
 
 def collect_responses(ids: List[str], zone: str, ds_nodash: str, suffix: str = "json"):
@@ -426,8 +430,8 @@ def ingest_update_proposals():
         """
         ds_nodash = context["ds_nodash"]
         query = _get_query("./queries/get_proposals_by_id.gql")
-        for _id in ids:
-            response = _get_response_gql(query, response_text=True, id=_id)
+        for _component_id, _id in ids:
+            response = _get_response_gql(query, response_text=True, component_id=_component_id, id=_id)
             hook = S3Hook(MINIO_CONN)
             hook.load_string(
                 json.dumps(response),
