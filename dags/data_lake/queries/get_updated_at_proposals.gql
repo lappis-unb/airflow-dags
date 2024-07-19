@@ -1,5 +1,6 @@
 query get_updat_at_proposals($id: ID!, $page: String!) {
   component(id: $id) {
+    id
     ... on Proposals {
       proposals(
           order: { publishedAt: "asc" }
