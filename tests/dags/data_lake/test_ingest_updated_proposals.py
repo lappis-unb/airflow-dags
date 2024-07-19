@@ -6,19 +6,19 @@ import pytest
 from dags.data_lake.ingest_updated_proposals import (
     MINIO_BUCKET,
     MINIO_CONN,
-    _filter_ids_by_ds_nodash,
+    _filter_ids_by_date,
     collect_responses,
     dict_safe_get,
     get_proposal_dic,
 )
 
 
-def test_filter_ids_by_ds_nodash():
+def test_filter_ids_by_date():
     """
     Test function to filter ids by date string without dashes.
 
     This function creates a sample DataFrame with 'id' and 'updatedAt' columns.
-    It sets a date string to filter the DataFrame by and calls the _filter_ids_by_ds_nodash function.
+    It sets a date string to filter the DataFrame by and calls the _filter_ids_by_date function.
     The expected result is a list of filtered ids.
 
     Returns:
@@ -34,7 +34,7 @@ def test_filter_ids_by_ds_nodash():
     date = "20220102"
 
     # Call the function to filter the DataFrame
-    result = _filter_ids_by_ds_nodash(df, date)
+    result = _filter_ids_by_date(df, date)
 
     # Assert the expected values
     assert result == [2]
