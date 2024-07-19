@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import List
 
 import pandas as pd
+import pendulum
 from airflow.configuration import conf
 from airflow.decorators import dag, task
 from airflow.operators.empty import EmptyOperator
@@ -30,6 +31,11 @@ def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield lst[i : i + n]
+
+
+def _get_date_time_filter(date_of_execution: pendulum.DateTime):
+    date_of_execution = pendulum.parse(date_of_execution)
+    return date_of_execution - timedelta(days=1)
 
 
 def _add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataFrame:
@@ -122,7 +128,7 @@ def _get_response_gql(query: str, paginated=False, **variables):
     return response
 
 
-def _filter_ids_by_date(ids_dataframes: pd.DataFrame, date: str) -> pd.DataFrame:
+def _filter_ids_by_date(ids_dataframes: pd.DataFrame, date: pendulum.DateTime) -> pd.DataFrame:
     """
     Filter the given DataFrame based on the provided date.
 
@@ -135,9 +141,7 @@ def _filter_ids_by_date(ids_dataframes: pd.DataFrame, date: str) -> pd.DataFrame
     -------
         pd.DataFrame: The filtered DataFrame containing only the rows with the specified date.
     """
-    date_filter = pd.Timestamp(
-        datetime.strptime(date, "%Y%m%d") - timedelta(days=1)
-    )  # To process the previous day.
+    date_filter = pd.Timestamp(_get_date_time_filter(date))  # To process the previous day.
     ids = pd.concat(ids_dataframes)
     ids["updatedAt"] = pd.to_datetime(ids["updatedAt"])
 
@@ -367,6 +371,8 @@ SCHEMA = "raw"
     tags=["data_lake"],
 )
 def ingest_update_proposals():
+    date = "{{data_interval_end }}"
+
     start = EmptyOperator(task_id="start")
     end = EmptyOperator(task_id="end", trigger_rule="none_failed")
 
@@ -391,7 +397,7 @@ def ingest_update_proposals():
         return response
 
     @task(retries=3, retry_delay=timedelta(seconds=20))
-    def get_current_updated_ids(ids: pd.DataFrame, **context):
+    def get_current_updated_ids(ids: pd.DataFrame, date_filter: pendulum.DateTime):
         """
         Filter the given DataFrame of IDs based on the current execution date.
 
@@ -404,7 +410,7 @@ def ingest_update_proposals():
         -------
             pd.DataFrame: The filtered DataFrame of IDs.
         """
-        ids = _filter_ids_by_date(ids, context["data_interval_end"].strftime("%Y%m%d"))
+        ids = _filter_ids_by_date(ids, date_filter)
         config_max_map_length = int(conf.get("core", "MAX_MAP_LENGTH", fallback="1024"))
 
         return list(chunks(ids, min([config_max_map_length, 2])))
@@ -416,7 +422,7 @@ def ingest_update_proposals():
     )
 
     @task(retries=3, retry_delay=timedelta(seconds=20))
-    def get_updated_proposals(ids: List[str], **context):
+    def get_updated_proposals(ids: List[str], date: pendulum.DateTime):
         """
         Retrieves and stores updated proposals in the landing zone.
 
@@ -429,8 +435,7 @@ def ingest_update_proposals():
         -------
             None
         """
-        date = context["data_interval_end"].strftime("%Y%m%d")
-        date_filter = (datetime.strptime(date, "%Y%m%d") - timedelta(days=1)).strftime("%Y%m%d")
+        date_filter = _get_date_time_filter(date).strftime("%Y%m%d")
 
         query = _get_query("./queries/get_proposals_by_id.gql")
         for _component_id, _id in ids:
@@ -444,7 +449,7 @@ def ingest_update_proposals():
             )
 
     @task
-    def transform_updated_proposals(ids, **context):
+    def transform_updated_proposals(ids, date: pendulum.DateTime):
         """
         Transforms and ingests updated proposals into the data lake.
 
@@ -456,8 +461,7 @@ def ingest_update_proposals():
         -------
             None
         """
-        date = context["data_interval_end"].strftime("%Y%m%d")
-        date_filter = (datetime.strptime(date, "%Y%m%d") - timedelta(days=1)).strftime("%Y%m%d")
+        date_filter = _get_date_time_filter(date).strftime("%Y%m%d")
         proposals_ids = [prop_id for _, prop_id in ids]
 
         responses = collect_responses(proposals_ids, LANDING_ZONE, date_filter)
@@ -475,7 +479,7 @@ def ingest_update_proposals():
             )
 
     @task.branch
-    def check_ids(**context):
+    def check_ids(current_ids):
         """
         Check if there are any updated IDs available.
 
@@ -492,8 +496,7 @@ def ingest_update_proposals():
         -------
             str: The task ID for the next task to execute.
         """
-        ids = context["task_instance"].xcom_pull(task_ids="get_current_updated_ids")
-        if len(ids) > 0:
+        if len(current_ids) > 0:
             return "check_and_create_schema"
         return "end"
 
@@ -510,7 +513,7 @@ def ingest_update_proposals():
     )
 
     @task
-    def insert_updated_proposals(ids, **context):
+    def insert_updated_proposals(ids, date: str):
         """
         Task to insert updated proposals into a PostgreSQL database.
 
@@ -526,8 +529,7 @@ def ingest_update_proposals():
         ------
         - None
         """
-        date = context["data_interval_end"].strftime("%Y%m%d")
-        date_filter = (datetime.strptime(date, "%Y%m%d") - timedelta(days=1)).strftime("%Y%m%d")
+        date_filter = _get_date_time_filter(date).strftime("%Y%m%d")
 
         proposals_ids = [prop_id for _, prop_id in ids]
 
@@ -550,7 +552,7 @@ def ingest_update_proposals():
     )
 
     @task
-    def move_to_processed_zone(ids, **context):
+    def move_to_processed_zone(ids, date: pendulum.DateTime):
         """
         Moves the updated proposals to the processed zone.
 
@@ -562,8 +564,7 @@ def ingest_update_proposals():
         -------
             None
         """
-        date = context["data_interval_end"].strftime("%Y%m%d")
-        date_filter = (datetime.strptime(date, "%Y%m%d") - timedelta(days=1)).strftime("%Y%m%d")
+        date_filter = _get_date_time_filter(date).strftime("%Y%m%d")
 
         proposals_ids = [prop_id for _, prop_id in ids]
         for _id in proposals_ids:
@@ -580,13 +581,15 @@ def ingest_update_proposals():
                 keys=f"updated_proposals/{PROCESSING_ZONE}/{date_filter}_{_id}.csv",
             )
 
-    _check_ids = check_ids()
     _get_ids = get_component_ids()
     _get_date_id_update_proposals = get_date_id_update_proposals.expand(components_ids=_get_ids)
-    _get_current_updated_ids = get_current_updated_ids(_get_date_id_update_proposals)
-    _transform_updated_proposals = transform_updated_proposals.expand(ids=_get_current_updated_ids)
+    _get_current_updated_ids = get_current_updated_ids(_get_date_id_update_proposals, date)
+    _check_ids = check_ids(_get_current_updated_ids)
+    _transform_updated_proposals = transform_updated_proposals.partial(date=date).expand(
+        ids=_get_current_updated_ids
+    )
     start >> _get_date_id_update_proposals
-    _get_updated_proposals = get_updated_proposals.expand(ids=_get_current_updated_ids)
+    _get_updated_proposals = get_updated_proposals.partial(date=date).expand(ids=_get_current_updated_ids)
     _get_current_updated_ids >> check_and_create_bucket >> _get_updated_proposals
     _get_updated_proposals >> _transform_updated_proposals >> _check_ids
     _transform_updated_proposals >> delete_landing_zone
@@ -595,8 +598,8 @@ def ingest_update_proposals():
     (
         check_and_create_schema
         >> create_table
-        >> insert_updated_proposals.expand(ids=_get_current_updated_ids)
-        >> move_to_processed_zone.expand(ids=_get_current_updated_ids)
+        >> insert_updated_proposals.partial(date=date).expand(ids=_get_current_updated_ids)
+        >> move_to_processed_zone.partial(date=date).expand(ids=_get_current_updated_ids)
         >> end
     )
 
