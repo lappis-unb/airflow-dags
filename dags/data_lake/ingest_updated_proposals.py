@@ -325,7 +325,7 @@ def _get_create_table():
 QUERY = _get_query()
 DECIDIM_CONN_ID = "api_decidim"
 MINIO_CONN = "minio_conn_id"
-MINIO_BUCKET = "brasil-participativo-daily-csv"
+MINIO_BUCKET = "brasil-participativo"
 LANDING_ZONE = "landing_zone"
 PROCESSING_ZONE = "processing"
 PROCESSED_ZONE = "processed"
@@ -338,8 +338,8 @@ postgres_dataset = Dataset(f"{TABLE_NAME}")
 @dag(
     default_args=default_args,
     schedule_interval="0 22 * * *",
-    start_date=datetime(2021, 1, 1),
-    catchup=False,
+    start_date=datetime(2023, 5, 1),
+    catchup=True,
     tags=["data_lake"],
 )
 def ingest_update_proposals():
@@ -404,7 +404,7 @@ def ingest_update_proposals():
             hook = S3Hook(MINIO_CONN)
             hook.load_string(
                 response,
-                key=f"updated_proposals/landing_zone/{ds_nodash}_{_id}.json",
+                key=f"updated_proposals/{LANDING_ZONE}/{ds_nodash}_{_id}.json",
                 bucket_name=MINIO_BUCKET,
                 replace=True,
             )

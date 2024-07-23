@@ -33,7 +33,6 @@ class ParticipatoryTextsReport(Report):
         matomo_user_country_csv: str,
         matomo_devices_detection_csv: str,
     ):
-
         if not report_data["proposals"]:
             return self.template.render(
                 data={

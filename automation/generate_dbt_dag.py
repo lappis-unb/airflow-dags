@@ -47,12 +47,22 @@ def generate_airflow_task(node_type, node_name, dbt_project_path, dbt_profile_pa
     type2command = {"model": "run", "test": "test"}
     dbt_command = type2command[node_type]
     task_id = f"{dbt_command}_{node_name}"
+    target_path = f"/tmp/dbt_target_{dbt_command}_{node_name}"
+    logs_path = f"/tmp/dbt_logs_{dbt_command}_{node_name}"
     task = f"""
 {indentation}{node_name}_task = BashOperator(
 {indentation}{indentation}task_id='{task_id}',
-{indentation}{indentation}bash_command='cd {dbt_project_path} && dbt {dbt_command} \\
-{indentation}{indentation}--profiles-dir {dbt_profile_path} --select {node_name}',
-{indentation}{indentation}env={{'DBT_POSTGRES_PASSWORD': Variable.get("dex_demo_pg_password")}}
+{indentation}{indentation}bash_command='dbt deps && dbt {dbt_command} --select {node_name} \\
+&& rm -r {target_path} {logs_path}',
+{indentation}{indentation}env={{
+{indentation}{indentation}{indentation}'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
+{indentation}{indentation}{indentation}'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
+{indentation}{indentation}{indentation}'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password"),
+{indentation}{indentation}{indentation}'DBT_TARGET_PATH': '{target_path}',
+{indentation}{indentation}{indentation}'DBT_LOG_PATH': '{logs_path}'
+{indentation}{indentation}}},
+{indentation}{indentation}cwd='{dbt_project_path}',
+{indentation}{indentation}append_env=True
 {indentation})"""
     return task
 
