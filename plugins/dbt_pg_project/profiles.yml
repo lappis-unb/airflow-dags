@@ -5,10 +5,10 @@ dbt_pg_project:
       type: postgres
       host: localhost
       port: 25570
-      dbname: data_warehouse
+      dbname: airflow
       user: airflow
       pass: airflow
-      schema: raw
+      schema: public
       threads: 4
     prod:
       host: "{{ env_var('DBT_POSTGRES_HOST') }}"
