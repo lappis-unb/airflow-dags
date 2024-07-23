@@ -62,7 +62,6 @@ class NotifierDAG:
         start_date: str,
         end_date: str,
     ) -> None:
-
         assert isinstance(notifier_type, NotifierTypes)
 
         self.notifier_type = notifier_type

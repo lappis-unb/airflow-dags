@@ -11,9 +11,12 @@ variables:
   GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
 
   DBT_PROJECT_DIR: "${CI_PROJECT_DIR}/plugins/dbt_pg_project"
-  DBT_PROFILE_DIR: "${CI_PROJECT_DIR}/plugins/dbt_pg_project"
+
+  AIRFLOW_DBT_PROJECT_DIR: "/opt/airflow/dags-config/repo/plugins/dbt_pg_project"
+  AIRFLOW_DBT_PROFILE_DIR: "/opt/airflow/dags-config/repo/plugins/dbt_pg_project"
+
   PYTHON_SCRIPT: "${CI_PROJECT_DIR}/automation/generate_dbt_dag.py"
-  DAG_REPO_PATH: "${CI_PROJECT_DIR}/dags/dbt/"
+  DAG_REPO_PATH: "${CI_PROJECT_DIR}/dags/"
   GIT_CI_USER: "CI Bot"
   GIT_CI_EMAIL: "ci@lappis.rocks"
   
@@ -51,7 +54,7 @@ lint-ruff:
   stage: lint
   <<: *default_rule_python
   script:
-    - ruff .
+    - ruff check .
 
 lint-black:
   stage: lint
@@ -151,7 +154,7 @@ process_manifest:
   stage: generate_dbt_dag
   image: python:3.9
   script:
-    - python $PYTHON_SCRIPT --manifest_path $DBT_PROJECT_DIR/target/manifest.json --project_path $DBT_PROJECT_DIR --profile_path $DBT_PROFILE_DIR --dag_folder_path dbt/
+    - python $PYTHON_SCRIPT --manifest_path $DBT_PROJECT_DIR/target/manifest.json --project_path $AIRFLOW_DBT_PROJECT_DIR --profile_path $AIRFLOW_DBT_PROFILE_DIR --dag_folder_path dbt/
   artifacts:
     paths:
       - dbt/*.py
@@ -166,7 +169,9 @@ commit_generated_file:
     - git config --global user.email "$GIT_CI_EMAIL"
     - git config --global user.name "$GIT_CI_USER"
     - git checkout $CI_COMMIT_REF_NAME
-    - mv dbt $DAG_REPO_PATH
+    - apt-get update -y
+    - apt-get install -y rsync
+    - rsync -a --delete dbt/ $DAG_REPO_PATH/dbt/
     - git add $DAG_REPO_PATH
     - git diff-index --quiet HEAD || (git commit -m "automation(dbt_dag) Add airflow DAG from dbt manifest [ci skip]" && git push https://dbtAutomation:$CI_JOB_TOKEN@gitlab.com/lappis-unb/decidimbr/servicos-de-dados/airflow-dags.git $CI_COMMIT_REF_NAME)
   only:

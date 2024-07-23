@@ -3,13 +3,22 @@
 The result is the checkbox `Participantes podem criar propostas` marked as checked or not.
 
 When setting decidim's proposals availability:
-if proposals_status is true
+if permission_status is true
     then the code `marking` checkbox sends
         (component[step_settings][1][creation_enabled], 0)
         (component[step_settings][1][creation_enabled], 1)
 else
     then the code `unmarking` checkbox sends
         (component[step_settings][1][creation_enabled], 0)
+
+Permissions config
+
+Comments Proposals | Permissions Config
+    0       0      |    0
+    0       1      |    1
+    1       0      |    2
+    1       1      |    3
+
 """
 
 # pylint: disable=import-error, invalid-name, expression-not-assigned
@@ -32,6 +41,69 @@ DECIDIM_CONN_ID = "api_decidim"
 PAGE_FORM_CLASS = "form edit_component"
 
 
+def _convert_html_form_to_dict(html_form: bs4.element.Tag) -> defaultdict:
+    """Convert html <form> and <input> tags to python dictionary.
+
+    Args:
+    ----
+        html_form (bs4.element.Tag): beautiful soup object with
+            respective html <form> filtered.
+
+    Returns:
+    -------
+        defaultdict: a dictionary of lists with html input tag name
+        and value.
+    """
+    dict_output = defaultdict(list)
+    for tag in html_form.find_all("input"):
+        if tag.get("type", None) == "checkbox":
+            if tag.get("checked", None):
+                dict_output[tag["name"]].append(tag["value"])
+        else:
+            dict_output[tag["name"]].append(tag["value"])
+
+    return dict_output
+
+
+def _find_form_input_id(dict_form: bs4.element.Tag, pattern: str):
+    """Find a form input id using regex.
+
+    Args:
+    ----
+        dict_form (bs4.element.Tag): a dict contains beautiful soup objects
+            with respective html <form> filtered.
+
+    Returns:
+    -------
+        form_input_id: a string with form input id value.
+
+    Raises:
+    ------
+        IndexError: If does not found a component of creation enabled.
+    """
+    pattern_match = [component for component in dict_form if re.match(pattern, component)]
+    logging.info(pattern_match)
+    pattern_match = sorted(pattern_match)
+
+    form_input_id = pattern_match.pop(0)
+
+    logging.info("FORM_INPUT_ID: %s", form_input_id)
+
+    return form_input_id
+
+
+def set_comment_permmision(dict_form: dict, status: bool):
+    comments_pattern = r"component\[.*step_settings\](\[[0-9]{1,}\]){0,1}\[comments_blocked\]"
+    comments_form_input_id = _find_form_input_id(dict_form, comments_pattern)
+    dict_form[comments_form_input_id] = [f"{int(not status)}"]
+
+
+def set_proposals_permmision(dict_form: dict, status: bool):
+    proposals_pattern = r"component\[.*step_settings\](\[[0-9]{1,}\]){0,1}\[creation_enabled\]"
+    proposals_form_input_id = _find_form_input_id(dict_form, proposals_pattern)
+    dict_form[proposals_form_input_id] = [f"{int(status)}"]
+
+
 class DecidimNotifierDAGGenerator:  # noqa: D101
     def generate_dag(
         self,
@@ -41,11 +113,13 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
         start_date: str,
         end_date: str,
         decidim_url: str,
+        permission_config: int,
         dag_id: str,
         schedule: str,
     ):
         self.component_id = component_id
         self.process_id = process_id
+        self.permission_config = str(permission_config)
 
         self.telegram_conn_id = telegram_config["telegram_conn_id"]
         self.telegram_chat_id = telegram_config["telegram_group_id"]
@@ -80,68 +154,13 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
             tags=["decidim"],
             is_paused_upon_creation=False,
         )
-        def notify_on_n_off_proposals(
-            proposals_status: bool,
+        def notify_on_n_off_permissions(
+            permission_status: bool,
         ):  # pylint: disable=missing-function-docstring
             # due to Airflow DAG __doc__
 
-            def _convert_html_form_to_dict(html_form: bs4.element.Tag) -> defaultdict:
-                """Convert html <form> and <input> tags to python dictionary.
-
-                Args:
-                ----
-                    html_form (bs4.element.Tag): beautiful soup object with
-                        respective html <form> filtered.
-
-                Returns:
-                -------
-                    defaultdict: a dictionary of lists with html input tag name
-                    and value.
-                """
-                dict_output = defaultdict(list)
-                for tag in html_form.find_all("input"):
-                    if tag.get("type", None) == "checkbox":
-                        if tag.get("checked", None):
-                            dict_output[tag["name"]].append(tag["value"])
-                    else:
-                        dict_output[tag["name"]].append(tag["value"])
-
-                return dict_output
-
-            def _find_form_input_id(dict_form: bs4.element.Tag):
-                """Find a form input id using regex.
-
-                Args:
-                ----
-                    dict_form (bs4.element.Tag): a dict contains beautiful soup objects
-                        with respective html <form> filtered.
-
-                Returns:
-                -------
-                    form_input_id: a string with form input id value.
-
-                Raises:
-                ------
-                    IndexError: If does not found a component of creation enabled.
-                """
-                # name="component[default_step_settings][creation_enabled]"
-                # component[step_settings][27][creation_enabled]
-                # component[step_settings][29][creation_enabled]
-                # component[step_settings][10][creation_enabled]
-
-                pattern = r"component\[.*step_settings\](\[[0-9]{1,}\]){0,1}\[creation_enabled\]"
-                pattern_match = [component for component in dict_form if re.match(pattern, component)]
-                logging.info(pattern_match)
-                pattern_match = sorted(pattern_match)
-
-                form_input_id = pattern_match.pop(0)
-
-                logging.info("FORM_INPUT_ID: %s", form_input_id)
-
-                return form_input_id
-
             @task
-            def set_proposals_availability(proposals_status: bool):
+            def set_permissions_availability(permission_status: bool):
                 """Airflow task that makes a request to set status of `Participantes podem criar propostas`.
 
                 It means that a decidim component became available or unavailable
@@ -149,7 +168,7 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
 
                 Args:
                 ----
-                    proposals_status (bool): the desired action on the html
+                    permission_status (bool): the desired action on the html
                         input checkbox `Participantes podem criar propostas`.
                 """
                 session = GraphQLHook(DECIDIM_CONN_ID).get_session()
@@ -165,31 +184,35 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                 logging.info("Requesting page form from %s", self.decidim_url)
 
                 dict_form = _convert_html_form_to_dict(html_form)
-                form_input_id = _find_form_input_id(dict_form)
 
-                # set proposals availability
-                if proposals_status:
-                    dict_form[form_input_id] = ["1"]
-                else:
-                    dict_form[form_input_id] = ["0"]
+                # set permissions availability
+                logging.info(self.permission_config)
+                match self.permission_config:
+                    case "1":
+                        set_proposals_permmision(dict_form, permission_status)
+                    case "2":
+                        set_comment_permmision(dict_form, permission_status)
+                    case "3":
+                        set_proposals_permmision(dict_form, permission_status)
+                        set_comment_permmision(dict_form, permission_status)
 
                 data = list(dict_form.items())
                 session.post(self.decidim_url.rstrip("/edit"), data=data)
                 session.close()
 
             @task
-            def send_telegram(proposals_status: bool):
+            def send_telegram(permission_status: bool):
                 """Airflow task to send telegram message.
 
                 Args:
                 ----
-                    proposals_status (bool): the desired action on the html
+                    permission_status (bool): the desired action on the html
                         input checkbox `Participantes podem criar propostas`.
                 """
-                if proposals_status:
-                    message = "✅ <b>[ATIVADO]</b> \n\n<i>Participantes podem criar propostas</i>"
+                if permission_status:
+                    message = "✅ <b>[ATIVADO]</b> \n\n<i>Participantes podem criar propostas e comentar</i>"
                 else:
-                    message = "🚫 <b>[DESATIVADO]</b> \n\n<i>Participantes não podem criar propostas</i>"
+                    message = "🚫 <b>[DESATIVADO]</b> \n\n<i>Participantes não podem criar propostas nem comentar</i>"  # noqa: E501
 
                 TelegramHook(
                     telegram_conn_id=self.telegram_conn_id,
@@ -201,22 +224,22 @@ class DecidimNotifierDAGGenerator:  # noqa: D101
                     }
                 )
 
-            set_proposals_availability(proposals_status) >> send_telegram(proposals_status)
+            set_permissions_availability(permission_status) >> send_telegram(permission_status)
 
-        return notify_on_n_off_proposals
+        return notify_on_n_off_permissions
 
 
 def yaml_to_dag(process_config: dict):
     """Recive the path to configuration file and generate an airflow dag."""
     DecidimNotifierDAGGenerator().generate_dag(
         **process_config,
-        dag_id="notify_set_on_proposals",
+        dag_id="notify_set_on_permissions",
         schedule="0 8 * * *",
     )(True)
 
     DecidimNotifierDAGGenerator().generate_dag(
         **process_config,
-        dag_id="notify_set_off_proposals",
+        dag_id="notify_set_off_permissions",
         schedule="0 22 * * *",
     )(False)
 
