@@ -8,7 +8,7 @@ dbt_pg_project:
       dbname: airflow
       user: airflow
       pass: airflow
-      schema: public
+      schema: dbt
       threads: 4
     prod:
       host: "{{ env_var('DBT_POSTGRES_HOST') }}"
