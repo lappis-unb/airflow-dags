@@ -1,43 +1,14 @@
 from unittest import mock
 
-import pandas as pd
 import pytest
 
 from dags.data_lake.ingest_updated_proposals import (
     MINIO_BUCKET,
     MINIO_CONN,
-    _filter_ids_by_date,
     collect_responses,
     dict_safe_get,
     get_proposal_dic,
 )
-
-
-def test_filter_ids_by_date():
-    """
-    Test function to filter ids by date string without dashes.
-
-    This function creates a sample DataFrame with 'id' and 'updatedAt' columns.
-    It sets a date string to filter the DataFrame by and calls the _filter_ids_by_date function.
-    The expected result is a list of filtered ids.
-
-    Returns:
-    -------
-        None
-    """
-    # Create a sample DataFrame
-    df = pd.DataFrame(
-        {"id": [1, 2, 3], "updatedAt": ["2022-01-01T10:00:00", "2022-01-02T12:00:00", "2022-01-03T15:00:00"]}
-    )
-
-    # Set the date to filter by
-    date = "20220102"
-
-    # Call the function to filter the DataFrame
-    result = _filter_ids_by_date(df, date)
-
-    # Assert the expected values
-    assert result == [2]
 
 
 def test_collect_responses():
@@ -120,9 +91,11 @@ def test_get_proposal_dic():
     main_title = "Main Title"
     component_id = "123"
     component_name = "Component Name"
+    participatory_space_id = "789"
     proposal = {
         "id": "456",
         "createdAt": "2022-01-01T10:00:00",
+        "participatory_space_id": participatory_space_id,
         "updatedAt": "2022-01-02T12:00:00",
         "author": {"name": "John Doe", "nickname": "johndoe", "organizationName": "ACME Corp"},
         "body": {"translations": [{"text": "Proposal Body"}]},
@@ -147,11 +120,14 @@ def test_get_proposal_dic():
     }
 
     # Call the function to get the proposal dictionary
-    proposal_data = get_proposal_dic(extract_text, main_title, component_id, component_name, proposal)
+    proposal_data = get_proposal_dic(
+        extract_text, main_title, component_id, component_name, proposal, participatory_space_id
+    )
 
     # Assert the expected values
     assert proposal_data == {
         "main_title": "Main Title",
+        "participatory_space_id": "789",
         "component_id": "123",
         "component_name": "Component Name",
         "proposal_id": "456",
