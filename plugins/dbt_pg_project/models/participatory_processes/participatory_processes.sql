@@ -32,18 +32,30 @@ total_comments_per_processes AS (
    FROM
        {{ source('raw', 'updated_proposals') }}
    GROUP BY main_title
+),
+total_votes_per_processes AS (
+   SELECT
+       main_title,
+       SUM(vote_count) AS total_votes
+   FROM
+       {{ source('raw','updated_proposals') }}
+   GROUP BY
+       main_title
 )
 SELECT
    rp.main_title,
    rp.latest_updates,
    tppp.total_proposals,
-   tcpp.total_comments
+   tcpp.total_comments,
+   tvpp.total_votes
 FROM
    recent_processes rp
 JOIN
    total_proposals_per_processes tppp ON rp.main_title = tppp.main_title
 JOIN
    total_comments_per_processes tcpp ON rp.main_title = tcpp.main_title
+JOIN
+   total_votes_per_processes tvpp ON rp.main_title = tvpp.main_title
 
 
 
