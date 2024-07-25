@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: participatory_processes
+    description: "Modelo que contém a consolidação dos processos participativos"
+    columns:
+      - name: main_title
+        description: "Nome do Processo participativo"
+      - name: latest_updates
+        description: "Atualização mais recente"
+      - name: total_proposals
+        description: "Total de propostas por processos"
+      - name: total_comments
+        description: "Total de comentários por processos participativos"
+      - name: total_votes
+        description: "Total de votos por processos participativos"
+
