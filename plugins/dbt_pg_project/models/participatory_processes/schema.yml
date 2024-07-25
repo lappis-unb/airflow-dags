@@ -4,7 +4,7 @@ models:
   - name: participatory_processes
     description: "Modelo que contém a consolidação dos processos participativos"
     columns:
-      - name: main_title
+      - name: title_process
         description: "Nome do Processo participativo"
       - name: latest_updates
         description: "Atualização mais recente"
