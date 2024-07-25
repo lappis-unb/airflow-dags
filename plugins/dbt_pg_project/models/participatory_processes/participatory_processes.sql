@@ -56,6 +56,8 @@ JOIN
    total_comments_per_processes tcpp ON rp.main_title = tcpp.main_title
 JOIN
    total_votes_per_processes tvpp ON rp.main_title = tvpp.main_title
+WHERE
+   rp.rn = 1
 
 
 
