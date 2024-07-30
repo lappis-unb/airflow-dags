@@ -87,11 +87,13 @@ def parse_manifest(manifest):
     nodes = manifest["nodes"]
     nodes_type_map = {node["name"]: node["resource_type"] for _, node in nodes.items()}
 
-    datasets_map = {
-        node["name"]: node["meta"]["datasets_trigger"].split(",")
-        for _, node in nodes.items()
-        if "datasets_trigger" in node["meta"]
-    }
+    datasets_map = {}
+    for _, node in nodes.items():
+        if "datasets_trigger" in node["meta"]:
+            triggers = node["meta"]["datasets_trigger"]
+            if isinstance(triggers, str):
+                triggers = triggers.split(",")
+            datasets_map[node["name"]] = triggers
 
     upstreams = {}
     for _, node in nodes.items():
