@@ -1,9 +1,9 @@
 from datetime import timedelta
 
 from airflow.decorators import dag
-from airflow.utils.dates import days_ago
 from airflow.models import Variable
 from airflow.operators.python import PythonVirtualenvOperator
+from airflow.utils.dates import days_ago
 
 ssh_tunnel = {
     "ssh_host": Variable.get("decidim_ssh_host"),
@@ -111,8 +111,9 @@ extractions = {
         "ingestion_type": "incremental",
         "incremental_filter": "updated_at >= '{{ ds }}'",
         "destination_schema": destination_schema,
-    }
+    },
 }
+
 
 @dag(
     dag_id="decidim_postgres_cursor_ingestion",
@@ -127,7 +128,7 @@ extractions = {
 def data_ingestion_postgres():
 
     def extract_data(extraction, extraction_info, db_conn, ssh_tunnel=None):
-        
+
         import pandas as pd
         from sqlalchemy import create_engine
         from sshtunnel import SSHTunnelForwarder
@@ -160,9 +161,7 @@ def data_ingestion_postgres():
                 )
                 df = pd.read_sql(query, engine)
         else:
-            connection_string = (
-                f"postgresql://{db_user}:{db_pw}@{db_host}:{db_port}/{db_db}"
-            )
+            connection_string = f"postgresql://{db_user}:{db_pw}@{db_host}:{db_port}/{db_db}"
             engine = create_engine(connection_string)
             df = pd.read_sql(query, engine)
 
@@ -171,8 +170,9 @@ def data_ingestion_postgres():
     def write_data(df, extraction, extraction_info, db_conn):
 
         import json
+
         import pandas as pd
-        from sqlalchemy import create_engine, Table, MetaData
+        from sqlalchemy import MetaData, Table, create_engine
         from sqlalchemy.orm import sessionmaker
 
         def treat_complex_columns(col_value):
@@ -198,9 +198,7 @@ def data_ingestion_postgres():
         db_pw = db_conn["pg_password"]
         db_db = db_conn["pg_db"]
 
-        connection_string = (
-            f"postgresql://{db_user}:{db_pw}@{db_host}:{db_port}/{db_db}"
-        )
+        connection_string = f"postgresql://{db_user}:{db_pw}@{db_host}:{db_port}/{db_db}"
         engine = create_engine(connection_string)
 
         df = df.applymap(treat_complex_columns)
@@ -211,8 +209,8 @@ def data_ingestion_postgres():
         if extraction_info["ingestion_type"] == "incremental":
             insertion_method = "append"
 
-            Session = sessionmaker(bind=engine)
-            session = Session()
+            sess = sessionmaker(bind=engine)
+            session = sess()
             metadata = MetaData(schema=schema)
 
             table = Table(extraction, metadata, autoload_with=engine)
@@ -252,10 +250,16 @@ def data_ingestion_postgres():
             task_id=f"write_data_{extraction}",
             python_callable=write_data,
             requirements=["pandas", "sqlalchemy"],
-            op_args=[f"{{{{ ti.xcom_pull(task_ids='extract_data_{extraction}') }}}}", extraction, extraction_info, destination_db_conn],
+            op_args=[
+                f"{{{{ ti.xcom_pull(task_ids='extract_data_{extraction}') }}}}",
+                extraction,
+                extraction_info,
+                destination_db_conn,
+            ],
             system_site_packages=True,
         )
 
         extract_data_task >> write_data_task
+
 
 data_ingestion_postgres = data_ingestion_postgres()
