@@ -15,7 +15,8 @@ WITH unique_proposals AS (
         {{ source('raw', 'updated_proposals') }}
 )
 SELECT
-   *
+   main_title,participatory_space_id, component_id,proposal_id,proposal_created_at, proposal_published_at, proposal_updated_at
+
 FROM
     unique_proposals
 WHERE

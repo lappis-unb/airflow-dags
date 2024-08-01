@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: proposals
+    description: "Modelo que contém a consolidação das propostas do processos participativos"
+    columns:
+      - name: main_title
+        description: "Nome do Processo participativo"
+      - name: participatory_space_id
+        description: "Id do espaço participativo"
+      - name: component_id
+        description: "Id do componente "
+      - name: proposal_id
+        description: "Id da proposta"
+      - name: proposal_created_at
+        description: "Data da criação da proposta"
+      - name: proposal_published_at
+        description: "Data da publicação da proposta"
+      - name: proposal_updated_at
+        description: "Última atualização da proposta"
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: updated_proposals
+        identifier: updated_proposals
+        database: conn_postgres
