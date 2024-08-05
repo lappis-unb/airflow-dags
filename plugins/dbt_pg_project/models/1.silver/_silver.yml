@@ -1,0 +1,129 @@
+version: 2
+
+models:
+  - name: users
+    description: "A table containing user information, including unique identifiers for each user."
+    columns:
+      - name: user_id
+        description: "The unique identifier for each user."
+        tests:
+          - unique
+          - not_null
+          - column_completeness_test_source:
+              source_name: bronze
+              source_table: decidim_users
+              origin_column: id
+
+  - name: participatory_processes
+    description: "A table containing data on participatory processes, including unique identifiers for each process."
+    columns:
+      - name: process_id
+        description: "The unique identifier for each participatory process."
+        tests:
+          - unique
+          - not_null
+          - column_completeness_test_source:
+              source_name: bronze
+              source_table: decidim_participatory_processes
+              origin_column: id
+
+  - name: proposals
+    description: "A table containing data on proposals within participatory processes."
+    columns:
+      - name: proposal_id
+        description: "The unique identifier for each proposal."
+        tests:
+          - unique
+          - not_null
+          - column_completeness_test_source:
+              source_name: bronze
+              source_table: decidim_proposals_proposals
+              origin_column: id
+      - name: process_id
+        description: "The identifier linking the proposal to its parent participatory process."
+        tests:
+          - not_null
+          - referential_integrity_test:
+              parent_model: participatory_processes
+              parent_column: process_id
+      - name: user_id
+        description: "The identifier linking the proposal to the user who created it."
+        tests:
+          - not_null
+          - referential_integrity_test:
+              parent_model: users
+              parent_column: user_id
+
+  - name: comments
+    description: "A table containing data on comments within participatory processes."
+    columns:
+      - name: comment_id
+        description: "The unique identifier for each comment."
+        tests:
+          - unique
+          - not_null
+          - column_completeness_test_source:
+              source_name: bronze
+              source_table: decidim_comments_comments
+              origin_column: id
+              origin_filter: o.decidim_participatory_space_type = 'Decidim::ParticipatoryProcess'
+      - name: commented_component_id
+        description: "The identifier linking the comment to its parent component (proposal or comment)."
+        tests:
+          - not_null
+          - referential_integrity_test:
+              parent_model: proposals
+              parent_column: proposal_id
+              filter: component_type = 'proposal'
+          - referential_integrity_test:
+              parent_model: comments
+              parent_column: comment_id
+              filter: component_type = 'comment'
+      - name: user_id
+        description: "The identifier linking the comment to the user who created it."
+        tests:
+          - not_null
+          - referential_integrity_test:
+              parent_model: users
+              parent_column: user_id
+
+  - name: votes
+    description: "A table containing data on votes within participatory processes."
+    columns:
+      - name: original_vote_id
+        description: "The identifier linking the vote to its original record in the source system."
+        tests:
+          - column_completeness_test_source:
+              source_name: bronze
+              source_table: decidim_proposals_proposal_votes
+              origin_column: id
+              filter: m.component_type = 'proposal'
+          - column_completeness_test_source:
+              source_name: bronze
+              source_table: decidim_comments_comment_votes
+              origin_column: id
+              filter: m.component_type = 'comment'
+      - name: vote_id
+        description: "The unique identifier for each vote."
+        tests:
+          - unique
+          - not_null
+      - name: voted_component_id
+        description: "The identifier linking the vote to its parent component (proposal or comment)."
+        tests:
+          - not_null
+          - referential_integrity_test:
+              parent_model: proposals
+              parent_column: proposal_id
+              filter: component_type = 'proposal'
+          - referential_integrity_test:
+              parent_model: comments
+              parent_column: comment_id
+              filter: component_type = 'comment'
+      - name: user_id
+        description: "The identifier linking the vote to the user who cast it."
+        tests:
+          - not_null
+          - referential_integrity_test:
+              parent_model: users
+              parent_column: user_id
