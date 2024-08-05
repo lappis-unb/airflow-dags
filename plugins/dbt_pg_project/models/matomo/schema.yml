@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: VisitsSummary_get_diario
+    description: "Resumo diário de visitas do site Brasil Participativo."
+    columns:
+      - name: DSC_PAGE_URL
+        description: "URL da página visitada."
+      - name: DSC_SECTION_NAME
+        description: "Nome da seção dentro da URL do site."
+      - name: DSC_PROCESS_ID
+        description: "Identificador do processo associado à página."
+      - name: NUM_UNIQUE_VISITORS_COUNT
+        description: "Contagem de visitantes únicos."
+      - name: NUM_USERS_COUNT
+        description: "Contagem total de usuários."
+      - name: NUM_VISITS_COUNT
+        description: "Contagem total de visitas."
+      - name: NUM_ACTIONS_COUNT
+        description: "Contagem total de ações realizadas."
+      - name: NUM_CONVERTED_VISITS_COUNT
+        description: "Contagem de visitas convertidas."
+      - name: NUM_BOUNCES_COUNT
+        description: "Contagem de rejeições (bounces)."
+      - name: NUM_TOTAL_VISIT_DURATION
+        description: "Duração total das visitas em segundos."
+      - name: NUM_MAX_ACTIONS_PER_VISIT
+        description: "Máximo de ações realizadas em uma única visita."
+      - name: NUM_BOUNCE_RATE
+        description: "Taxa de rejeição calculada como porcentagem."
+      - name: NUM_ACTIONS_PER_VISIT
+        description: "Número médio de ações por visita."
+      - name: NUM_AVERAGE_TIME_ON_SITE
+        description: "Tempo médio gasto no site por visita em segundos."
+      - name: DSC_SPACE
+        description: "Espaço categórico relacionado à visita."
+      - name: DSC_METHOD
+        description: "Método de acesso ou interação do usuário."
+      - name: DAT_VISIT_DATE
+        description: "Data da visita no formato AAAA-MM-DD."
+      - name: DAT_EVENT_DAY_ID
+        description: "Identificador do dia do evento."
+      - name: DAT_AVAILABLE_DAY_ID
+        description: "Identificador de disponibilidade diária."
+      - name: DAT_AVAILABLE_MONTH_ID
+        description: "Identificador de disponibilidade mensal."
+      - name: DAT_AVAILABLE_YEAR_ID
+        description: "Identificador de disponibilidade anual."
+      - name: DAT_WRITING_DAY_ID
+        description: "Identificador do dia de escrita dos dados."
