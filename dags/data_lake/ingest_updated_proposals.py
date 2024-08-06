@@ -1,11 +1,14 @@
 import io
 import json
+import logging
 from datetime import datetime, timedelta
 from io import StringIO
 from pathlib import Path
 from typing import List
 
 import pandas as pd
+import pendulum
+from airflow.configuration import conf
 from airflow.decorators import dag, task
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
@@ -22,6 +25,17 @@ default_args = {
     "email_on_retry": False,
     "retry_delay": timedelta(minutes=5),
 }
+
+
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i : i + n]
+
+
+def _get_date_time_filter(date_of_execution: pendulum.DateTime):
+    date_of_execution = pendulum.parse(date_of_execution)
+    return date_of_execution - timedelta(days=1)
 
 
 def _add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.DataFrame:
@@ -54,7 +68,7 @@ def _add_temporal_columns(df: pd.DataFrame, execution_date: datetime) -> pd.Data
     return df
 
 
-def _get_query(relative_path: str = "./queries/get_updat_at_proposals.gql"):
+def _get_query(relative_path: str = "./queries/get_updated_at_proposals.gql"):
     """
     Retrieves the query from the specified file and returns it.
 
@@ -66,7 +80,7 @@ def _get_query(relative_path: str = "./queries/get_updat_at_proposals.gql"):
     return query
 
 
-def _extract_id_date_from_response(response: str) -> pd.DataFrame:
+def _extract_id_date_from_response(responses: list[dict]) -> pd.DataFrame:
     """
     Extracts the id and date information from the given response.
 
@@ -79,17 +93,18 @@ def _extract_id_date_from_response(response: str) -> pd.DataFrame:
         pd.DataFrame: A DataFrame containing the extracted id and date information.
     """
     proposals_lists = []
-    for process in response["data"]["participatoryProcesses"]:
-        components = process.get("components")
-        nodes_lists = [component.get("proposals", {}).get("nodes") or [] for component in components]
-
-        for nodes in nodes_lists:
-            proposals_lists.append(nodes)
-    df_ids = pd.concat(pd.json_normalize(i) for i in proposals_lists)
+    for response in responses:
+        proposals_lists.extend(
+            [
+                {"component_id": response["data"]["component"]["id"], **component}
+                for component in response["data"]["component"]["proposals"]["nodes"]
+            ]
+        )
+    df_ids = pd.DataFrame(proposals_lists)
     return df_ids
 
 
-def _get_response_gql(query: str, response_text: bool = False, **variables):
+def _get_response_gql(query: str, paginated=False, **variables):
     """
     Executes the GraphQL query to get the date and id of the update proposals.
 
@@ -104,21 +119,16 @@ def _get_response_gql(query: str, response_text: bool = False, **variables):
         The response from the GraphQL query.
     """
     hook = GraphQLHook(DECIDIM_CONN_ID)
-    session = hook.get_session()
-    response = session.post(
-        hook.api_url,
-        json={
-            "query": query,
-            "variables": variables,
-        },
-    )
-    dado = response.text
-    if response_text:
-        return dado
-    return json.loads(dado)
+    logging.info(query)
+    if paginated:
+        response = [*hook.run_graphql_paginated_query(query, variables=variables)]
+    else:
+        response = hook.run_graphql_query(query, variables=variables)
+
+    return response
 
 
-def _filter_ids_by_ds_nodash(ids: pd.DataFrame, date: str) -> pd.DataFrame:
+def _filter_ids_by_date(ids_dataframes: pd.DataFrame, date: pendulum.DateTime) -> pd.DataFrame:
     """
     Filter the given DataFrame based on the provided date.
 
@@ -131,8 +141,16 @@ def _filter_ids_by_ds_nodash(ids: pd.DataFrame, date: str) -> pd.DataFrame:
     -------
         pd.DataFrame: The filtered DataFrame containing only the rows with the specified date.
     """
-    ids = ids[ids["updatedAt"].apply(lambda x: x[:10].replace("-", "")) == date]
-    return list(ids["id"].values)
+    date_filter = pd.Timestamp(_get_date_time_filter(date))  # To process the previous day.
+    ids = pd.concat(ids_dataframes)
+    ids["updatedAt"] = pd.to_datetime(ids["updatedAt"])
+
+    ids = ids[
+        (ids["updatedAt"].dt.year == date_filter.year)
+        & (ids["updatedAt"].dt.month == date_filter.month)
+        & (ids["updatedAt"].dt.day == date_filter.day)
+    ]
+    return list(ids[["component_id", "id"]].values)
 
 
 def collect_responses(ids: List[str], zone: str, ds_nodash: str, suffix: str = "json"):
@@ -153,7 +171,8 @@ def collect_responses(ids: List[str], zone: str, ds_nodash: str, suffix: str = "
     s3 = S3Hook(MINIO_CONN)
     responses = []
     for _id in ids:
-        response = s3.read_key(f"updated_proposals/{zone}/{ds_nodash}_{_id}.{suffix}", MINIO_BUCKET)
+        path = f"updated_proposals/{zone}/{ds_nodash}_{_id}.{suffix}"
+        response = s3.read_key(path, MINIO_BUCKET)
         if suffix == "json":
             response = json.loads(response)
         responses.append(response)
@@ -201,37 +220,32 @@ def flatten_structure_with_additional_fields(data, extract_by_id: bool = False):
     proposal_component = "proposals"
     if extract_by_id:
         proposal_component = "proposal"
-    data = data["data"]["participatoryProcesses"]
+    data = data["data"]["component"]
+    proposal_data_from_response = data[proposal_component]
 
     # Function to handle the extraction of text from nested translation dictionaries
     def extract_text(translations):
         if translations and isinstance(translations, list):
             return translations[0].get("text")
 
-    flattened_data = []
-    for item in data:
-        main_title = extract_text(item.get("title", {}).get("translations", []))
-        for component in item.get("components", []):
-            component_id = component.get("id", "")
-            component_name = extract_text(component.get("name", {}).get("translations", []))
-            if proposal_component in component:
-                if extract_by_id:
-                    proposal = component.get(proposal_component)
-                    if proposal:
-                        proposal_data = get_proposal_dic(
-                            extract_text, main_title, component_id, component_name, proposal
-                        )
-                        flattened_data.append(proposal_data)
-                else:
-                    for proposal in component.get("proposals", {}).get("nodes", []):
-                        proposal_data = get_proposal_dic(
-                            extract_text, main_title, component_id, component_name, proposal
-                        )
-                        flattened_data.append(proposal_data)
-    return flattened_data
+    main_title = extract_text(data["participatorySpace"].get("title", {}).get("translations", []))
+    component_id = data.get("id")
+    component_name = extract_text(data.get("name", {}).get("translations", []))
+
+    if extract_by_id and proposal_data_from_response:
+        return get_proposal_dic(
+            extract_text,
+            main_title,
+            component_id,
+            component_name,
+            proposal_data_from_response,
+            data["participatorySpace"]["id"],
+        )
 
 
-def get_proposal_dic(extract_text, main_title, component_id, component_name, proposal):
+def get_proposal_dic(
+    extract_text, main_title, component_id, component_name, proposal, participatory_space_id
+):
     """
     Constructs a dictionary containing various data fields extracted from a proposal.
 
@@ -249,6 +263,7 @@ def get_proposal_dic(extract_text, main_title, component_id, component_name, pro
     """
     proposal_data = {
         "main_title": main_title,
+        "participatory_space_id": participatory_space_id,
         "component_id": component_id,
         "component_name": component_name,
         "proposal_id": proposal["id"],
@@ -321,6 +336,22 @@ def _get_create_table():
     return create_table.format(schema=SCHEMA, table_name=TABLE_NAME)
 
 
+def _get_components_ids():
+    hook = GraphQLHook(DECIDIM_CONN_ID)
+    query = _get_query("./queries/get_proposals_ids.gql")
+    result = hook.run_graphql_query(query)
+
+    propsals_ids = []
+    participatory_processes = result["data"]["participatoryProcesses"]
+
+    for participatory_process in participatory_processes:
+        propsals_ids.extend([x["id"] for x in participatory_process["components"]])
+
+    config_max_map_length = int(conf.get("core", "MAX_MAP_LENGTH", fallback="1024"))
+
+    return list(chunks(propsals_ids, min([config_max_map_length, 1])))
+
+
 QUERY = _get_query()
 DECIDIM_CONN_ID = "api_decidim"
 MINIO_CONN = "minio_conn_id"
@@ -334,17 +365,23 @@ SCHEMA = "raw"
 
 @dag(
     default_args=default_args,
-    schedule_interval="0 22 * * *",
+    schedule_interval="0 1 * * *",
     start_date=datetime(2023, 5, 1),
     catchup=True,
     tags=["data_lake"],
 )
 def ingest_update_proposals():
+    date = "{{data_interval_end }}"
+
     start = EmptyOperator(task_id="start")
     end = EmptyOperator(task_id="end", trigger_rule="none_failed")
 
-    @task
-    def get_date_id_update_proposals():
+    @task(retries=3, retry_delay=timedelta(seconds=20))
+    def get_component_ids():
+        return _get_components_ids()
+
+    @task(retries=3, retry_delay=timedelta(seconds=20))
+    def get_date_id_update_proposals(components_ids: list[int]):
         """
         Retrieves the date and ID information for updating proposals.
 
@@ -353,12 +390,14 @@ def ingest_update_proposals():
             dict: A dictionary containing the extracted date and ID information.
         """
         query = _get_query()
-        response = _get_response_gql(query)
-        response = _extract_id_date_from_response(response)
+        data = []
+        for id in components_ids:
+            data.extend(_get_response_gql(query, paginated=True, id=id))
+        response = _extract_id_date_from_response(data)
         return response
 
-    @task(provide_context=True)
-    def get_current_updated_ids(ids: pd.DataFrame, **context):
+    @task(retries=3, retry_delay=timedelta(seconds=20))
+    def get_current_updated_ids(ids: pd.DataFrame, date_filter: pendulum.DateTime):
         """
         Filter the given DataFrame of IDs based on the current execution date.
 
@@ -371,8 +410,10 @@ def ingest_update_proposals():
         -------
             pd.DataFrame: The filtered DataFrame of IDs.
         """
-        ids = _filter_ids_by_ds_nodash(ids, context["ds_nodash"])
-        return ids
+        ids = _filter_ids_by_date(ids, date_filter)
+        config_max_map_length = int(conf.get("core", "MAX_MAP_LENGTH", fallback="1024"))
+
+        return list(chunks(ids, min([config_max_map_length, 2])))
 
     check_and_create_bucket = S3CreateBucketOperator(
         task_id="check_and_create_bucket",
@@ -380,8 +421,8 @@ def ingest_update_proposals():
         aws_conn_id=MINIO_CONN,
     )
 
-    @task(provide_context=True)
-    def get_updated_proposals(ids: List[str], **context):
+    @task(retries=3, retry_delay=timedelta(seconds=20))
+    def get_updated_proposals(ids: List[str], date: pendulum.DateTime):
         """
         Retrieves and stores updated proposals in the landing zone.
 
@@ -394,20 +435,21 @@ def ingest_update_proposals():
         -------
             None
         """
-        ds_nodash = context["ds_nodash"]
+        date_filter = _get_date_time_filter(date).strftime("%Y%m%d")
+
         query = _get_query("./queries/get_proposals_by_id.gql")
-        for _id in ids:
-            response = _get_response_gql(query, response_text=True, id=_id)
+        for _component_id, _id in ids:
+            response = _get_response_gql(query, response_text=True, component_id=_component_id, id=_id)
             hook = S3Hook(MINIO_CONN)
             hook.load_string(
-                response,
-                key=f"updated_proposals/{LANDING_ZONE}/{ds_nodash}_{_id}.json",
+                json.dumps(response),
+                key=f"updated_proposals/{LANDING_ZONE}/{date_filter}_{_id}.json",
                 bucket_name=MINIO_BUCKET,
                 replace=True,
             )
 
-    @task(provide_context=True)
-    def transform_updated_proposals(**context):
+    @task
+    def transform_updated_proposals(ids, date: pendulum.DateTime):
         """
         Transforms and ingests updated proposals into the data lake.
 
@@ -419,22 +461,25 @@ def ingest_update_proposals():
         -------
             None
         """
-        ds_nodash = context["ds_nodash"]
-        ids = context["task_instance"].xcom_pull(task_ids="get_current_updated_ids")
-        responses = collect_responses(ids, LANDING_ZONE, ds_nodash)
-        for response, _id in zip(responses, ids):
-            proposal: dict = flatten_structure_with_additional_fields(response, extract_by_id=True)
-            csv_buffer = _convert_to_csv(proposal)
+        date_filter = _get_date_time_filter(date).strftime("%Y%m%d")
+        proposals_ids = [prop_id for _, prop_id in ids]
+
+        responses = collect_responses(proposals_ids, LANDING_ZONE, date_filter)
+
+        for response, _proposal_id in zip(responses, proposals_ids):
+            flattened_data = flatten_structure_with_additional_fields(response, extract_by_id=True)
+
+            csv_buffer = _convert_to_csv([flattened_data])
             hook = S3Hook(MINIO_CONN)
             hook.load_string(
                 string_data=csv_buffer.getvalue(),
                 bucket_name=MINIO_BUCKET,
-                key=f"updated_proposals/{PROCESSING_ZONE}/{ds_nodash}_{_id}.csv",
+                key=f"updated_proposals/{PROCESSING_ZONE}/{date_filter}_{_proposal_id}.csv",
                 replace=True,
             )
 
-    @task.branch(provide_context=True)
-    def check_ids(**context):
+    @task.branch
+    def check_ids(current_ids):
         """
         Check if there are any updated IDs available.
 
@@ -451,8 +496,7 @@ def ingest_update_proposals():
         -------
             str: The task ID for the next task to execute.
         """
-        ids = context["task_instance"].xcom_pull(task_ids="get_current_updated_ids")
-        if len(ids) > 0:
+        if len(current_ids) > 0:
             return "check_and_create_schema"
         return "end"
 
@@ -468,8 +512,8 @@ def ingest_update_proposals():
         conn_id="conn_postgres",
     )
 
-    @task(provide_context=True)
-    def insert_updated_proposals(**context):
+    @task
+    def insert_updated_proposals(ids, date: str):
         """
         Task to insert updated proposals into a PostgreSQL database.
 
@@ -485,8 +529,11 @@ def ingest_update_proposals():
         ------
         - None
         """
-        ids = context["task_instance"].xcom_pull(task_ids="get_current_updated_ids")
-        responses = collect_responses(ids, PROCESSING_ZONE, context["ds_nodash"], suffix="csv")
+        date_filter = _get_date_time_filter(date).strftime("%Y%m%d")
+
+        proposals_ids = [prop_id for _, prop_id in ids]
+
+        responses = collect_responses(proposals_ids, PROCESSING_ZONE, date_filter, suffix="csv")
         df = pd.concat(pd.read_csv(io.StringIO(response)) for response in responses)
         engine = PostgresHook(postgres_conn_id="conn_postgres").get_sqlalchemy_engine()
         df.to_sql(
@@ -504,8 +551,8 @@ def ingest_update_proposals():
         aws_conn_id=MINIO_CONN,
     )
 
-    @task(provide_context=True)
-    def move_to_processed_zone(**context):
+    @task
+    def move_to_processed_zone(ids, date: pendulum.DateTime):
         """
         Moves the updated proposals to the processed zone.
 
@@ -517,34 +564,44 @@ def ingest_update_proposals():
         -------
             None
         """
-        ds_nodash = context["ds_nodash"]
-        ids = context["task_instance"].xcom_pull(task_ids="get_current_updated_ids")
-        for _id in ids:
+        date_filter = _get_date_time_filter(date).strftime("%Y%m%d")
+
+        proposals_ids = [prop_id for _, prop_id in ids]
+        for _id in proposals_ids:
             hook = S3Hook(MINIO_CONN)
             hook.copy_object(
-                source_bucket_key=f"updated_proposals/{PROCESSING_ZONE}/{ds_nodash}_{_id}.csv",
-                dest_bucket_key=f"updated_proposals/{PROCESSED_ZONE}/{ds_nodash}_{_id}.csv",
+                source_bucket_key=f"updated_proposals/{PROCESSING_ZONE}/{date_filter}_{_id}.csv",
+                dest_bucket_key=f"updated_proposals/{PROCESSED_ZONE}/{date_filter}_{_id}.csv",
                 source_bucket_name=MINIO_BUCKET,
                 dest_bucket_name=MINIO_BUCKET,
             )
 
             hook.delete_objects(
                 bucket=MINIO_BUCKET,
-                keys=f"updated_proposals/{PROCESSING_ZONE}/{ds_nodash}_{_id}.csv",
+                keys=f"updated_proposals/{PROCESSING_ZONE}/{date_filter}_{_id}.csv",
             )
 
-    _check_ids = check_ids()
-    _get_date_id_update_proposals = get_date_id_update_proposals()
-    _transform_updated_proposals = transform_updated_proposals()
+    _get_ids = get_component_ids()
+    _get_date_id_update_proposals = get_date_id_update_proposals.expand(components_ids=_get_ids)
+    _get_current_updated_ids = get_current_updated_ids(_get_date_id_update_proposals, date)
+    _check_ids = check_ids(_get_current_updated_ids)
+    _transform_updated_proposals = transform_updated_proposals.partial(date=date).expand(
+        ids=_get_current_updated_ids
+    )
     start >> _get_date_id_update_proposals
-    _get_current_updated_ids = get_current_updated_ids(_get_date_id_update_proposals)
-    _get_updated_proposals = get_updated_proposals(_get_current_updated_ids)
+    _get_updated_proposals = get_updated_proposals.partial(date=date).expand(ids=_get_current_updated_ids)
     _get_current_updated_ids >> check_and_create_bucket >> _get_updated_proposals
     _get_updated_proposals >> _transform_updated_proposals >> _check_ids
     _transform_updated_proposals >> delete_landing_zone
 
     _check_ids >> [check_and_create_schema, end]
-    check_and_create_schema >> create_table >> insert_updated_proposals() >> move_to_processed_zone() >> end
+    (
+        check_and_create_schema
+        >> create_table
+        >> insert_updated_proposals.partial(date=date).expand(ids=_get_current_updated_ids)
+        >> move_to_processed_zone.partial(date=date).expand(ids=_get_current_updated_ids)
+        >> end
+    )
 
 
 dag = ingest_update_proposals()

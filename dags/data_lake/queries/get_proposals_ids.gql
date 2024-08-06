@@ -1,0 +1,7 @@
+query get_updat_at_proposals {
+  participatoryProcesses {
+    components(filter: {type: "Proposals"}) {
+      id
+    }
+  }
+}

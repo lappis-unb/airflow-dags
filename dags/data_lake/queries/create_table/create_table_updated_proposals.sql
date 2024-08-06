@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS {schema}.{table_name} (
 	main_title text NULL,
+	participatory_space_id int8 NULL,
 	component_id int8 NULL,
 	component_name text NULL,
 	proposal_id int8 NOT NULL,
