@@ -27,16 +27,16 @@ with DAG(
 
     api_participatory_processes_task = BashOperator(
         task_id='run_api_participatory_processes',
-        bash_command='dbt deps && dbt run --select api_participatory_processes \
-&& rm -r /tmp/dbt_target_run_api_participatory_processes /tmp/dbt_logs_run_api_participatory_processes',
+        bash_command='rm -r /tmp/dbt_run_api_participatory_processes || true \
+&& cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_run_api_participatory_processes \
+&& cd /tmp/dbt_run_api_participatory_processes/dbt_pg_project \
+&& dbt deps && dbt run --select api_participatory_processes \
+&& rm -r /tmp/dbt_run_api_participatory_processes',
         env={
             'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
             'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
             'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password"),
-            'DBT_TARGET_PATH': '/tmp/dbt_target_run_api_participatory_processes',
-            'DBT_LOG_PATH': '/tmp/dbt_logs_run_api_participatory_processes'
         },
-        cwd='/opt/airflow/dags-config/repo/plugins/dbt_pg_project',
         append_env=True
     )
 
