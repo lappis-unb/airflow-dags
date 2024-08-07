@@ -27,16 +27,16 @@ with DAG(
 
     first_visitors_per_day_task = BashOperator(
         task_id='run_first_visitors_per_day',
-        bash_command='dbt deps && dbt run --select first_visitors_per_day \
-&& rm -r /tmp/dbt_target_run_first_visitors_per_day /tmp/dbt_logs_run_first_visitors_per_day',
+        bash_command='rm -r /tmp/dbt_run_first_visitors_per_day || true \
+&& cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_run_first_visitors_per_day \
+&& cd /tmp/dbt_run_first_visitors_per_day/dbt_pg_project \
+&& dbt deps && dbt run --select first_visitors_per_day \
+&& rm -r /tmp/dbt_run_first_visitors_per_day',
         env={
             'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
             'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
             'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password"),
-            'DBT_TARGET_PATH': '/tmp/dbt_target_run_first_visitors_per_day',
-            'DBT_LOG_PATH': '/tmp/dbt_logs_run_first_visitors_per_day'
         },
-        cwd='/opt/airflow/dags-config/repo/plugins/dbt_pg_project',
         append_env=True
     )
 
