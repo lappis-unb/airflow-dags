@@ -8,8 +8,13 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.operators.empty import EmptyOperator
 from airflow.utils.dates import days_ago
 
+from datetime import timedelta
+
 default_args = {
     'owner': 'DBT-Genrated',
+    'retries': 2,
+    'retry_delay': timedelta(minutes=30),
+    'pool': 'dbt_pool'
 }
 
 with DAG(
@@ -18,6 +23,7 @@ with DAG(
     schedule=[Dataset('updated_proposals')],
     start_date=days_ago(1),
     tags=["dbt", "model"],
+    max_active_runs=1
 ) as dag:
 
     end_task = EmptyOperator(
