@@ -37,15 +37,15 @@ def generate_airflow_task(node_type, node_name, dbt_project_path, dbt_profile_pa
     type2command = {"model": "run", "test": "test"}
     dbt_command = type2command[node_type]
     task_id = f"{dbt_command}_{node_name}"
-    
-    project_parent_folder = dbt_project_path.split('/')[-1]
+
+    project_parent_folder = dbt_project_path.split("/")[-1]
     k8s_dbt_project_path = f"/tmp/dbt_{dbt_command}_{node_name}"
 
     task = f"""
 {indentation}{node_name}_task = BashOperator(
 {indentation}{indentation}task_id='{task_id}',
-{indentation}{indentation}bash_command='rm -r {k8s_dbt_project_path} || true \\ 
-&& cp -r {dbt_project_path} {k8s_dbt_project_path} \\ 
+{indentation}{indentation}bash_command='rm -r {k8s_dbt_project_path} || true \\
+&& cp -r {dbt_project_path} {k8s_dbt_project_path} \\
 && cd {k8s_dbt_project_path}/{project_parent_folder} \\
 && dbt deps && dbt {dbt_command} --select {node_name} \\
 && rm -r {k8s_dbt_project_path}',
