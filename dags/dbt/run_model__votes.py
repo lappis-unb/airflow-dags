@@ -29,7 +29,7 @@ with DAG(
         task_id='run_votes',
         bash_command='rm -r /tmp/dbt_run_votes || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_run_votes \
-&& cd /tmp/dbt_run_votes/dbt_pg_project \
+&& cd /tmp/dbt_run_votes \
 && dbt deps && dbt run --select votes \
 && rm -r /tmp/dbt_run_votes',
         env={
@@ -44,7 +44,7 @@ with DAG(
         task_id='test_column_completeness_test_source_votes_original_vote_id__m_component_type_proposal___id__bronze__decidim_proposals_proposal_votes',
         bash_command='rm -r /tmp/dbt_test_column_completeness_test_source_votes_original_vote_id__m_component_type_proposal___id__bronze__decidim_proposals_proposal_votes || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_column_completeness_test_source_votes_original_vote_id__m_component_type_proposal___id__bronze__decidim_proposals_proposal_votes \
-&& cd /tmp/dbt_test_column_completeness_test_source_votes_original_vote_id__m_component_type_proposal___id__bronze__decidim_proposals_proposal_votes/dbt_pg_project \
+&& cd /tmp/dbt_test_column_completeness_test_source_votes_original_vote_id__m_component_type_proposal___id__bronze__decidim_proposals_proposal_votes \
 && dbt deps && dbt test --select column_completeness_test_source_votes_original_vote_id__m_component_type_proposal___id__bronze__decidim_proposals_proposal_votes \
 && rm -r /tmp/dbt_test_column_completeness_test_source_votes_original_vote_id__m_component_type_proposal___id__bronze__decidim_proposals_proposal_votes',
         env={
@@ -59,7 +59,7 @@ with DAG(
         task_id='test_column_completeness_test_source_votes_original_vote_id__m_component_type_comment___id__bronze__decidim_comments_comment_votes',
         bash_command='rm -r /tmp/dbt_test_column_completeness_test_source_votes_original_vote_id__m_component_type_comment___id__bronze__decidim_comments_comment_votes || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_column_completeness_test_source_votes_original_vote_id__m_component_type_comment___id__bronze__decidim_comments_comment_votes \
-&& cd /tmp/dbt_test_column_completeness_test_source_votes_original_vote_id__m_component_type_comment___id__bronze__decidim_comments_comment_votes/dbt_pg_project \
+&& cd /tmp/dbt_test_column_completeness_test_source_votes_original_vote_id__m_component_type_comment___id__bronze__decidim_comments_comment_votes \
 && dbt deps && dbt test --select column_completeness_test_source_votes_original_vote_id__m_component_type_comment___id__bronze__decidim_comments_comment_votes \
 && rm -r /tmp/dbt_test_column_completeness_test_source_votes_original_vote_id__m_component_type_comment___id__bronze__decidim_comments_comment_votes',
         env={
@@ -74,7 +74,7 @@ with DAG(
         task_id='test_unique_votes_vote_id',
         bash_command='rm -r /tmp/dbt_test_unique_votes_vote_id || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_unique_votes_vote_id \
-&& cd /tmp/dbt_test_unique_votes_vote_id/dbt_pg_project \
+&& cd /tmp/dbt_test_unique_votes_vote_id \
 && dbt deps && dbt test --select unique_votes_vote_id \
 && rm -r /tmp/dbt_test_unique_votes_vote_id',
         env={
@@ -89,7 +89,7 @@ with DAG(
         task_id='test_not_null_votes_vote_id',
         bash_command='rm -r /tmp/dbt_test_not_null_votes_vote_id || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_not_null_votes_vote_id \
-&& cd /tmp/dbt_test_not_null_votes_vote_id/dbt_pg_project \
+&& cd /tmp/dbt_test_not_null_votes_vote_id \
 && dbt deps && dbt test --select not_null_votes_vote_id \
 && rm -r /tmp/dbt_test_not_null_votes_vote_id',
         env={
@@ -104,7 +104,7 @@ with DAG(
         task_id='test_not_null_votes_voted_component_id',
         bash_command='rm -r /tmp/dbt_test_not_null_votes_voted_component_id || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_not_null_votes_voted_component_id \
-&& cd /tmp/dbt_test_not_null_votes_voted_component_id/dbt_pg_project \
+&& cd /tmp/dbt_test_not_null_votes_voted_component_id \
 && dbt deps && dbt test --select not_null_votes_voted_component_id \
 && rm -r /tmp/dbt_test_not_null_votes_voted_component_id',
         env={
@@ -119,7 +119,7 @@ with DAG(
         task_id='test_referential_integrity_test_votes_voted_component_id__component_type_proposal___proposal_id__proposals',
         bash_command='rm -r /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_proposal___proposal_id__proposals || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_proposal___proposal_id__proposals \
-&& cd /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_proposal___proposal_id__proposals/dbt_pg_project \
+&& cd /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_proposal___proposal_id__proposals \
 && dbt deps && dbt test --select referential_integrity_test_votes_voted_component_id__component_type_proposal___proposal_id__proposals \
 && rm -r /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_proposal___proposal_id__proposals',
         env={
@@ -134,7 +134,7 @@ with DAG(
         task_id='test_referential_integrity_test_votes_voted_component_id__component_type_comment___comment_id__comments',
         bash_command='rm -r /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_comment___comment_id__comments || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_comment___comment_id__comments \
-&& cd /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_comment___comment_id__comments/dbt_pg_project \
+&& cd /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_comment___comment_id__comments \
 && dbt deps && dbt test --select referential_integrity_test_votes_voted_component_id__component_type_comment___comment_id__comments \
 && rm -r /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_comment___comment_id__comments',
         env={
@@ -149,7 +149,7 @@ with DAG(
         task_id='test_not_null_votes_user_id',
         bash_command='rm -r /tmp/dbt_test_not_null_votes_user_id || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_not_null_votes_user_id \
-&& cd /tmp/dbt_test_not_null_votes_user_id/dbt_pg_project \
+&& cd /tmp/dbt_test_not_null_votes_user_id \
 && dbt deps && dbt test --select not_null_votes_user_id \
 && rm -r /tmp/dbt_test_not_null_votes_user_id',
         env={
@@ -164,7 +164,7 @@ with DAG(
         task_id='test_referential_integrity_test_votes_user_id__user_id__users',
         bash_command='rm -r /tmp/dbt_test_referential_integrity_test_votes_user_id__user_id__users || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_referential_integrity_test_votes_user_id__user_id__users \
-&& cd /tmp/dbt_test_referential_integrity_test_votes_user_id__user_id__users/dbt_pg_project \
+&& cd /tmp/dbt_test_referential_integrity_test_votes_user_id__user_id__users \
 && dbt deps && dbt test --select referential_integrity_test_votes_user_id__user_id__users \
 && rm -r /tmp/dbt_test_referential_integrity_test_votes_user_id__user_id__users',
         env={

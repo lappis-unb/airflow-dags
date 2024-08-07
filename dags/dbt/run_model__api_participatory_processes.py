@@ -29,7 +29,7 @@ with DAG(
         task_id='run_api_participatory_processes',
         bash_command='rm -r /tmp/dbt_run_api_participatory_processes || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_run_api_participatory_processes \
-&& cd /tmp/dbt_run_api_participatory_processes/dbt_pg_project \
+&& cd /tmp/dbt_run_api_participatory_processes \
 && dbt deps && dbt run --select api_participatory_processes \
 && rm -r /tmp/dbt_run_api_participatory_processes',
         env={

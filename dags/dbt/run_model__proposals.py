@@ -29,7 +29,7 @@ with DAG(
         task_id='run_proposals',
         bash_command='rm -r /tmp/dbt_run_proposals || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_run_proposals \
-&& cd /tmp/dbt_run_proposals/dbt_pg_project \
+&& cd /tmp/dbt_run_proposals \
 && dbt deps && dbt run --select proposals \
 && rm -r /tmp/dbt_run_proposals',
         env={
@@ -44,7 +44,7 @@ with DAG(
         task_id='test_unique_proposals_proposal_id',
         bash_command='rm -r /tmp/dbt_test_unique_proposals_proposal_id || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_unique_proposals_proposal_id \
-&& cd /tmp/dbt_test_unique_proposals_proposal_id/dbt_pg_project \
+&& cd /tmp/dbt_test_unique_proposals_proposal_id \
 && dbt deps && dbt test --select unique_proposals_proposal_id \
 && rm -r /tmp/dbt_test_unique_proposals_proposal_id',
         env={
@@ -59,7 +59,7 @@ with DAG(
         task_id='test_not_null_proposals_proposal_id',
         bash_command='rm -r /tmp/dbt_test_not_null_proposals_proposal_id || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_not_null_proposals_proposal_id \
-&& cd /tmp/dbt_test_not_null_proposals_proposal_id/dbt_pg_project \
+&& cd /tmp/dbt_test_not_null_proposals_proposal_id \
 && dbt deps && dbt test --select not_null_proposals_proposal_id \
 && rm -r /tmp/dbt_test_not_null_proposals_proposal_id',
         env={
@@ -74,7 +74,7 @@ with DAG(
         task_id='test_column_completeness_test_source_proposals_proposal_id__id__bronze__decidim_proposals_proposals',
         bash_command='rm -r /tmp/dbt_test_column_completeness_test_source_proposals_proposal_id__id__bronze__decidim_proposals_proposals || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_column_completeness_test_source_proposals_proposal_id__id__bronze__decidim_proposals_proposals \
-&& cd /tmp/dbt_test_column_completeness_test_source_proposals_proposal_id__id__bronze__decidim_proposals_proposals/dbt_pg_project \
+&& cd /tmp/dbt_test_column_completeness_test_source_proposals_proposal_id__id__bronze__decidim_proposals_proposals \
 && dbt deps && dbt test --select column_completeness_test_source_proposals_proposal_id__id__bronze__decidim_proposals_proposals \
 && rm -r /tmp/dbt_test_column_completeness_test_source_proposals_proposal_id__id__bronze__decidim_proposals_proposals',
         env={
@@ -89,7 +89,7 @@ with DAG(
         task_id='test_not_null_proposals_process_id',
         bash_command='rm -r /tmp/dbt_test_not_null_proposals_process_id || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_not_null_proposals_process_id \
-&& cd /tmp/dbt_test_not_null_proposals_process_id/dbt_pg_project \
+&& cd /tmp/dbt_test_not_null_proposals_process_id \
 && dbt deps && dbt test --select not_null_proposals_process_id \
 && rm -r /tmp/dbt_test_not_null_proposals_process_id',
         env={
@@ -104,7 +104,7 @@ with DAG(
         task_id='test_referential_integrity_test_proposals_process_id__process_id__participatory_processes',
         bash_command='rm -r /tmp/dbt_test_referential_integrity_test_proposals_process_id__process_id__participatory_processes || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_referential_integrity_test_proposals_process_id__process_id__participatory_processes \
-&& cd /tmp/dbt_test_referential_integrity_test_proposals_process_id__process_id__participatory_processes/dbt_pg_project \
+&& cd /tmp/dbt_test_referential_integrity_test_proposals_process_id__process_id__participatory_processes \
 && dbt deps && dbt test --select referential_integrity_test_proposals_process_id__process_id__participatory_processes \
 && rm -r /tmp/dbt_test_referential_integrity_test_proposals_process_id__process_id__participatory_processes',
         env={
@@ -119,7 +119,7 @@ with DAG(
         task_id='test_not_null_proposals_user_id',
         bash_command='rm -r /tmp/dbt_test_not_null_proposals_user_id || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_not_null_proposals_user_id \
-&& cd /tmp/dbt_test_not_null_proposals_user_id/dbt_pg_project \
+&& cd /tmp/dbt_test_not_null_proposals_user_id \
 && dbt deps && dbt test --select not_null_proposals_user_id \
 && rm -r /tmp/dbt_test_not_null_proposals_user_id',
         env={
@@ -134,7 +134,7 @@ with DAG(
         task_id='test_referential_integrity_test_proposals_user_id__user_id__users',
         bash_command='rm -r /tmp/dbt_test_referential_integrity_test_proposals_user_id__user_id__users || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_referential_integrity_test_proposals_user_id__user_id__users \
-&& cd /tmp/dbt_test_referential_integrity_test_proposals_user_id__user_id__users/dbt_pg_project \
+&& cd /tmp/dbt_test_referential_integrity_test_proposals_user_id__user_id__users \
 && dbt deps && dbt test --select referential_integrity_test_proposals_user_id__user_id__users \
 && rm -r /tmp/dbt_test_referential_integrity_test_proposals_user_id__user_id__users',
         env={
@@ -149,7 +149,7 @@ with DAG(
         task_id='test_referential_integrity_test_comments_commented_component_id__component_type_proposal___proposal_id__proposals',
         bash_command='rm -r /tmp/dbt_test_referential_integrity_test_comments_commented_component_id__component_type_proposal___proposal_id__proposals || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_referential_integrity_test_comments_commented_component_id__component_type_proposal___proposal_id__proposals \
-&& cd /tmp/dbt_test_referential_integrity_test_comments_commented_component_id__component_type_proposal___proposal_id__proposals/dbt_pg_project \
+&& cd /tmp/dbt_test_referential_integrity_test_comments_commented_component_id__component_type_proposal___proposal_id__proposals \
 && dbt deps && dbt test --select referential_integrity_test_comments_commented_component_id__component_type_proposal___proposal_id__proposals \
 && rm -r /tmp/dbt_test_referential_integrity_test_comments_commented_component_id__component_type_proposal___proposal_id__proposals',
         env={
@@ -164,7 +164,7 @@ with DAG(
         task_id='test_referential_integrity_test_votes_voted_component_id__component_type_proposal___proposal_id__proposals',
         bash_command='rm -r /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_proposal___proposal_id__proposals || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_proposal___proposal_id__proposals \
-&& cd /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_proposal___proposal_id__proposals/dbt_pg_project \
+&& cd /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_proposal___proposal_id__proposals \
 && dbt deps && dbt test --select referential_integrity_test_votes_voted_component_id__component_type_proposal___proposal_id__proposals \
 && rm -r /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_proposal___proposal_id__proposals',
         env={

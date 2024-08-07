@@ -29,7 +29,7 @@ with DAG(
         task_id='run_users',
         bash_command='rm -r /tmp/dbt_run_users || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_run_users \
-&& cd /tmp/dbt_run_users/dbt_pg_project \
+&& cd /tmp/dbt_run_users \
 && dbt deps && dbt run --select users \
 && rm -r /tmp/dbt_run_users',
         env={
@@ -44,7 +44,7 @@ with DAG(
         task_id='test_unique_users_user_id',
         bash_command='rm -r /tmp/dbt_test_unique_users_user_id || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_unique_users_user_id \
-&& cd /tmp/dbt_test_unique_users_user_id/dbt_pg_project \
+&& cd /tmp/dbt_test_unique_users_user_id \
 && dbt deps && dbt test --select unique_users_user_id \
 && rm -r /tmp/dbt_test_unique_users_user_id',
         env={
@@ -59,7 +59,7 @@ with DAG(
         task_id='test_not_null_users_user_id',
         bash_command='rm -r /tmp/dbt_test_not_null_users_user_id || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_not_null_users_user_id \
-&& cd /tmp/dbt_test_not_null_users_user_id/dbt_pg_project \
+&& cd /tmp/dbt_test_not_null_users_user_id \
 && dbt deps && dbt test --select not_null_users_user_id \
 && rm -r /tmp/dbt_test_not_null_users_user_id',
         env={
@@ -74,7 +74,7 @@ with DAG(
         task_id='test_column_completeness_test_source_users_user_id__id__bronze__decidim_users',
         bash_command='rm -r /tmp/dbt_test_column_completeness_test_source_users_user_id__id__bronze__decidim_users || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_column_completeness_test_source_users_user_id__id__bronze__decidim_users \
-&& cd /tmp/dbt_test_column_completeness_test_source_users_user_id__id__bronze__decidim_users/dbt_pg_project \
+&& cd /tmp/dbt_test_column_completeness_test_source_users_user_id__id__bronze__decidim_users \
 && dbt deps && dbt test --select column_completeness_test_source_users_user_id__id__bronze__decidim_users \
 && rm -r /tmp/dbt_test_column_completeness_test_source_users_user_id__id__bronze__decidim_users',
         env={
@@ -89,7 +89,7 @@ with DAG(
         task_id='test_referential_integrity_test_proposals_user_id__user_id__users',
         bash_command='rm -r /tmp/dbt_test_referential_integrity_test_proposals_user_id__user_id__users || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_referential_integrity_test_proposals_user_id__user_id__users \
-&& cd /tmp/dbt_test_referential_integrity_test_proposals_user_id__user_id__users/dbt_pg_project \
+&& cd /tmp/dbt_test_referential_integrity_test_proposals_user_id__user_id__users \
 && dbt deps && dbt test --select referential_integrity_test_proposals_user_id__user_id__users \
 && rm -r /tmp/dbt_test_referential_integrity_test_proposals_user_id__user_id__users',
         env={
@@ -104,7 +104,7 @@ with DAG(
         task_id='test_referential_integrity_test_comments_user_id__user_id__users',
         bash_command='rm -r /tmp/dbt_test_referential_integrity_test_comments_user_id__user_id__users || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_referential_integrity_test_comments_user_id__user_id__users \
-&& cd /tmp/dbt_test_referential_integrity_test_comments_user_id__user_id__users/dbt_pg_project \
+&& cd /tmp/dbt_test_referential_integrity_test_comments_user_id__user_id__users \
 && dbt deps && dbt test --select referential_integrity_test_comments_user_id__user_id__users \
 && rm -r /tmp/dbt_test_referential_integrity_test_comments_user_id__user_id__users',
         env={
@@ -119,7 +119,7 @@ with DAG(
         task_id='test_referential_integrity_test_votes_user_id__user_id__users',
         bash_command='rm -r /tmp/dbt_test_referential_integrity_test_votes_user_id__user_id__users || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_test_referential_integrity_test_votes_user_id__user_id__users \
-&& cd /tmp/dbt_test_referential_integrity_test_votes_user_id__user_id__users/dbt_pg_project \
+&& cd /tmp/dbt_test_referential_integrity_test_votes_user_id__user_id__users \
 && dbt deps && dbt test --select referential_integrity_test_votes_user_id__user_id__users \
 && rm -r /tmp/dbt_test_referential_integrity_test_votes_user_id__user_id__users',
         env={

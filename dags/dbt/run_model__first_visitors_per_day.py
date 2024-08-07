@@ -29,7 +29,7 @@ with DAG(
         task_id='run_first_visitors_per_day',
         bash_command='rm -r /tmp/dbt_run_first_visitors_per_day || true \
 && cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_run_first_visitors_per_day \
-&& cd /tmp/dbt_run_first_visitors_per_day/dbt_pg_project \
+&& cd /tmp/dbt_run_first_visitors_per_day \
 && dbt deps && dbt run --select first_visitors_per_day \
 && rm -r /tmp/dbt_run_first_visitors_per_day',
         env={
