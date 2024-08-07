@@ -1,5 +1,6 @@
 {{ config(
-    materialized='table'
+    materialized='table',
+    schema='dbt'
 ) }}
 
 SELECT 
@@ -17,7 +18,7 @@ SELECT
     bounce_rate AS NUM_TAXA_REJEICAO,
     nb_actions_per_visit AS NUM_ACOES_POR_VISITA,
     avg_time_on_site AS NUM_TEMPO_MEDIO_NO_SITE,
-    space AS DSC_ESPACO,
+    space AS DSC_ESPACO_PARTICIPATIVO,
     method AS DSC_METODO,
     date AS DAT_DATA_VISITA,
     event_day_id AS DAT_ID_DIA_EVENTO,
@@ -28,4 +29,4 @@ SELECT
 FROM
     raw.visits_summary_get
 WHERE
-    period = 'month'
+    period = 'week'
