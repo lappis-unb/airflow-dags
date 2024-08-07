@@ -118,8 +118,7 @@ extractions = {
 @dag(
     dag_id="decidim_postgres_cursor_ingestion",
     default_args=default_args,
-    # schedule_interval="0 4 * * *",
-    schedule_interval=None,
+    schedule_interval="0 4 * * *",
     start_date=days_ago(1),
     tags=["ingestion"],
     catchup=False,

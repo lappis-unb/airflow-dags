@@ -3,7 +3,8 @@ import time
 from datetime import datetime, timezone
 
 from plugins.postgres_data_ingestion.connection import close_connection, get_connection
-from plugins.postgres_data_ingestion.decoder import decode_pgoutput
+from plugins.postgres_data_ingestion.decoder import MessageDecoder
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -23,7 +24,8 @@ def start_replication(config, publication_name, slot_name, status_interval=2, ti
             if message:
                 last_message_received_at = datetime.now(timezone.utc)
                 logging.info("Message received")
-                decoded_message = decode_pgoutput(message)
+                decoder = MessageDecoder(pgoutput_message=_message, starting_position=0)
+                decoded_message = decoder.decode_pgoutput()
                 if (
                     decoded_message["type"] == "B"
                     and decoded_message.get("commit_timestamp", datetime(1970, 1, 1)).replace(
