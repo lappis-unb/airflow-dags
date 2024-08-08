@@ -1,6 +1,9 @@
 {{ config(
     materialized='table',
-    schema='dbt'
+    schema='dbt',
+    meta={
+        "datasets_trigger": ["visits_summary_get"]
+    }
 ) }}
 
 SELECT 
@@ -27,6 +30,6 @@ SELECT
     available_year_id AS DAT_ID_ANO_DISPONIVEL,
     writing_day_id AS DAT_ID_DIA_ESCRITA
 FROM
-    raw.visits_summary_get
+    {{ source('raw', 'visits_summary') }}
 WHERE
-    period = 'week'
+    period = 'day'

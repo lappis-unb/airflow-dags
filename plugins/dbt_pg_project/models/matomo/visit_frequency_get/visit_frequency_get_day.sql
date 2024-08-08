@@ -1,6 +1,9 @@
 {{ config(
     materialized='table',
-    schema='dbt'
+    schema='dbt',
+    meta={
+        "datasets_trigger": ["visit_frequency_get"]
+    }
 ) }}
 
   SELECT 
@@ -39,6 +42,6 @@
     writing_day_id AS DAT_ID_DIA_ESCRITA,
     "period" AS DSC_PERIODO
 FROM 
-    raw.visit_frequency_get 
+    {{ source('raw', 'visit_frequency_get') }} 
 WHERE period = 'day'
     ;

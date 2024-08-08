@@ -1,7 +1,9 @@
-
 {{ config(
     materialized='table',
-    schema='dbt'
+    schema='dbt',
+    meta={
+        "datasets_trigger": ["user_country_get_country"]
+    }
 ) }}
 
 
@@ -32,5 +34,6 @@ SELECT
     writing_day_id AS DAT_ID_DIA_ESCRITA, 
     "period" AS DSC_PERIODO
 FROM 
-    raw.user_country_get_country
-where period = 'week'; 
+    {{ source('raw', 'user_country_get_country') }}
+where period = 'month'   
+    ;

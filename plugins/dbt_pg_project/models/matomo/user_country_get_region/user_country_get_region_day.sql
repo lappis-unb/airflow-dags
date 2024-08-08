@@ -1,7 +1,11 @@
 {{ config(
     materialized='table',
-    schema='dbt'
+    schema='dbt',
+    meta={
+        "datasets_trigger": ["user_country_get_region"]
+    }
 ) }}
+
 
   SELECT 
     SUBSTRING(url FROM LENGTH('pageUrl==') + 1) AS DSC_URL,
@@ -34,6 +38,6 @@
     sum_daily_nb_uniq_visitors AS NUM_VISITANTES_UNICOS_DIARIOS,
     sum_daily_nb_users AS NUM_TOTAL_USUARIOS_DIARIOS
 FROM 
-    raw.user_country_get_region
+    {{ source('raw', 'user_country_get_region') }}
 where period = 'day'
     ;

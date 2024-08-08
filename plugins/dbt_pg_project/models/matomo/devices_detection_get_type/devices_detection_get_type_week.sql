@@ -1,7 +1,11 @@
 {{ config(
     materialized='table',
-    schema='dbt'
+    schema='dbt',
+    meta={
+        "datasets_trigger": ["devices_detection_get_type"]
+    }
 ) }}
+
 
 
 SELECT 
@@ -31,6 +35,6 @@ SELECT
     sum_daily_nb_users AS NUM_TOTAL_USUARIOS_DIARIOS,
     sum_daily_nb_uniq_visitors AS NUM_VISITANTES_UNICOS_DIARIOS
 FROM 
-    raw.devices_detection_get_type
+    {{ source('raw', 'devices_detection_get_type') }}
 where period = 'week'
     ;

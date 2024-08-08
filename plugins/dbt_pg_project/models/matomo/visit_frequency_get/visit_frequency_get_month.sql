@@ -1,6 +1,9 @@
 {{ config(
     materialized='table',
-    schema='dbt'
+    schema='dbt',
+    meta={
+        "datasets_trigger": ["visit_frequency_get"]
+    }
 ) }}
 
 SELECT 
@@ -32,5 +35,5 @@ SELECT
     nb_actions_per_visit_returning AS num_acoes_por_visita_retornantes,
     avg_time_on_site_returning AS num_tempo_medio_no_site_retornantes
 FROM 
-    raw.visit_frequency_get
+    {{ source('raw', 'visit_frequency_get') }}
 WHERE "period" = 'month';
