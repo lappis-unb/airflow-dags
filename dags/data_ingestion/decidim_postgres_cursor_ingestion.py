@@ -203,27 +203,27 @@ def data_ingestion_postgres():
         df = df.applymap(treat_complex_columns)
 
         schema = extraction_info["destination_schema"]
-        insertion_method = "replace"
+        insertion_method = "append"
+
+        sess = sessionmaker(bind=engine)
+        session = sess()
+        metadata = MetaData(schema=schema)
+
+        table = Table(extraction, metadata, autoload_with=engine)
 
         if extraction_info["ingestion_type"] == "incremental":
-            insertion_method = "append"
-
-            sess = sessionmaker(bind=engine)
-            session = sess()
-            metadata = MetaData(schema=schema)
-
-            table = Table(extraction, metadata, autoload_with=engine)
-
             ids_to_delete = [str(x) for x in df["id"].unique()]
-
             delete_query = table.delete().where(table.c.id.in_(ids_to_delete))
 
-            result = session.execute(delete_query)
-            session.commit()
+        else:
+            delete_query = table.delete()
 
-            print(f"Rows deleted: {result.rowcount}")
+        result = session.execute(delete_query)
+        session.commit()
 
-            session.close()
+        print(f"Rows deleted: {result.rowcount}")
+
+        session.close()
 
         df.to_sql(
             name=extraction,
