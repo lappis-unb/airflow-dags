@@ -32,8 +32,6 @@ components_base as
         row_number() over(partition by id order by updated_at DESC) as row_number
     FROM
         {{ source('bronze', 'decidim_components') }}
-    WHERE
-        participatory_space_type = 'Decidim::ParticipatoryProcess'
 ),
 
 deduped_components as (select * from components_base where row_number = 1),
@@ -46,8 +44,7 @@ coauthorships_base as
     FROM
         {{ source('bronze', 'decidim_coauthorships') }}
     WHERE
-        decidim_author_type = 'Decidim::UserBaseEntity'
-        AND coauthorable_type = 'Decidim::Proposals::Proposal'
+        coauthorable_type = 'Decidim::Proposals::Proposal'
 ),
 
 deduped_coauthorships as (select * from coauthorships_base where row_number = 1)
@@ -55,7 +52,9 @@ deduped_coauthorships as (select * from coauthorships_base where row_number = 1)
 select
 	p.id as proposal_id,
     c.participatory_space_id as process_id,
+    c.participatory_space_type,
     ca.decidim_author_id as user_id,
+    ca.decidim_author_type as author_type,
 	p.state as proposal_status,
 	p.created_at,
 	p.title::json->>'pt-BR' as proposal_title,
