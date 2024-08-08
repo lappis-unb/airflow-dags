@@ -1,0 +1,312 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Esquema contendo dados brutos relacionados à detecção de dispositivos usados pelos visitantes."
+    tables:
+      - name: devices_detection_get_type
+        description: "Tabela com dados de detecção de tipo de dispositivos, incluindo métricas de visitas, ações e durações."
+        columns:
+          - name: url
+            description: "URL completa da página visitada."
+
+          - name: nb_uniq_visitors
+            description: "Número de visitantes únicos que acessaram a página."
+
+          - name: nb_visits
+            description: "Número total de visitas à página."
+
+          - name: nb_actions
+            description: "Número total de ações realizadas pelos usuários durante as visitas."
+
+          - name: nb_users
+            description: "Número total de usuários que acessaram a página."
+
+          - name: max_actions
+            description: "Máximo de ações realizadas em uma única visita."
+
+          - name: sum_visit_length
+            description: "Duração total de todas as visitas em segundos."
+
+          - name: bounce_count
+            description: "Número total de rejeições (visitas sem interação)."
+
+          - name: nb_visits_converted
+            description: "Número de visitas que resultaram em conversões."
+
+          - name: segment
+            description: "Segmento associado à visita."
+
+          - name: logo
+            description: "Logo associado ao dispositivo ou ao espaço participativo."
+
+          - name: event_day_id
+            description: "Identificador do dia do evento."
+
+          - name: available_day_id
+            description: "Identificador do dia disponível."
+
+          - name: available_month_id
+            description: "Identificador do mês disponível."
+
+          - name: available_year_id
+            description: "Identificador do ano disponível."
+
+          - name: writing_day_id
+            description: "Identificador do dia de escrita do registro."
+
+          - name: period
+            description: "Período da visita (e.g., 'day', 'week')."
+
+          - name: sum_daily_nb_users
+            description: "Soma diária do total de usuários."
+
+          - name: sum_daily_nb_uniq_visitors
+            description: "Soma diária de visitantes únicos."
+
+models:
+  - name: device_type_summary_day
+    description: "Modelo que processa dados de frequência de visitas por tipo de dispositivo, filtrando as visitas diárias e calculando métricas associadas."
+    columns:
+      - name: DSC_URL
+        description: "URL extraída da página."
+
+      - name: DSC_texto_participativo
+        description: "Texto participativo extraído do URL."
+
+      - name: DSC_processo_id
+        description: "ID do processo extraído do URL."
+
+      - name: DSC_DISPOSITIVO
+        description: "Tipo de dispositivo detectado durante a visita."
+
+      - name: NUM_VISITANTES_UNICOS
+        description: "Número de visitantes únicos que acessaram a página."
+
+      - name: NUM_TOTAL_VISITAS
+        description: "Número total de visitas à página."
+
+      - name: NUM_TOTAL_ACOES
+        description: "Número total de ações realizadas pelos usuários durante as visitas."
+
+      - name: NUM_TOTAL_USUARIOS
+        description: "Número total de usuários que acessaram a página."
+
+      - name: NUM_MAX_ACOES_POR_VISITA
+        description: "Máximo de ações realizadas em uma única visita."
+
+      - name: NUM_DURACAO_TOTAL_VISITAS
+        description: "Duração total de todas as visitas em segundos."
+
+      - name: NUM_TOTAL_REJEICOES
+        description: "Número total de rejeições (visitas sem interação)."
+
+      - name: NUM_VISITAS_CONVERTIDAS
+        description: "Número de visitas que resultaram em conversões."
+
+      - name: DSC_SEGMENTO
+        description: "Segmento associado à visita."
+
+      - name: DSC_LOGO
+        description: "Logo associado ao dispositivo ou ao espaço participativo."
+
+      - name: DSC_ESPACO_PARTICIPATIVO
+        description: "Descrição do espaço participativo."
+
+      - name: DSC_METODO
+        description: "Descrição do método utilizado."
+
+      - name: DAT_DATA
+        description: "Data do registro de visita."
+
+      - name: DAT_ID_DIA_EVENTO
+        description: "Identificador do dia do evento."
+
+      - name: DAT_ID_DIA_DISPONIVEL
+        description: "Identificador do dia disponível."
+
+      - name: DAT_ID_MES_DISPONIVEL
+        description: "Identificador do mês disponível."
+
+      - name: DAT_ID_ANO_DISPONIVEL
+        description: "Identificador do ano disponível."
+
+      - name: DAT_ID_DIA_ESCRITA
+        description: "Identificador do dia de escrita do registro."
+
+      - name: DSC_PERIODO
+        description: "Período considerado para a visita."
+
+      - name: NUM_TOTAL_USUARIOS_DIARIOS
+        description: "Soma diária do total de usuários."
+
+      - name: NUM_VISITANTES_UNICOS_DIARIOS
+        description: "Soma diária de visitantes únicos."
+
+    meta:
+      datasets_trigger: 
+        - devices_detection_get_type
+
+  - name: device_type_summary_month
+    description: "Modelo que processa dados de frequência de visitas por tipo de dispositivo, filtrando as visitas mensais e calculando métricas associadas."
+    columns:
+      - name: DSC_URL
+        description: "URL extraída da página."
+
+      - name: DSC_texto_participativo
+        description: "Texto participativo extraído do URL."
+
+      - name: DSC_processo_id
+        description: "ID do processo extraído do URL."
+
+      - name: DSC_DISPOSITIVO
+        description: "Tipo de dispositivo detectado durante a visita."
+
+      - name: NUM_VISITANTES_UNICOS
+        description: "Número de visitantes únicos que acessaram a página."
+
+      - name: NUM_TOTAL_VISITAS
+        description: "Número total de visitas à página."
+
+      - name: NUM_TOTAL_ACOES
+        description: "Número total de ações realizadas pelos usuários durante as visitas."
+
+      - name: NUM_TOTAL_USUARIOS
+        description: "Número total de usuários que acessaram a página."
+
+      - name: NUM_MAX_ACOES_POR_VISITA
+        description: "Máximo de ações realizadas em uma única visita."
+
+      - name: NUM_DURACAO_TOTAL_VISITAS
+        description: "Duração total de todas as visitas em segundos."
+
+      - name: NUM_TOTAL_REJEICOES
+        description: "Número total de rejeições (visitas sem interação)."
+
+      - name: NUM_VISITAS_CONVERTIDAS
+        description: "Número de visitas que resultaram em conversões."
+
+      - name: DSC_SEGMENTO
+        description: "Segmento associado à visita."
+
+      - name: DSC_LOGO
+        description: "Logo associado ao dispositivo ou ao espaço participativo."
+
+      - name: DSC_ESPACO_PARTICIPATIVO
+        description: "Descrição do espaço participativo."
+
+      - name: DSC_METODO
+        description: "Descrição do método utilizado."
+
+      - name: DAT_DATA
+        description: "Data do registro de visita."
+
+      - name: DAT_ID_DIA_EVENTO
+        description: "Identificador do dia do evento."
+
+      - name: DAT_ID_DIA_DISPONIVEL
+        description: "Identificador do dia disponível."
+
+      - name: DAT_ID_MES_DISPONIVEL
+        description: "Identificador do mês disponível."
+
+      - name: DAT_ID_ANO_DISPONIVEL
+        description: "Identificador do ano disponível."
+
+      - name: DAT_ID_DIA_ESCRITA
+        description: "Identificador do dia de escrita do registro."
+
+      - name: DSC_PERIODO
+        description: "Período considerado para a visita."
+
+      - name: NUM_TOTAL_USUARIOS_DIARIOS
+        description: "Soma diária do total de usuários."
+
+      - name: NUM_VISITANTES_UNICOS_DIARIOS
+        description: "Soma diária de visitantes únicos."
+
+    meta:
+      datasets_trigger: 
+        - devices_detection_get_type
+
+  - name: device_type_summary_week
+    description: "Modelo que processa dados de frequência de visitas por tipo de dispositivo, filtrando as visitas semanais e calculando métricas associadas."
+    columns:
+      - name: DSC_URL
+        description: "URL extraída da página."
+
+      - name: DSC_texto_participativo
+        description: "Texto participativo extraído do URL."
+
+      - name: DSC_processo_id
+        description: "ID do processo extraído do URL."
+
+      - name: DSC_DISPOSITIVO
+        description: "Tipo de dispositivo detectado durante a visita."
+
+      - name: NUM_VISITANTES_UNICOS
+        description: "Número de visitantes únicos que acessaram a página."
+
+      - name: NUM_TOTAL_VISITAS
+        description: "Número total de visitas à página."
+
+      - name: NUM_TOTAL_ACOES
+        description: "Número total de ações realizadas pelos usuários durante as visitas."
+
+      - name: NUM_TOTAL_USUARIOS
+        description: "Número total de usuários que acessaram a página."
+
+      - name: NUM_MAX_ACOES_POR_VISITA
+        description: "Máximo de ações realizadas em uma única visita."
+
+      - name: NUM_DURACAO_TOTAL_VISITAS
+        description: "Duração total de todas as visitas em segundos."
+
+      - name: NUM_TOTAL_REJEICOES
+        description: "Número total de rejeições (visitas sem interação)."
+
+      - name: NUM_VISITAS_CONVERTIDAS
+        description: "Número de visitas que resultaram em conversões."
+
+      - name: DSC_SEGMENTO
+        description: "Segmento associado à visita."
+
+      - name: DSC_LOGO
+        description: "Logo associado ao dispositivo ou ao espaço participativo."
+
+      - name: DSC_ESPACO_PARTICIPATIVO
+        description: "Descrição do espaço participativo."
+
+      - name: DSC_METODO
+        description: "Descrição do método utilizado."
+
+      - name: DAT_DATA
+        description: "Data do registro de visita."
+
+      - name: DAT_ID_DIA_EVENTO
+        description: "Identificador do dia do evento."
+
+      - name: DAT_ID_DIA_DISPONIVEL
+        description: "Identificador do dia disponível."
+
+      - name: DAT_ID_MES_DISPONIVEL
+        description: "Identificador do mês disponível."
+
+      - name: DAT_ID_ANO_DISPONIVEL
+        description: "Identificador do ano disponível."
+
+      - name: DAT_ID_DIA_ESCRITA
+        description: "Identificador do dia de escrita do registro."
+
+      - name: DSC_PERIODO
+        description: "Período considerado para a visita."
+
+      - name: NUM_TOTAL_USUARIOS_DIARIOS
+        description: "Soma diária do total de usuários."
+
+      - name: NUM_VISITANTES_UNICOS_DIARIOS
+        description: "Soma diária de visitantes únicos."
+
+    meta:
+      datasets_trigger: 
+        - devices_detection_get_type

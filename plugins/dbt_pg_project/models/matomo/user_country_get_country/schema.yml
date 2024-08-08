@@ -1,0 +1,309 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Esquema contendo dados brutos relacionados ao país de origem dos usuários."
+    tables:
+      - name: user_country_get_country
+        description: "Tabela com dados de frequência de visitas por país, incluindo métricas de visitas, ações e durações."
+        columns:
+          - name: url
+            description: "URL completa da página visitada."
+          
+          - name: nb_visits
+            description: "Número total de visitas à página."
+          
+          - name: nb_actions
+            description: "Número total de ações realizadas pelos usuários durante as visitas."
+          
+          - name: max_actions
+            description: "Máximo de ações realizadas em uma única visita."
+          
+          - name: sum_visit_length
+            description: "Duração total de todas as visitas em segundos."
+          
+          - name: bounce_count
+            description: "Número total de rejeições (visitas sem interação)."
+          
+          - name: nb_visits_converted
+            description: "Número de visitas que resultaram em conversões."
+          
+          - name: sum_daily_nb_uniq_visitors
+            description: "Soma diária de visitantes únicos."
+          
+          - name: sum_daily_nb_users
+            description: "Soma diária do total de usuários."
+          
+          - name: code
+            description: "Código do país associado à visita."
+          
+          - name: logo
+            description: "Logo associado ao país."
+          
+          - name: segment
+            description: "Segmento associado à visita."
+          
+          - name: event_day_id
+            description: "Identificador do dia do evento."
+          
+          - name: available_day_id
+            description: "Identificador do dia disponível."
+          
+          - name: available_month_id
+            description: "Identificador do mês disponível."
+          
+          - name: available_year_id
+            description: "Identificador do ano disponível."
+          
+          - name: writing_day_id
+            description: "Identificador do dia de escrita do registro."
+          
+          - name: period
+            description: "Período da visita (e.g., 'day', 'week')."
+
+models:
+  - name: user_country_summary_day
+    description: "Modelo que processa dados de frequência de visitas por país, filtrando as visitas diárias e calculando métricas associadas filtrado por dia"
+    columns:
+      - name: DSC_URL
+        description: "URL extraída da página."
+
+      - name: DSC_texto_participativo
+        description: "Texto participativo extraído do URL."
+
+      - name: DSC_processo_id
+        description: "ID do processo extraído do URL."
+
+      - name: DSC_PAIS
+        description: "Etiqueta do país associada ao processo."
+
+      - name: NUM_VISITAS
+        description: "Número total de visitas à página."
+
+      - name: NUM_ACOES
+        description: "Número total de ações realizadas pelos usuários durante as visitas."
+
+      - name: NUM_MAXIMO_ACOES
+        description: "Máximo de ações realizadas em uma única visita."
+
+      - name: NUM_DURACAO_TOTAL_VISITAS
+        description: "Duração total de todas as visitas em segundos."
+
+      - name: NUM_CONTAGEM_REJEICOES
+        description: "Número total de rejeições (visitas sem interação)."
+
+      - name: NUM_VISITAS_CONVERTIDAS
+        description: "Número de visitas que resultaram em conversões."
+
+      - name: NUM_TOTAL_VISITANTES_UNICOS_DIARIOS
+        description: "Soma diária de visitantes únicos."
+
+      - name: NUM_TOTAL_USUARIOS_DIARIOS
+        description: "Soma diária do total de usuários."
+
+      - name: DSC_CODIGO
+        description: "Código do país associado à visita."
+
+      - name: DSC_LOGO
+        description: "Logo associado ao país."
+
+      - name: DSC_SEGMENTO
+        description: "Segmento associado à visita."
+
+      - name: NUM_ALTURA_LOGO
+        description: "Altura do logo associado ao país."
+
+      - name: DSC_ESPACO_PARTICIPATIVO
+        description: "Descrição do espaço participativo."
+
+      - name: DSC_METODO
+        description: "Descrição do método utilizado."
+
+      - name: DAT_DATA
+        description: "Data do registro de visita."
+
+      - name: DAT_ID_DIA_EVENTO
+        description: "Identificador do dia do evento."
+
+      - name: DAT_ID_DIA_DISPONIVEL
+        description: "Identificador do dia disponível."
+
+      - name: DAT_ID_MES_DISPONIVEL
+        description: "Identificador do mês disponível."
+
+      - name: DAT_ID_ANO_DISPONIVEL
+        description: "Identificador do ano disponível."
+
+      - name: DAT_ID_DIA_ESCRITA
+        description: "Identificador do dia de escrita do registro."
+
+      - name: DSC_PERIODO
+        description: "Período considerado para a visita."
+
+    meta:
+      datasets_trigger: 
+        - user_country_get_country
+  - name: user_country_summary_week
+    description: "Modelo que processa dados de frequência de visitas por país, filtrando as visitas diárias e calculando métricas associadas filtrado por semana"
+    columns:
+      - name: DSC_URL
+        description: "URL extraída da página."
+
+      - name: DSC_texto_participativo
+        description: "Texto participativo extraído do URL."
+
+      - name: DSC_processo_id
+        description: "ID do processo extraído do URL."
+
+      - name: DSC_PAIS
+        description: "Etiqueta do país associada ao processo."
+
+      - name: NUM_VISITAS
+        description: "Número total de visitas à página."
+
+      - name: NUM_ACOES
+        description: "Número total de ações realizadas pelos usuários durante as visitas."
+
+      - name: NUM_MAXIMO_ACOES
+        description: "Máximo de ações realizadas em uma única visita."
+
+      - name: NUM_DURACAO_TOTAL_VISITAS
+        description: "Duração total de todas as visitas em segundos."
+
+      - name: NUM_CONTAGEM_REJEICOES
+        description: "Número total de rejeições (visitas sem interação)."
+
+      - name: NUM_VISITAS_CONVERTIDAS
+        description: "Número de visitas que resultaram em conversões."
+
+      - name: NUM_TOTAL_VISITANTES_UNICOS_DIARIOS
+        description: "Soma diária de visitantes únicos."
+
+      - name: NUM_TOTAL_USUARIOS_DIARIOS
+        description: "Soma diária do total de usuários."
+
+      - name: DSC_CODIGO
+        description: "Código do país associado à visita."
+
+      - name: DSC_LOGO
+        description: "Logo associado ao país."
+
+      - name: DSC_SEGMENTO
+        description: "Segmento associado à visita."
+
+      - name: NUM_ALTURA_LOGO
+        description: "Altura do logo associado ao país."
+
+      - name: DSC_ESPACO_PARTICIPATIVO
+        description: "Descrição do espaço participativo."
+
+      - name: DSC_METODO
+        description: "Descrição do método utilizado."
+
+      - name: DAT_DATA
+        description: "Data do registro de visita."
+
+      - name: DAT_ID_DIA_EVENTO
+        description: "Identificador do dia do evento."
+
+      - name: DAT_ID_DIA_DISPONIVEL
+        description: "Identificador do dia disponível."
+
+      - name: DAT_ID_MES_DISPONIVEL
+        description: "Identificador do mês disponível."
+
+      - name: DAT_ID_ANO_DISPONIVEL
+        description: "Identificador do ano disponível."
+
+      - name: DAT_ID_DIA_ESCRITA
+        description: "Identificador do dia de escrita do registro."
+
+      - name: DSC_PERIODO
+        description: "Período considerado para a visita."
+
+    meta:
+      datasets_trigger: 
+        - user_country_get_country
+
+
+  - name: user_country_summary_month
+    description: "Modelo que processa dados de frequência de visitas por país, filtrando as visitas diárias e calculando métricas associadas filtrado por mês"
+    columns:
+      - name: DSC_URL
+        description: "URL extraída da página."
+
+      - name: DSC_texto_participativo
+        description: "Texto participativo extraído do URL."
+
+      - name: DSC_processo_id
+        description: "ID do processo extraído do URL."
+
+      - name: DSC_PAIS
+        description: "Etiqueta do país associada ao processo."
+
+      - name: NUM_VISITAS
+        description: "Número total de visitas à página."
+
+      - name: NUM_ACOES
+        description: "Número total de ações realizadas pelos usuários durante as visitas."
+
+      - name: NUM_MAXIMO_ACOES
+        description: "Máximo de ações realizadas em uma única visita."
+
+      - name: NUM_DURACAO_TOTAL_VISITAS
+        description: "Duração total de todas as visitas em segundos."
+
+      - name: NUM_CONTAGEM_REJEICOES
+        description: "Número total de rejeições (visitas sem interação)."
+
+      - name: NUM_VISITAS_CONVERTIDAS
+        description: "Número de visitas que resultaram em conversões."
+
+      - name: NUM_TOTAL_VISITANTES_UNICOS_DIARIOS
+        description: "Soma diária de visitantes únicos."
+
+      - name: NUM_TOTAL_USUARIOS_DIARIOS
+        description: "Soma diária do total de usuários."
+
+      - name: DSC_CODIGO
+        description: "Código do país associado à visita."
+
+      - name: DSC_LOGO
+        description: "Logo associado ao país."
+
+      - name: DSC_SEGMENTO
+        description: "Segmento associado à visita."
+
+      - name: NUM_ALTURA_LOGO
+        description: "Altura do logo associado ao país."
+
+      - name: DSC_ESPACO_PARTICIPATIVO
+        description: "Descrição do espaço participativo."
+
+      - name: DSC_METODO
+        description: "Descrição do método utilizado."
+
+      - name: DAT_DATA
+        description: "Data do registro de visita."
+
+      - name: DAT_ID_DIA_EVENTO
+        description: "Identificador do dia do evento."
+
+      - name: DAT_ID_DIA_DISPONIVEL
+        description: "Identificador do dia disponível."
+
+      - name: DAT_ID_MES_DISPONIVEL
+        description: "Identificador do mês disponível."
+
+      - name: DAT_ID_ANO_DISPONIVEL
+        description: "Identificador do ano disponível."
+
+      - name: DAT_ID_DIA_ESCRITA
+        description: "Identificador do dia de escrita do registro."
+
+      - name: DSC_PERIODO
+        description: "Período considerado para a visita."
+
+    meta:
+      datasets_trigger: 
+        - user_country_get_country

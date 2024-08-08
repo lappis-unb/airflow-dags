@@ -1,50 +1,293 @@
 version: 2
 
+
+sources:
+  - name: raw
+    description: "Esquema contendo dados brutos de resumo de visitas."
+    tables:
+      - name: visits_summary
+        description: "Tabela com dados de resumo de visitas, contendo informações sobre visitas únicas, ações e duração das visitas."
+        columns:
+          - name: url
+            description: "URL completa da página visitada."
+
+          - name: nb_uniq_visitors
+            description: "Número de visitantes únicos para a página."
+
+          - name: nb_users
+            description: "Número total de usuários que acessaram a página."
+
+          - name: nb_visits
+            description: "Número total de visitas à página."
+
+          - name: nb_actions
+            description: "Número total de ações realizadas pelos usuários durante as visitas."
+
+          - name: nb_visits_converted
+            description: "Número de visitas que resultaram em conversões."
+
+          - name: bounce_count
+            description: "Número de rejeições (visitas que não geraram interação)."
+
+          - name: sum_visit_length
+            description: "Duração total das visitas em segundos."
+
+          - name: max_actions
+            description: "Máximo de ações realizadas em uma única visita."
+
+          - name: bounce_rate
+            description: "Taxa de rejeição das visitas."
+
+          - name: nb_actions_per_visit
+            description: "Número médio de ações por visita."
+
+          - name: avg_time_on_site
+            description: "Tempo médio gasto no site por visita."
+
+          - name: space
+            description: "Espaço participativo associado à visita."
+
+          - name: method
+            description: "Método ou abordagem utilizado para a visita."
+
+          - name: date
+            description: "Data da visita."
+
+          - name: event_day_id
+            description: "Identificador do dia do evento."
+
+          - name: available_day_id
+            description: "Identificador do dia disponível."
+
+          - name: available_month_id
+            description: "Identificador do mês disponível."
+
+          - name: available_year_id
+            description: "Identificador do ano disponível."
+
+          - name: writing_day_id
+            description: "Identificador do dia de escrita do registro."
+
+          - name: period
+            description: "Período da visita (e.g., 'day', 'week')."
+
+
 models:
-  - name: VisitsSummary_get_diario
-    description: "Resumo diário de visitas do site Brasil Participativo."
+  - name: visits_summary_day
+    description: "Modelo que processa dados de visitas com filtro diário."
     columns:
-      - name: DSC_PAGE_URL
-        description: "URL da página visitada."
-      - name: DSC_SECTION_NAME
-        description: "Nome da seção dentro da URL do site."
-      - name: DSC_PROCESS_ID
-        description: "Identificador do processo associado à página."
-      - name: NUM_UNIQUE_VISITORS_COUNT
-        description: "Contagem de visitantes únicos."
-      - name: NUM_USERS_COUNT
-        description: "Contagem total de usuários."
-      - name: NUM_VISITS_COUNT
-        description: "Contagem total de visitas."
-      - name: NUM_ACTIONS_COUNT
-        description: "Contagem total de ações realizadas."
-      - name: NUM_CONVERTED_VISITS_COUNT
-        description: "Contagem de visitas convertidas."
-      - name: NUM_BOUNCES_COUNT
-        description: "Contagem de rejeições (bounces)."
-      - name: NUM_TOTAL_VISIT_DURATION
-        description: "Duração total das visitas em segundos."
-      - name: NUM_MAX_ACTIONS_PER_VISIT
-        description: "Máximo de ações realizadas em uma única visita."
-      - name: NUM_BOUNCE_RATE
-        description: "Taxa de rejeição calculada como porcentagem."
-      - name: NUM_ACTIONS_PER_VISIT
+      - name: DSC_URL_PAGINA
+        description: "URL extraída da página."
+
+      - name: DSC_NOME_SECAO
+        description: "Nome da seção extraída do URL."
+
+      - name: DSC_ID_PROCESSO
+        description: "ID do processo extraído do URL."
+
+      - name: NUM_VISITANTES_UNICOS
+        description: "Número de visitantes únicos."
+
+      - name: NUM_TOTAL_USUARIOS
+        description: "Número total de usuários."
+
+      - name: NUM_TOTAL_VISITAS
+        description: "Número total de visitas."
+
+      - name: NUM_TOTAL_ACOES
+        description: "Número total de ações realizadas."
+
+      - name: NUM_VISITAS_CONVERTIDAS
+        description: "Número de visitas que resultaram em conversões."
+
+      - name: NUM_TOTAL_REJEICOES
+        description: "Número total de rejeições."
+
+      - name: NUM_DURACAO_TOTAL_VISITAS
+        description: "Duração total de todas as visitas."
+
+      - name: NUM_MAX_ACOES_POR_VISITA
+        description: "Número máximo de ações em uma única visita."
+
+      - name: NUM_TAXA_REJEICAO
+        description: "Taxa de rejeição."
+
+      - name: NUM_ACOES_POR_VISITA
         description: "Número médio de ações por visita."
-      - name: NUM_AVERAGE_TIME_ON_SITE
-        description: "Tempo médio gasto no site por visita em segundos."
-      - name: DSC_SPACE
-        description: "Espaço categórico relacionado à visita."
-      - name: DSC_METHOD
-        description: "Método de acesso ou interação do usuário."
-      - name: DAT_VISIT_DATE
-        description: "Data da visita no formato AAAA-MM-DD."
-      - name: DAT_EVENT_DAY_ID
-        description: "Identificador do dia do evento."
-      - name: DAT_AVAILABLE_DAY_ID
-        description: "Identificador de disponibilidade diária."
-      - name: DAT_AVAILABLE_MONTH_ID
-        description: "Identificador de disponibilidade mensal."
-      - name: DAT_AVAILABLE_YEAR_ID
-        description: "Identificador de disponibilidade anual."
-      - name: DAT_WRITING_DAY_ID
-        description: "Identificador do dia de escrita dos dados."
+
+      - name: NUM_TEMPO_MEDIO_NO_SITE
+        description: "Tempo médio gasto no site."
+
+      - name: DSC_ESPACO_PARTICIPATIVO
+        description: "Descrição do espaço participativo."
+
+      - name: DSC_METODO
+        description: "Descrição do método."
+
+      - name: DAT_DATA_VISITA
+        description: "Data da visita."
+
+      - name: DAT_ID_DIA_EVENTO
+        description: "ID do dia do evento."
+
+      - name: DAT_ID_DIA_DISPONIVEL
+        description: "ID do dia disponível."
+
+      - name: DAT_ID_MES_DISPONIVEL
+        description: "ID do mês disponível."
+
+      - name: DAT_ID_ANO_DISPONIVEL
+        description: "ID do ano disponível."
+
+      - name: DAT_ID_DIA_ESCRITA
+        description: "ID do dia de escrita."
+
+    meta:
+      datasets_trigger: 
+        - visits_summary_get
+
+  - name: visits_summary_week
+    description: "Modelo que processa dados de visitas com filtro semanal."
+    columns:
+      - name: DSC_URL_PAGINA
+        description: "URL extraída da página."
+
+      - name: DSC_NOME_SECAO
+        description: "Nome da seção extraída do URL."
+
+      - name: DSC_ID_PROCESSO
+        description: "ID do processo extraído do URL."
+
+      - name: NUM_VISITANTES_UNICOS
+        description: "Número de visitantes únicos."
+
+      - name: NUM_TOTAL_USUARIOS
+        description: "Número total de usuários."
+
+      - name: NUM_TOTAL_VISITAS
+        description: "Número total de visitas."
+
+      - name: NUM_TOTAL_ACOES
+        description: "Número total de ações realizadas."
+
+      - name: NUM_VISITAS_CONVERTIDAS
+        description: "Número de visitas que resultaram em conversões."
+
+      - name: NUM_TOTAL_REJEICOES
+        description: "Número total de rejeições."
+
+      - name: NUM_DURACAO_TOTAL_VISITAS
+        description: "Duração total de todas as visitas."
+
+      - name: NUM_MAX_ACOES_POR_VISITA
+        description: "Número máximo de ações em uma única visita."
+
+      - name: NUM_TAXA_REJEICAO
+        description: "Taxa de rejeição."
+
+      - name: NUM_ACOES_POR_VISITA
+        description: "Número médio de ações por visita."
+
+      - name: NUM_TEMPO_MEDIO_NO_SITE
+        description: "Tempo médio gasto no site."
+
+      - name: DSC_ESPACO_PARTICIPATIVO
+        description: "Descrição do espaço participativo."
+
+      - name: DSC_METODO
+        description: "Descrição do método."
+
+      - name: DAT_DATA_VISITA
+        description: "Data da visita."
+
+      - name: DAT_ID_DIA_EVENTO
+        description: "ID do dia do evento."
+
+      - name: DAT_ID_DIA_DISPONIVEL
+        description: "ID do dia disponível."
+
+      - name: DAT_ID_MES_DISPONIVEL
+        description: "ID do mês disponível."
+
+      - name: DAT_ID_ANO_DISPONIVEL
+        description: "ID do ano disponível."
+
+      - name: DAT_ID_DIA_ESCRITA
+        description: "ID do dia de escrita."
+
+    meta:
+      datasets_trigger: 
+        - visits_summary_get
+
+  - name: visits_summary_month
+    description: "Modelo que processa dados de visitas com filtro mensal."
+    columns:
+      - name: DSC_URL_PAGINA
+        description: "URL extraída da página."
+
+      - name: DSC_NOME_SECAO
+        description: "Nome da seção extraída do URL."
+
+      - name: DSC_ID_PROCESSO
+        description: "ID do processo extraído do URL."
+
+      - name: NUM_VISITANTES_UNICOS
+        description: "Número de visitantes únicos."
+
+      - name: NUM_TOTAL_USUARIOS
+        description: "Número total de usuários."
+
+      - name: NUM_TOTAL_VISITAS
+        description: "Número total de visitas."
+
+      - name: NUM_TOTAL_ACOES
+        description: "Número total de ações realizadas."
+
+      - name: NUM_VISITAS_CONVERTIDAS
+        description: "Número de visitas que resultaram em conversões."
+
+      - name: NUM_TOTAL_REJEICOES
+        description: "Número total de rejeições."
+
+      - name: NUM_DURACAO_TOTAL_VISITAS
+        description: "Duração total de todas as visitas."
+
+      - name: NUM_MAX_ACOES_POR_VISITA
+        description: "Número máximo de ações em uma única visita."
+
+      - name: NUM_TAXA_REJEICAO
+        description: "Taxa de rejeição."
+
+      - name: NUM_ACOES_POR_VISITA
+        description: "Número médio de ações por visita."
+
+      - name: NUM_TEMPO_MEDIO_NO_SITE
+        description: "Tempo médio gasto no site."
+
+      - name: DSC_ESPACO_PARTICIPATIVO
+        description: "Descrição do espaço participativo."
+
+      - name: DSC_METODO
+        description: "Descrição do método."
+
+      - name: DAT_DATA_VISITA
+        description: "Data da visita."
+
+      - name: DAT_ID_DIA_EVENTO
+        description: "ID do dia do evento."
+
+      - name: DAT_ID_DIA_DISPONIVEL
+        description: "ID do dia disponível."
+
+      - name: DAT_ID_MES_DISPONIVEL
+        description: "ID do mês disponível."
+
+      - name: DAT_ID_ANO_DISPONIVEL
+        description: "ID do ano disponível."
+
+      - name: DAT_ID_DIA_ESCRITA
+        description: "ID do dia de escrita."
+
+    meta:
+      datasets_trigger: 
+        - visits_summary_get

@@ -1,0 +1,434 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Esquema contendo dados brutos de frequência de visitas."
+    tables:
+      - name: visit_frequency_get
+        description: "Tabela com dados de frequência de visitas, contendo informações sobre novos e retornantes visitantes, ações e duração das visitas."
+        columns:
+          - name: url
+            description: "URL completa da página visitada."
+
+          - name: nb_uniq_visitors_new
+            description: "Número de visitantes únicos novos para a página."
+
+          - name: nb_users_new
+            description: "Número de usuários novos que acessaram a página."
+
+          - name: nb_visits_new
+            description: "Número de visitas novas à página."
+
+          - name: nb_actions_new
+            description: "Número de ações realizadas por novos visitantes durante as visitas."
+
+          - name: nb_visits_converted_new
+            description: "Número de visitas novas que resultaram em conversões."
+
+          - name: bounce_count_new
+            description: "Número de rejeições (novas visitas que não geraram interação)."
+
+          - name: sum_visit_length_new
+            description: "Duração total das novas visitas em segundos."
+
+          - name: max_actions_new
+            description: "Máximo de ações realizadas em uma única nova visita."
+
+          - name: bounce_rate_new
+            description: "Taxa de rejeição das novas visitas."
+
+          - name: nb_actions_per_visit_new
+            description: "Número médio de ações por nova visita."
+
+          - name: avg_time_on_site_new
+            description: "Tempo médio gasto no site por nova visita."
+
+          - name: nb_uniq_visitors_returning
+            description: "Número de visitantes únicos retornantes para a página."
+
+          - name: nb_users_returning
+            description: "Número de usuários retornantes que acessaram a página."
+
+          - name: nb_visits_returning
+            description: "Número de visitas retornantes à página."
+
+          - name: nb_actions_returning
+            description: "Número de ações realizadas por visitantes retornantes durante as visitas."
+
+          - name: nb_visits_converted_returning
+            description: "Número de visitas retornantes que resultaram em conversões."
+
+          - name: bounce_count_returning
+            description: "Número de rejeições (visitas retornantes que não geraram interação)."
+
+          - name: sum_visit_length_returning
+            description: "Duração total das visitas retornantes em segundos."
+
+          - name: max_actions_returning
+            description: "Máximo de ações realizadas em uma única visita retornante."
+
+          - name: bounce_rate_returning
+            description: "Taxa de rejeição das visitas retornantes."
+
+          - name: nb_actions_per_visit_returning
+            description: "Número médio de ações por visita retornante."
+
+          - name: avg_time_on_site_returning
+            description: "Tempo médio gasto no site por visita retornante."
+
+          - name: space
+            description: "Espaço participativo associado à visita."
+
+          - name: method
+            description: "Método ou abordagem utilizado para a visita."
+
+          - name: date
+            description: "Data da visita."
+
+          - name: event_day_id
+            description: "Identificador do dia do evento."
+
+          - name: available_day_id
+            description: "Identificador do dia disponível."
+
+          - name: available_month_id
+            description: "Identificador do mês disponível."
+
+          - name: available_year_id
+            description: "Identificador do ano disponível."
+
+          - name: writing_day_id
+            description: "Identificador do dia de escrita do registro."
+
+          - name: period
+            description: "Período da visita ('day', 'week', 'month')."
+
+
+models:
+  - name: visit_frequency_day
+    description: "Modelo que processa dados de frequência de visitas com filtro diário."
+    columns:
+      - name: DSC_URL
+        description: "URL extraída da página."
+
+      - name: DSC_texto_participativo
+        description: "Texto participativo extraído do URL."
+
+      - name: DSC_processo_id
+        description: "ID do processo extraído do URL."
+
+      - name: NUM_VISITANTES_UNICOS_NOVOS
+        description: "Número de visitantes únicos novos."
+
+      - name: NUM_USUARIOS_NOVOS
+        description: "Número de usuários novos."
+
+      - name: NUM_VISITAS_NOVAS
+        description: "Número de visitas novas."
+
+      - name: NUM_ACOES_NOVAS
+        description: "Número de ações novas."
+
+      - name: NUM_VISITAS_CONVERTIDAS_NOVAS
+        description: "Número de visitas convertidas novas."
+
+      - name: NUM_REJEICOES_NOVAS
+        description: "Número de rejeições novas."
+
+      - name: NUM_DURACAO_TOTAL_VISITAS_NOVAS
+        description: "Duração total das visitas novas."
+
+      - name: NUM_MAX_ACOES_POR_VISITA_NOVAS
+        description: "Número máximo de ações por visita nova."
+
+      - name: NUM_TAXA_REJEICAO_NOVAS
+        description: "Taxa de rejeição novas."
+
+      - name: NUM_ACOES_POR_VISITA_NOVAS
+        description: "Número médio de ações por visita nova."
+
+      - name: NUM_TEMPO_MEDIO_NO_SITE_NOVAS
+        description: "Tempo médio no site para visitas novas."
+
+      - name: NUM_VISITANTES_UNICOS_RETORNANTES
+        description: "Número de visitantes únicos retornantes."
+
+      - name: NUM_USUARIOS_RETORNANTES
+        description: "Número de usuários retornantes."
+
+      - name: NUM_VISITAS_RETORNANTES
+        description: "Número de visitas retornantes."
+
+      - name: NUM_ACOES_RETORNANTES
+        description: "Número de ações retornantes."
+
+      - name: NUM_VISITAS_CONVERTIDAS_RETORNANTES
+        description: "Número de visitas convertidas retornantes."
+
+      - name: NUM_REJEICOES_RETORNANTES
+        description: "Número de rejeições retornantes."
+
+      - name: NUM_DURACAO_TOTAL_VISITAS_RETORNANTES
+        description: "Duração total das visitas retornantes."
+
+      - name: NUM_MAX_ACOES_POR_VISITA_RETORNANTES
+        description: "Número máximo de ações por visita retornante."
+
+      - name: NUM_TAXA_REJEICAO_RETORNANTES
+        description: "Taxa de rejeição para visitas retornantes."
+
+      - name: NUM_ACOES_POR_VISITA_RETORNANTES
+        description: "Número médio de ações por visita retornante."
+
+      - name: NUM_TEMPO_MEDIO_NO_SITE_RETORNANTES
+        description: "Tempo médio no site para visitas retornantes."
+
+      - name: DSC_ESPACO_PARTICIPATIVO
+        description: "Descrição do espaço participativo."
+
+      - name: DSC_METODO
+        description: "Descrição do método utilizado."
+
+      - name: DAT_DATA
+        description: "Data do registro de visita."
+
+      - name: DAT_ID_DIA_EVENTO
+        description: "ID do dia do evento."
+
+      - name: DAT_ID_DIA_DISPONIVEL
+        description: "ID do dia disponível."
+
+      - name: DAT_ID_MES_DISPONIVEL
+        description: "ID do mês disponível."
+
+      - name: DAT_ID_ANO_DISPONIVEL
+        description: "ID do ano disponível."
+
+      - name: DAT_ID_DIA_ESCRITA
+        description: "ID do dia de escrita."
+
+      - name: DSC_PERIODO
+        description: "Descrição do período considerado."
+
+    meta:
+      datasets_trigger: 
+        - visit_frequency_get
+
+  - name: visit_frequency_week
+    description: "Modelo que processa dados de frequência de visitas com filtro semanal."
+    columns:
+      - name: DSC_URL
+        description: "URL extraída da página."
+
+      - name: DSC_texto_participativo
+        description: "Texto participativo extraído do URL."
+
+      - name: DSC_processo_id
+        description: "ID do processo extraído do URL."
+
+      - name: NUM_VISITANTES_UNICOS_NOVOS
+        description: "Número de visitantes únicos novos."
+
+      - name: NUM_USUARIOS_NOVOS
+        description: "Número de usuários novos."
+
+      - name: NUM_VISITAS_NOVAS
+        description: "Número de visitas novas."
+
+      - name: NUM_ACOES_NOVAS
+        description: "Número de ações novas."
+
+      - name: NUM_VISITAS_CONVERTIDAS_NOVAS
+        description: "Número de visitas convertidas novas."
+
+      - name: NUM_REJEICOES_NOVAS
+        description: "Número de rejeições novas."
+
+      - name: NUM_DURACAO_TOTAL_VISITAS_NOVAS
+        description: "Duração total das visitas novas."
+
+      - name: NUM_MAX_ACOES_POR_VISITA_NOVAS
+        description: "Número máximo de ações por visita nova."
+
+      - name: NUM_TAXA_REJEICAO_NOVAS
+        description: "Taxa de rejeição novas."
+
+      - name: NUM_ACOES_POR_VISITA_NOVAS
+        description: "Número médio de ações por visita nova."
+
+      - name: NUM_TEMPO_MEDIO_NO_SITE_NOVAS
+        description: "Tempo médio no site para visitas novas."
+
+      - name: NUM_VISITANTES_UNICOS_RETORNANTES
+        description: "Número de visitantes únicos retornantes."
+
+      - name: NUM_USUARIOS_RETORNANTES
+        description: "Número de usuários retornantes."
+
+      - name: NUM_VISITAS_RETORNANTES
+        description: "Número de visitas retornantes."
+
+      - name: NUM_ACOES_RETORNANTES
+        description: "Número de ações retornantes."
+
+      - name: NUM_VISITAS_CONVERTIDAS_RETORNANTES
+        description: "Número de visitas convertidas retornantes."
+
+      - name: NUM_REJEICOES_RETORNANTES
+        description: "Número de rejeições retornantes."
+
+      - name: NUM_DURACAO_TOTAL_VISITAS_RETORNANTES
+        description: "Duração total das visitas retornantes."
+
+      - name: NUM_MAX_ACOES_POR_VISITA_RETORNANTES
+        description: "Número máximo de ações por visita retornante."
+
+      - name: NUM_TAXA_REJEICAO_RETORNANTES
+        description: "Taxa de rejeição para visitas retornantes."
+
+      - name: NUM_ACOES_POR_VISITA_RETORNANTES
+        description: "Número médio de ações por visita retornante."
+
+      - name: NUM_TEMPO_MEDIO_NO_SITE_RETORNANTES
+        description: "Tempo médio no site para visitas retornantes."
+
+      - name: DSC_ESPACO_PARTICIPATIVO
+        description: "Descrição do espaço participativo."
+
+      - name: DSC_METODO
+        description: "Descrição do método utilizado."
+
+      - name: DAT_DATA
+        description: "Data do registro de visita."
+
+      - name: DAT_ID_DIA_EVENTO
+        description: "ID do dia do evento."
+
+      - name: DAT_ID_DIA_DISPONIVEL
+        description: "ID do dia disponível."
+
+      - name: DAT_ID_MES_DISPONIVEL
+        description: "ID do mês disponível."
+
+      - name: DAT_ID_ANO_DISPONIVEL
+        description: "ID do ano disponível."
+
+      - name: DAT_ID_DIA_ESCRITA
+        description: "ID do dia de escrita."
+
+      - name: DSC_PERIODO
+        description: "Descrição do período considerado."
+
+    meta:
+      datasets_trigger: 
+        - visit_frequency_get
+
+
+  - name: visit_frequency_month
+    description: "Modelo que processa dados de frequência de visitas com filtro mensal."
+    columns:
+      - name: DSC_URL
+        description: "URL extraída da página."
+
+      - name: DSC_texto_participativo
+        description: "Texto participativo extraído do URL."
+
+      - name: DSC_processo_id
+        description: "ID do processo extraído do URL."
+
+      - name: NUM_VISITANTES_UNICOS_NOVOS
+        description: "Número de visitantes únicos novos."
+
+      - name: NUM_USUARIOS_NOVOS
+        description: "Número de usuários novos."
+
+      - name: NUM_VISITAS_NOVAS
+        description: "Número de visitas novas."
+
+      - name: NUM_ACOES_NOVAS
+        description: "Número de ações novas."
+
+      - name: NUM_VISITAS_CONVERTIDAS_NOVAS
+        description: "Número de visitas convertidas novas."
+
+      - name: NUM_REJEICOES_NOVAS
+        description: "Número de rejeições novas."
+
+      - name: NUM_DURACAO_TOTAL_VISITAS_NOVAS
+        description: "Duração total das visitas novas."
+
+      - name: NUM_MAX_ACOES_POR_VISITA_NOVAS
+        description: "Número máximo de ações por visita nova."
+
+      - name: NUM_TAXA_REJEICAO_NOVAS
+        description: "Taxa de rejeição novas."
+
+      - name: NUM_ACOES_POR_VISITA_NOVAS
+        description: "Número médio de ações por visita nova."
+
+      - name: NUM_TEMPO_MEDIO_NO_SITE_NOVAS
+        description: "Tempo médio no site para visitas novas."
+
+      - name: NUM_VISITANTES_UNICOS_RETORNANTES
+        description: "Número de visitantes únicos retornantes."
+
+      - name: NUM_USUARIOS_RETORNANTES
+        description: "Número de usuários retornantes."
+
+      - name: NUM_VISITAS_RETORNANTES
+        description: "Número de visitas retornantes."
+
+      - name: NUM_ACOES_RETORNANTES
+        description: "Número de ações retornantes."
+
+      - name: NUM_VISITAS_CONVERTIDAS_RETORNANTES
+        description: "Número de visitas convertidas retornantes."
+
+      - name: NUM_REJEICOES_RETORNANTES
+        description: "Número de rejeições retornantes."
+
+      - name: NUM_DURACAO_TOTAL_VISITAS_RETORNANTES
+        description: "Duração total das visitas retornantes."
+
+      - name: NUM_MAX_ACOES_POR_VISITA_RETORNANTES
+        description: "Número máximo de ações por visita retornante."
+
+      - name: NUM_TAXA_REJEICAO_RETORNANTES
+        description: "Taxa de rejeição para visitas retornantes."
+
+      - name: NUM_ACOES_POR_VISITA_RETORNANTES
+        description: "Número médio de ações por visita retornante."
+
+      - name: NUM_TEMPO_MEDIO_NO_SITE_RETORNANTES
+        description: "Tempo médio no site para visitas retornantes."
+
+      - name: DSC_ESPACO_PARTICIPATIVO
+        description: "Descrição do espaço participativo."
+
+      - name: DSC_METODO
+        description: "Descrição do método utilizado."
+
+      - name: DAT_DATA
+        description: "Data do registro de visita."
+
+      - name: DAT_ID_DIA_EVENTO
+        description: "ID do dia do evento."
+
+      - name: DAT_ID_DIA_DISPONIVEL
+        description: "ID do dia disponível."
+
+      - name: DAT_ID_MES_DISPONIVEL
+        description: "ID do mês disponível."
+
+      - name: DAT_ID_ANO_DISPONIVEL
+        description: "ID do ano disponível."
+
+      - name: DAT_ID_DIA_ESCRITA
+        description: "ID do dia de escrita."
+
+      - name: DSC_PERIODO
+        description: "Descrição do período considerado."
+
+    meta:
+      datasets_trigger: 
+        - visit_frequency_get
