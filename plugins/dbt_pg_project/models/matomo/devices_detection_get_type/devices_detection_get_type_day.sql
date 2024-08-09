@@ -8,22 +8,23 @@
 
 
 SELECT 
-	space AS TIPO_ESPACO,
-    nb_users AS NUM_TOTAL_USUARIOS,
-    nb_visits AS NUM_TOTAL_VISITAS,
+	SPLIT_PART(SUBSTRING(url FROM LENGTH('pageUrl==https://brasilparticipativo.presidencia.gov.br/') + 1), '/', 4) AS DSC_processo_URL_ID,
+    "label" AS DSC_DISPOSITIVO,
     nb_uniq_visitors AS NUM_VISITANTES_UNICOS,
-    nb_visits_converted AS NUM_VISITAS_CONVERTIDAS,
-    sum_visit_length AS NUM_DURACAO_TOTAL_VISITAS,
-    max_actions AS NUM_MAX_ACOES_POR_VISITA,
-    avg_time_on_site AS NUM_TEMPO_MEDIO_NO_SITE,
-    bounce_count AS NUM_TOTAL_REJEICOES,
-    bounce_rate AS NUM_TAXA_REJEICAO,
+    nb_visits AS NUM_TOTAL_VISITAS,
     nb_actions AS NUM_TOTAL_ACOES,
-    nb_actions_per_visit AS NUM_ACOES_POR_VISITA,
-    date AS DAT_DATA_VISITA,
-    SUBSTRING(url FROM LENGTH('pageUrl==') + 1) AS DSC_URL_PAGINA,
-    SPLIT_PART(SUBSTRING(url FROM LENGTH('pageUrl==https://brasilparticipativo.presidencia.gov.br/') + 1), '/', 2) AS DSC_NOME_SECAO,
-    SPLIT_PART(SUBSTRING(url FROM LENGTH('pageUrl==https://brasilparticipativo.presidencia.gov.br/') + 1), '/', 4) AS DSC_ID_PROCESSO
+    nb_users AS NUM_TOTAL_USUARIOS,
+    max_actions AS NUM_MAX_ACOES_POR_VISITA,
+    sum_visit_length AS NUM_DURACAO_TOTAL_VISITAS,
+    bounce_count AS NUM_TOTAL_REJEICOES,
+    nb_visits_converted AS NUM_VISITAS_CONVERTIDAS,
+    segment AS DSC_SEGMENTO,
+    "space" AS DSC_ESPACO_PARTICIPATIVO,
+    "date" AS DAT_DATA,
+    "period" AS DSC_PERIODO,
+    sum_daily_nb_users AS NUM_TOTAL_USUARIOS_DIARIOS,
+    sum_daily_nb_uniq_visitors AS NUM_VISITANTES_UNICOS_DIARIOS,
+    SUBSTRING(url FROM LENGTH('pageUrl==') + 1) AS DSC_URL
 FROM 
     {{ source('raw', 'devices_detection_get_type') }}
 where period = 'day'
