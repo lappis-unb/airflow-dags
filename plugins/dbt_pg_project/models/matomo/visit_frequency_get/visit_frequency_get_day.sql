@@ -34,7 +34,7 @@
     avg_time_on_site_returning AS NUM_TEMPO_MEDIO_NO_SITE_RETORNANTES,
     "space" AS DSC_ESPACO_PARTICIPATIVO,
     "method" AS DSC_METODO,
-    "date" AS DAT_DATA,
+    "date" AS DAT_REF,
     event_day_id AS DAT_ID_DIA_EVENTO,
     available_day_id AS DAT_ID_DIA_DISPONIVEL,
     available_month_id AS DAT_ID_MES_DISPONIVEL,

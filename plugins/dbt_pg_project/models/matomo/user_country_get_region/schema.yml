@@ -107,7 +107,7 @@ models:
       - name: DSC_METODO
         description: "Descrição do método utilizado."
 
-      - name: DAT_DATA
+      - name: DAT_REF
         description: "Data do registro de visita."
 
       - name: DAT_ID_DIA_EVENTO
@@ -177,9 +177,6 @@ models:
       - name: NUM_VISITAS_CONVERTIDAS
         description: "Número de visitas que resultaram em conversões."
 
-      - name: DSC_SEGMENTO
-        description: "Descrição do segmento associado à visita."
-
       - name: DSC_REGIAO
         description: "Descrição da região do visitante."
 
@@ -201,7 +198,7 @@ models:
       - name: DSC_METODO
         description: "Descrição do método utilizado."
 
-      - name: DAT_DATA
+      - name: DAT_REF
         description: "Data do registro de visita."
 
       - name: DAT_ID_DIA_EVENTO
@@ -296,7 +293,7 @@ models:
       - name: DSC_METODO
         description: "Descrição do método utilizado."
 
-      - name: DAT_DATA
+      - name: DAT_REF
         description: "Data do registro de visita."
 
       - name: DAT_ID_DIA_EVENTO

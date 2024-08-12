@@ -124,7 +124,7 @@ models:
       - name: DSC_METODO
         description: "Descrição do método."
 
-      - name: DAT_DATA_VISITA
+      - name: DAT_REF_VISITA
         description: "Data da visita."
 
       - name: DAT_ID_DIA_EVENTO
@@ -197,7 +197,7 @@ models:
       - name: DSC_METODO
         description: "Descrição do método."
 
-      - name: DAT_DATA_VISITA
+      - name: DAT_REF_VISITA
         description: "Data da visita."
 
       - name: DAT_ID_DIA_EVENTO
@@ -270,7 +270,7 @@ models:
       - name: DSC_METODO
         description: "Descrição do método."
 
-      - name: DAT_DATA_VISITA
+      - name: DAT_REF_VISITA
         description: "Data da visita."
 
       - name: DAT_ID_DIA_EVENTO

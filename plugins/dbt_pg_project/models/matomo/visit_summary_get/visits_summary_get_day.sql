@@ -23,7 +23,7 @@ SELECT
     avg_time_on_site AS NUM_TEMPO_MEDIO_NO_SITE,
     space AS DSC_ESPACO_PARTICIPATIVO,
     method AS DSC_METODO,
-    date AS DAT_DATA_VISITA,
+    date AS DAT_REF_VISITA,
     event_day_id AS DAT_ID_DIA_EVENTO,
     available_day_id AS DAT_ID_DIA_DISPONIVEL,
     available_month_id AS DAT_ID_MES_DISPONIVEL,
