@@ -23,7 +23,7 @@ SELECT
     "period" AS DSC_PERIODO,
     sum_daily_nb_users AS NUM_TOTAL_USUARIOS_DIARIOS,
     sum_daily_nb_uniq_visitors AS NUM_VISITANTES_UNICOS_DIARIOS,
-    SUBSTRING(url FROM LENGTH('pageUrl==') + 1) AS DSC_URL,
+    SUBSTRING(url FROM LENGTH('pageUrl==') + 1) AS DSC_URL
 FROM 
     {{ source('raw', 'devices_detection_get_type') }}
 where period = 'month'
