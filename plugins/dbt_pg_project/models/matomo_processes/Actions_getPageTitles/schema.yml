@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: total_visits
+    description: "Modelo que contém métricas de visitas e engajamento"
+    columns:
+      - name: processo
+        description: "Nome do processo participativo"
+      - name: visitas_totais
+        description: "Total de visitas ao processo participativo"
+      - name: visitantes_unicos
+        description: "Número de visitantes únicos ao processo participativo"
+      - name: numero_total_engajamento
+        description: "Número total de interações de engajamento no processo participativo"
+      - name: tempo_total_gasto
+        description: "Tempo total gasto no processo participativo"
+      - name: numero_acessos_tempo_rede
+        description: "Número de acessos com tempo registrado relacionado à rede"
+      - name: tempo_maximo_rede
+        description: "Tempo máximo registrado na rede para o processo participativo"
+      - name: numero_acessos_tempo_servidor
+        description: "Número de acessos com tempo registrado relacionado ao servidor"
+      - name: tempo_maximo_servidor
+        description: "Tempo máximo registrado no servidor para o processo participativo"
+      - name: numero_acessos_tempo_transferencia
+        description: "Número de acessos com tempo registrado relacionado à transferência de dados"
+      - name: tempo_maximo_transferencia
+        description: "Tempo máximo registrado na transferência de dados para o processo participativo"
+      - name: numero_acessos_tempo_processamento_DOM
+        description: "Número de acessos com tempo registrado relacionado ao processamento do DOM"
+      - name: numero_acessos_tempo_carregamento
+        description: "Número de acessos com tempo registrado relacionado ao carregamento da página"
+      - name: tempo_maximo_carregamento
+        description: "Tempo máximo registrado para o carregamento da página do processo participativo"
+
+sources:
+  - name: raw
+    tables:
+      - name: Actions_getPageTitles_daily
+        description: "Tabela contendo as métricas diárias das páginas"
+      - name: Actions_getPageTitles_weekly
+        description: "Tabela contendo as métricas semanais das páginas"
+      - name: Actions_getPageTitles_monthly
+        description: "Tabela contendo as métricas mensais das páginas"
