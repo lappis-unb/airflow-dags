@@ -23,6 +23,6 @@ SELECT
     date AS DAT_REF_VISITA,
     SUBSTRING(url FROM LENGTH('pageUrl==') + 1) AS DSC_URL_PAGINA
 FROM
-    {{ source('raw', 'visits_summary') }}
+    {{ source('raw', 'visits_summary_get') }}
 WHERE
     period = 'day'
