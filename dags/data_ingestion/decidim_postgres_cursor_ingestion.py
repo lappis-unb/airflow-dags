@@ -49,67 +49,67 @@ extractions = {
     "decidim_components": {
         "extraction_schema": origin_schema,
         "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}'",
+        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
         "destination_schema": destination_schema,
     },
     "decidim_participatory_processes": {
         "extraction_schema": origin_schema,
         "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}'",
+        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
         "destination_schema": destination_schema,
     },
     "decidim_participatory_process_types": {
         "extraction_schema": origin_schema,
         "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}'",
+        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
         "destination_schema": destination_schema,
     },
     "decidim_areas": {
         "extraction_schema": origin_schema,
         "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}'",
+        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
         "destination_schema": destination_schema,
     },
     "decidim_users": {
         "extraction_schema": origin_schema,
         "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}'",
+        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
         "destination_schema": destination_schema,
     },
     "decidim_proposals_proposals": {
         "extraction_schema": origin_schema,
         "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}'",
+        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
         "destination_schema": destination_schema,
     },
     "decidim_scopes": {
         "extraction_schema": origin_schema,
         "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}'",
+        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
         "destination_schema": destination_schema,
     },
     "decidim_proposals_proposal_votes": {
         "extraction_schema": origin_schema,
         "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}'",
+        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
         "destination_schema": destination_schema,
     },
     "decidim_comments_comment_votes": {
         "extraction_schema": origin_schema,
         "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}'",
+        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
         "destination_schema": destination_schema,
     },
     "decidim_comments_comments": {
         "extraction_schema": origin_schema,
         "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}'",
+        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
         "destination_schema": destination_schema,
     },
     "decidim_coauthorships": {
         "extraction_schema": origin_schema,
         "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}'",
+        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
         "destination_schema": destination_schema,
     },
 }
@@ -164,11 +164,9 @@ def data_ingestion_postgres():
             engine = create_engine(connection_string)
             df = pd.read_sql(query, engine)
 
-        return df.to_json()
+        return df
 
     def write_data(df, extraction, extraction_info, db_conn):
-
-        import json
 
         import pandas as pd
         from sqlalchemy import MetaData, Table, create_engine
@@ -178,8 +176,6 @@ def data_ingestion_postgres():
             if isinstance(col_value, (dict, list)):
                 return json.dumps(col_value, ensure_ascii=False)
             return col_value
-
-        df = pd.DataFrame(json.loads(df))
 
         print("##############################################################")
         pd.set_option("display.max_columns", None)
