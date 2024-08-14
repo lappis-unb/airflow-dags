@@ -180,8 +180,6 @@ def data_ingestion_postgres():
 
     def write_data(df, extraction, extraction_info, db_conn):
 
-        import json
-
         import pandas as pd
         from sqlalchemy import MetaData, Table, create_engine
         from sqlalchemy.orm import sessionmaker
