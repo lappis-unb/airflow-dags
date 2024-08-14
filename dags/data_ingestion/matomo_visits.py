@@ -91,7 +91,7 @@ def data_ingestion_matomo_detailed_visits():
         import json
 
         import pandas as pd
-        from sqlalchemy import MetaData, Table, and_, create_engine, or_
+        from sqlalchemy import MetaData, Table, create_engine
         from sqlalchemy.orm import sessionmaker
 
         if not data:
@@ -168,21 +168,8 @@ def data_ingestion_matomo_detailed_visits():
 
         table = Table(extraction, metadata, autoload_with=engine)
 
-        unique_combinations = df[
-            ["idVisit", "pageIdAction", "serverTimestamp", "timestamp"]
-        ].drop_duplicates()
-
-        conditions = [
-            and_(
-                table.c.idVisit == row["idVisit"],
-                table.c.pageIdAction == row["pageIdAction"],
-                table.c.serverTimestamp == row["serverTimestamp"],
-                table.c.timestamp == row["timestamp"],
-            )
-            for index, row in unique_combinations.iterrows()
-        ]
-
-        delete_query = table.delete().where(or_(*conditions))
+        to_delete = [str(x) for x in df["serverDate"].unique()]
+        delete_query = table.delete().where(table.c.serverDate.in_(to_delete))
 
         result = session.execute(delete_query)
         session.commit()
