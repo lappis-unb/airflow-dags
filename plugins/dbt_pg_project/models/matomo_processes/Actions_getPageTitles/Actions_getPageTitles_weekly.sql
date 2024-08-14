@@ -7,7 +7,7 @@
     )
 }}
 
-WITH total_visits AS (
+WITH actions AS (
     SELECT 
         label AS processo,
         SUM(nb_visits) AS visitas_totais,
@@ -27,20 +27,20 @@ WITH total_visits AS (
     GROUP BY label
 )
 SELECT
-    tv.processo,
-    tv.visitas_totais,
-    -- tv.visitantes_unicos,
-    tv.numero_total_engajamento,
-    tv.tempo_total_gasto,
-    tv.numero_acessos_tempo_rede,
-    tv.tempo_maximo_rede,
-    tv.numero_acessos_tempo_servidor,
-    tv.tempo_maximo_servidor,
-    tv.numero_acessos_tempo_transferencia,
-    tv.tempo_maximo_transferencia,
-    tv.numero_acessos_tempo_carregamento,
-    tv.tempo_maximo_carregamento
+    act.processo,
+    act.visitas_totais,
+    -- act.visitantes_unicos,
+    act.numero_total_engajamento,
+    act.tempo_total_gasto,
+    act.numero_acessos_tempo_rede,
+    act.tempo_maximo_rede,
+    act.numero_acessos_tempo_servidor,
+    act.tempo_maximo_servidor,
+    act.numero_acessos_tempo_transferencia,
+    act.tempo_maximo_transferencia,
+    act.numero_acessos_tempo_carregamento,
+    act.tempo_maximo_carregamento
 FROM
-    total_visits tv
+    actions act
 
 -- coluna nb_uniq_visitors não existe em weekly de homolog
