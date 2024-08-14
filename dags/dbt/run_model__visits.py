@@ -18,9 +18,9 @@ default_args = {
 }
 
 with DAG(
-    "run_model__first_visitors_per_day",
+    "run_model__visits",
     default_args=default_args,
-    schedule=[Dataset('visit_frequency_get')],
+    schedule=[Dataset('participatory_processes_model')],
     start_date=days_ago(1),
     tags=["dbt", "model"],
     max_active_runs=1
@@ -28,16 +28,16 @@ with DAG(
 
     end_task = EmptyOperator(
         task_id="end",
-        outlets=[Dataset("first_visitors_per_day_model")],
+        outlets=[Dataset("visits_model")],
     )
 
-    first_visitors_per_day_task = BashOperator(
-        task_id='run_first_visitors_per_day',
-        bash_command='rm -r /tmp/dbt_run_first_visitors_per_day || true \
-&& cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_run_first_visitors_per_day \
-&& cd /tmp/dbt_run_first_visitors_per_day \
-&& dbt deps && dbt run --select first_visitors_per_day \
-&& rm -r /tmp/dbt_run_first_visitors_per_day',
+    visits_task = BashOperator(
+        task_id='run_visits',
+        bash_command='rm -r /tmp/dbt_run_visits || true \
+&& cp -r /opt/airflow/dags-config/repo/plugins/dbt_pg_project /tmp/dbt_run_visits \
+&& cd /tmp/dbt_run_visits \
+&& dbt deps && dbt run --select visits \
+&& rm -r /tmp/dbt_run_visits',
         env={
             'DBT_POSTGRES_HOST': Variable.get("bp_dw_pg_host"),
             'DBT_POSTGRES_USER': Variable.get("bp_dw_pg_user"),
@@ -47,4 +47,4 @@ with DAG(
         append_env=True
     )
 
-    first_visitors_per_day_task >> end_task
+    visits_task >> end_task

@@ -39,9 +39,10 @@ with DAG(
 && dbt deps && dbt run --select comments \
 && rm -r /tmp/dbt_run_comments',
         env={
-            'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
-            'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
-            'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password"),
+            'DBT_POSTGRES_HOST': Variable.get("bp_dw_pg_host"),
+            'DBT_POSTGRES_USER': Variable.get("bp_dw_pg_user"),
+            'DBT_POSTGRES_PASSWORD': Variable.get("bp_dw_pg_password"),
+            'DBT_POSTGRES_ENVIRONMENT': Variable.get("bp_dw_pg_environment"),
         },
         append_env=True
     )
@@ -54,9 +55,10 @@ with DAG(
 && dbt deps && dbt test --select unique_comments_comment_id \
 && rm -r /tmp/dbt_test_unique_comments_comment_id',
         env={
-            'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
-            'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
-            'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password"),
+            'DBT_POSTGRES_HOST': Variable.get("bp_dw_pg_host"),
+            'DBT_POSTGRES_USER': Variable.get("bp_dw_pg_user"),
+            'DBT_POSTGRES_PASSWORD': Variable.get("bp_dw_pg_password"),
+            'DBT_POSTGRES_ENVIRONMENT': Variable.get("bp_dw_pg_environment"),
         },
         append_env=True
     )
@@ -69,9 +71,10 @@ with DAG(
 && dbt deps && dbt test --select not_null_comments_comment_id \
 && rm -r /tmp/dbt_test_not_null_comments_comment_id',
         env={
-            'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
-            'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
-            'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password"),
+            'DBT_POSTGRES_HOST': Variable.get("bp_dw_pg_host"),
+            'DBT_POSTGRES_USER': Variable.get("bp_dw_pg_user"),
+            'DBT_POSTGRES_PASSWORD': Variable.get("bp_dw_pg_password"),
+            'DBT_POSTGRES_ENVIRONMENT': Variable.get("bp_dw_pg_environment"),
         },
         append_env=True
     )
@@ -84,9 +87,10 @@ with DAG(
 && dbt deps && dbt test --select column_completeness_test_source_comments_comment_id__id__o_decidim_participatory_space_type_Decidim_ParticipatoryProcess___bronze__decidim_comments_comments \
 && rm -r /tmp/dbt_test_column_completeness_test_source_comments_comment_id__id__o_decidim_participatory_space_type_Decidim_ParticipatoryProcess___bronze__decidim_comments_comments',
         env={
-            'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
-            'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
-            'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password"),
+            'DBT_POSTGRES_HOST': Variable.get("bp_dw_pg_host"),
+            'DBT_POSTGRES_USER': Variable.get("bp_dw_pg_user"),
+            'DBT_POSTGRES_PASSWORD': Variable.get("bp_dw_pg_password"),
+            'DBT_POSTGRES_ENVIRONMENT': Variable.get("bp_dw_pg_environment"),
         },
         append_env=True
     )
@@ -99,9 +103,10 @@ with DAG(
 && dbt deps && dbt test --select not_null_comments_commented_component_id \
 && rm -r /tmp/dbt_test_not_null_comments_commented_component_id',
         env={
-            'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
-            'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
-            'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password"),
+            'DBT_POSTGRES_HOST': Variable.get("bp_dw_pg_host"),
+            'DBT_POSTGRES_USER': Variable.get("bp_dw_pg_user"),
+            'DBT_POSTGRES_PASSWORD': Variable.get("bp_dw_pg_password"),
+            'DBT_POSTGRES_ENVIRONMENT': Variable.get("bp_dw_pg_environment"),
         },
         append_env=True
     )
@@ -114,9 +119,10 @@ with DAG(
 && dbt deps && dbt test --select referential_integrity_test_comments_commented_component_id__component_type_proposal___proposal_id__proposals \
 && rm -r /tmp/dbt_test_referential_integrity_test_comments_commented_component_id__component_type_proposal___proposal_id__proposals',
         env={
-            'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
-            'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
-            'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password"),
+            'DBT_POSTGRES_HOST': Variable.get("bp_dw_pg_host"),
+            'DBT_POSTGRES_USER': Variable.get("bp_dw_pg_user"),
+            'DBT_POSTGRES_PASSWORD': Variable.get("bp_dw_pg_password"),
+            'DBT_POSTGRES_ENVIRONMENT': Variable.get("bp_dw_pg_environment"),
         },
         append_env=True
     )
@@ -129,9 +135,10 @@ with DAG(
 && dbt deps && dbt test --select referential_integrity_test_comments_commented_component_id__component_type_comment___comment_id__comments \
 && rm -r /tmp/dbt_test_referential_integrity_test_comments_commented_component_id__component_type_comment___comment_id__comments',
         env={
-            'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
-            'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
-            'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password"),
+            'DBT_POSTGRES_HOST': Variable.get("bp_dw_pg_host"),
+            'DBT_POSTGRES_USER': Variable.get("bp_dw_pg_user"),
+            'DBT_POSTGRES_PASSWORD': Variable.get("bp_dw_pg_password"),
+            'DBT_POSTGRES_ENVIRONMENT': Variable.get("bp_dw_pg_environment"),
         },
         append_env=True
     )
@@ -144,9 +151,10 @@ with DAG(
 && dbt deps && dbt test --select not_null_comments_user_id \
 && rm -r /tmp/dbt_test_not_null_comments_user_id',
         env={
-            'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
-            'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
-            'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password"),
+            'DBT_POSTGRES_HOST': Variable.get("bp_dw_pg_host"),
+            'DBT_POSTGRES_USER': Variable.get("bp_dw_pg_user"),
+            'DBT_POSTGRES_PASSWORD': Variable.get("bp_dw_pg_password"),
+            'DBT_POSTGRES_ENVIRONMENT': Variable.get("bp_dw_pg_environment"),
         },
         append_env=True
     )
@@ -159,9 +167,10 @@ with DAG(
 && dbt deps && dbt test --select referential_integrity_test_comments_user_id__user_id__users \
 && rm -r /tmp/dbt_test_referential_integrity_test_comments_user_id__user_id__users',
         env={
-            'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
-            'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
-            'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password"),
+            'DBT_POSTGRES_HOST': Variable.get("bp_dw_pg_host"),
+            'DBT_POSTGRES_USER': Variable.get("bp_dw_pg_user"),
+            'DBT_POSTGRES_PASSWORD': Variable.get("bp_dw_pg_password"),
+            'DBT_POSTGRES_ENVIRONMENT': Variable.get("bp_dw_pg_environment"),
         },
         append_env=True
     )
@@ -174,9 +183,10 @@ with DAG(
 && dbt deps && dbt test --select referential_integrity_test_votes_voted_component_id__component_type_comment___comment_id__comments \
 && rm -r /tmp/dbt_test_referential_integrity_test_votes_voted_component_id__component_type_comment___comment_id__comments',
         env={
-            'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
-            'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
-            'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password"),
+            'DBT_POSTGRES_HOST': Variable.get("bp_dw_pg_host"),
+            'DBT_POSTGRES_USER': Variable.get("bp_dw_pg_user"),
+            'DBT_POSTGRES_PASSWORD': Variable.get("bp_dw_pg_password"),
+            'DBT_POSTGRES_ENVIRONMENT': Variable.get("bp_dw_pg_environment"),
         },
         append_env=True
     )
