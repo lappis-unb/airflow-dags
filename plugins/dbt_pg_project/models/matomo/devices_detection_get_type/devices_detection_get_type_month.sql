@@ -8,7 +8,7 @@
 
 
 SELECT 
-	SPLIT_PART(SUBSTRING(url FROM LENGTH('pageUrl==https://brasilparticipativo.presidencia.gov.br/') + 1), '/', 4) AS DSC_processo_URL_ID,
+	SPLIT_PART(SUBSTRING(url FROM LENGTH('pageUrl==https://brasilparticipativo.presidencia.gov.br/') + 1), '/', 4) AS DSC_processo_ID,
     "label" AS DSC_DISPOSITIVO,
     nb_uniq_visitors AS NUM_VISITANTES_UNICOS,
     nb_visits AS NUM_TOTAL_VISITAS,
