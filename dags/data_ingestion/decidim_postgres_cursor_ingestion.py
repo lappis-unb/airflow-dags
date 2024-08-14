@@ -123,7 +123,7 @@ extractions = {
     tags=["ingestion"],
     catchup=False,
     concurrency=1,
-    render_template_as_native_obj=True
+    render_template_as_native_obj=True,
 )
 def data_ingestion_postgres():
 
@@ -168,6 +168,8 @@ def data_ingestion_postgres():
         return df
 
     def write_data(df, extraction, extraction_info, db_conn):
+
+        import json
 
         import pandas as pd
         from sqlalchemy import MetaData, Table, create_engine
