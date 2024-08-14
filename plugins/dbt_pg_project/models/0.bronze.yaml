@@ -17,3 +17,4 @@ sources:
       - name: decidim_scope_types
       - name: decidim_scopes
       - name: decidim_users
+      - name: matomo_detailed_visits
