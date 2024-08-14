@@ -39,9 +39,10 @@ with DAG(
 && dbt deps && dbt run --select api_participatory_processes \
 && rm -r /tmp/dbt_run_api_participatory_processes',
         env={
-            'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
-            'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
-            'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password"),
+            'DBT_POSTGRES_HOST': Variable.get("bp_dw_pg_host"),
+            'DBT_POSTGRES_USER': Variable.get("bp_dw_pg_user"),
+            'DBT_POSTGRES_PASSWORD': Variable.get("bp_dw_pg_password"),
+            'DBT_POSTGRES_ENVIRONMENT': Variable.get("bp_dw_pg_environment"),
         },
         append_env=True
     )
