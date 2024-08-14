@@ -123,6 +123,7 @@ extractions = {
     tags=["ingestion"],
     catchup=False,
     concurrency=1,
+    render_template_as_native_obj=True
 )
 def data_ingestion_postgres():
 
