@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: participatory_processes
+  - name: api_participatory_processes
     description: "Modelo que contém a consolidação dos processos participativos"
     columns:
       - name: title_process

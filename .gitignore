@@ -1,3 +1,5 @@
+wip*
+
 # dbt integration
 
 plugins/dbt_pg_project/target/

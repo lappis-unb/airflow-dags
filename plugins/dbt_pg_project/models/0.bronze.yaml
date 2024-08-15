@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: bronze
+    schema: raw
+    tables:
+      - name: decidim_area_types
+      - name: decidim_areas
+      - name: decidim_coauthorships
+      - name: decidim_comments_comment_votes
+      - name: decidim_comments_comments
+      - name: decidim_components
+      - name: decidim_participatory_process_types
+      - name: decidim_participatory_processes
+      - name: decidim_proposals_proposal_votes
+      - name: decidim_proposals_proposals
+      - name: decidim_scope_types
+      - name: decidim_scopes
+      - name: decidim_users
+      - name: matomo_detailed_visits
