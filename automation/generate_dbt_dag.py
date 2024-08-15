@@ -47,9 +47,10 @@ def generate_airflow_task(node_type, node_name, dbt_project_path, dbt_profile_pa
 && dbt deps && dbt {dbt_command} --select {node_name} \\
 && rm -r {k8s_dbt_project_path}',
 {indentation}{indentation}env={{
-{indentation}{indentation}{indentation}'DBT_POSTGRES_HOST': Variable.get("dbt_postgres_host"),
-{indentation}{indentation}{indentation}'DBT_POSTGRES_USER': Variable.get("dbt_postgres_user"),
-{indentation}{indentation}{indentation}'DBT_POSTGRES_PASSWORD': Variable.get("dbt_postgres_password"),
+{indentation}{indentation}{indentation}'DBT_POSTGRES_HOST': Variable.get("bp_dw_pg_host"),
+{indentation}{indentation}{indentation}'DBT_POSTGRES_USER': Variable.get("bp_dw_pg_user"),
+{indentation}{indentation}{indentation}'DBT_POSTGRES_PASSWORD': Variable.get("bp_dw_pg_password"),
+{indentation}{indentation}{indentation}'DBT_POSTGRES_ENVIRONMENT': Variable.get("bp_dw_pg_environment"),
 {indentation}{indentation}}},
 {indentation}{indentation}append_env=True
 {indentation})"""
