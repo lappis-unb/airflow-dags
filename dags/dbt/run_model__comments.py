@@ -43,7 +43,7 @@ with DAG(
             'DBT_POSTGRES_USER': Variable.get("bp_dw_pg_user"),
             'DBT_POSTGRES_PASSWORD': Variable.get("bp_dw_pg_password"),
             'DBT_POSTGRES_ENVIRONMENT': Variable.get("bp_dw_pg_environment"),
-            'DBT_POSTGRES_PORT': Variable.get("bp_dw_pg_port"),
+            'DBT_POSTGRES_PORT': int(Variable.get("bp_dw_pg_port")),
             'DBT_POSTGRES_DATABASE': Variable.get("bp_dw_pg_db"),
         },
         append_env=True
