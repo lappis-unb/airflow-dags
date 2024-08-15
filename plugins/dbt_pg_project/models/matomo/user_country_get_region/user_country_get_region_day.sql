@@ -8,7 +8,7 @@
 
 
   SELECT 
-        SPLIT_PART(SUBSTRING(url FROM LENGTH('pageUrl==https://brasilparticipativo.presidencia.gov.br/') + 1), '/', 4) AS PROCESSO_ID,
+    SPLIT_PART(SUBSTRING(url FROM LENGTH('pageUrl==https://brasilparticipativo.presidencia.gov.br/') + 1), '/', 4) AS PROCESSO_ID,
     country_name AS DSC_NOME_PAIS,
     region_name AS DSC_NOME_REGIAO,
     region AS DSC_ESTADO,
