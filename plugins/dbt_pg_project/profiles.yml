@@ -2,7 +2,7 @@ dbt_pg_project:
   outputs:
     auto:
       host: "{{ env_var('DBT_POSTGRES_HOST') }}"
-      port: "{{ env_var('DBT_POSTGRES_PORT', "5432") | int }}"
+      port: "{{ env_var('DBT_POSTGRES_PORT', 5432) | int }}"
       dbname: "{{ env_var('DBT_POSTGRES_DATABASE', 'analytics') }}"
       user: "{{ env_var('DBT_POSTGRES_USER') }}"
       pass: "{{ env_var('DBT_POSTGRES_PASSWORD') }}"
