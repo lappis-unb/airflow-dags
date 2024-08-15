@@ -47,6 +47,7 @@ deduped_area_types as (select * from area_types_base where row_number = 1)
 select
 	p.id as process_id,
 	pt.title::json->>'pt-BR' as process_type,
+    p.slug as process_slug,
 	p.title::json->>'pt-BR' as process_title,
 	p.subtitle::json->>'pt-BR' as process_subtitle,
 	p.description::json->>'pt-BR' as description,
