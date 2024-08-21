@@ -73,7 +73,7 @@ select
 	p.title::json->>'pt-BR' as proposal_title,
 	p.body::json->>'pt-BR' as proposal_text,
 	s.name::json->>'pt-BR' as proposal_scope,
-    c.name::json->>'pt-BR' as proposal_category
+    cat.name::json->>'pt-BR' as proposal_category
 from 
 	deduped_proposals p
 		left join
@@ -89,5 +89,5 @@ from
     deduped_categorizations pc
             on p.id = pc.categorizable_id
         left join
-    {{ source('bronze', 'decidim_categories') }} c
+    {{ source('bronze', 'decidim_categories') }} cat
             on pc.decidim_category_id = c.id
