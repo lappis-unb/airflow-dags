@@ -57,7 +57,7 @@ select
 	created_at
 from
 	deduped_proposal_votes
-		
+
 	union all
 
 select

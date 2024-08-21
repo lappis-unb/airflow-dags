@@ -5,7 +5,7 @@ with validation as (
 
     select
         o.{{ origin_column }},
-        m.{{ column_name }} as match_value 
+        m.{{ column_name }} as match_value
     from
       {{ ref(origin_model) }} o
         LEFT JOIN
@@ -44,7 +44,7 @@ with validation as (
 
     select
         o.{{ origin_column }},
-        m.{{ column_name }} as match_value 
+        m.{{ column_name }} as match_value
     from
       {{ source(source_name, source_table) }} o
         LEFT JOIN

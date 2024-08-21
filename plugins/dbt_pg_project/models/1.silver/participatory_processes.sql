@@ -64,7 +64,7 @@ select
 from
 	deduped_participatory_processes p
 		left join
-	deduped_participatory_process_types pt 
+	deduped_participatory_process_types pt
 			on p.decidim_participatory_process_type_id = pt.id
             and p.decidim_organization_id = pt.decidim_organization_id
 		left join
