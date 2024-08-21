@@ -20,7 +20,7 @@ variables:
 # <------------- Defining Anchors ------------->
 
 default:
-  image: $CI_REGISTRY/lappis-unb/decidimbr/servicos-de-dados/airflow-docker/main/latest
+  image: $CI_REGISTRY/lappis-unb/decidimbr/servicos-de-dados/airflow-docker/main:latest
   retry: 0
   before_script:
     - python -m pip install --upgrade pip setuptools wheel  # Upgrade pip and related tools
