@@ -15,6 +15,39 @@ from plugins.graphql.hooks.graphql_hook import GraphQLHook
 from plugins.telegram.decorators import telegram_retry
 from plugins.yaml.config_reader import dump_yaml, load_yaml, read_yaml_files_from_directory
 
+doc_dag_md="""
+
+## DAG: `create_processes_configs`
+
+### Responsáveis
+
+#### Desenvolvedor: `Paulo Gonçalves`
+
+### Visão Geral
+**Descrição:**
+Essa DAG é responsável pela automação da criação e atualização de arquivos de
+configuração para processos participativos. O fluxo captura dados de
+componentes de espaços participativos, realiza a configuração ou atualização
+desses componentes, e gera arquivos YAML que são utilizados para configurar
+notificações em grupos do Telegram. A DAG também lida com a criação de
+tópicos específicos no Telegram para diferentes tipos de notificações.
+
+**Agendamento:**
+- **Intervalo de Execução:** `A cada hora com offset de 10 minutos (10 */1 * * *)`.
+- **Data de Início:** `18/11/2023`.
+
+### Ecossistema e Arquitetura Modular
+
+A seguir temos uma breve lista dos principais módulos utilizados pelo código fonte dessa DAG.
+
+| Tipo | Descrição |
+|-----------------------|---------------------------|
+| **Decorators** | `dag`, `task`   |
+| **Operators**  | N/A (Uso de `task` decorator para tarefas) |
+| **Providers / Hooks**  | `GraphQLHook`, `TelegramHook` |
+
+"""
+
 DECIDIM_CONN_ID = "api_decidim"
 TELEGRAM_CONN_ID = "telegram_decidim"
 VARIABLE_FOR_LAST_DATE_EXECUTED = "last_config_creation_date"
@@ -292,8 +325,8 @@ DEFAULT_ARGS = {
     schedule_interval="10 */1 * * *",  # Toda hora, mas com um offset de 10min
     start_date=datetime(2023, 11, 18),
     catchup=False,
-    doc_md=__doc__,
     tags=["creation", "dag", "automation"],
+    doc_md=doc_dag_md,
 )
 def create_processes_configs():
     @task
