@@ -45,6 +45,11 @@ extractions = {
         "ingestion_type": "full_refresh",
         "destination_schema": destination_schema,
     },
+    "decidim_categories": {
+        "extraction_schema": origin_schema,
+        "ingestion_type": "full_refresh",
+        "destination_schema": destination_schema,
+    },
     # Incremental Tables
     "decidim_components": {
         "extraction_schema": origin_schema,
@@ -107,6 +112,12 @@ extractions = {
         "destination_schema": destination_schema,
     },
     "decidim_coauthorships": {
+        "extraction_schema": origin_schema,
+        "ingestion_type": "incremental",
+        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
+        "destination_schema": destination_schema,
+    },
+    "decidim_categorizations": {
         "extraction_schema": origin_schema,
         "ingestion_type": "incremental",
         "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",

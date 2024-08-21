@@ -18,3 +18,5 @@ sources:
       - name: decidim_scopes
       - name: decidim_users
       - name: matomo_detailed_visits
+      - name: decidim_categorizations
+      - name: decidim_categories

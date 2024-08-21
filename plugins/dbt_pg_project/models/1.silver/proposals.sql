@@ -47,7 +47,20 @@ coauthorships_base as
         coauthorable_type = 'Decidim::Proposals::Proposal'
 ),
 
-deduped_coauthorships as (select * from coauthorships_base where row_number = 1)
+deduped_coauthorships as (select * from coauthorships_base where row_number = 1),
+
+categorizations_base as
+(
+    SELECT
+        *,
+        row_number() over(partition by id order by updated_at DESC) as row_number
+    FROM
+        {{ source('bronze', 'decidim_categorizations') }}
+    WHERE
+        categorizable_type = 'Decidim::Proposals::Proposal'
+),
+
+deduped_categorizations as (select * from categorizations_base where row_number = 1)
 
 select
 	p.id as proposal_id,
@@ -59,7 +72,8 @@ select
 	p.created_at,
 	p.title::json->>'pt-BR' as proposal_title,
 	p.body::json->>'pt-BR' as proposal_text,
-	s.name::json->>'pt-BR' as proposal_scope
+	s.name::json->>'pt-BR' as proposal_scope,
+    c.name::json->>'pt-BR' as proposal_category
 from 
 	deduped_proposals p
 		left join
@@ -71,3 +85,9 @@ from
         left join
     deduped_coauthorships ca
             on p.id = ca.coauthorable_id
+        left join
+    deduped_categorizations pc
+            on p.id = pc.categorizable_id
+        left join
+    {{ source('bronze', 'decidim_categories') }} c
+            on pc.decidim_category_id = c.id
