@@ -35,7 +35,6 @@ limit = 100
     render_template_as_native_obj=True,
 )
 def data_ingestion_matomo_detailed_visits():
-
     def fetch_visits_details(api_url, site_id, api_token, start_date, end_date, limit=100):
         """
         Fetches visitor details from Matomo Live! API within a specified date range, paginated.
@@ -87,7 +86,6 @@ def data_ingestion_matomo_detailed_visits():
         return all_visits
 
     def write_data(data, extraction, schema, db_conn):
-
         import json
 
         import pandas as pd

@@ -137,9 +137,7 @@ extractions = {
     render_template_as_native_obj=True,
 )
 def data_ingestion_postgres():
-
     def extract_data(extraction, extraction_info, db_conn, ssh_tunnel=None):
-
         import pandas as pd
         from sqlalchemy import create_engine
         from sshtunnel import SSHTunnelForwarder
@@ -179,7 +177,6 @@ def data_ingestion_postgres():
         return df
 
     def write_data(df, extraction, extraction_info, db_conn):
-
         import json
 
         import pandas as pd
@@ -246,7 +243,6 @@ def data_ingestion_postgres():
         print(f"DataFrame written to {schema}.{extraction}.")
 
     for extraction, extraction_info in extractions.items():
-
         extract_data_task = PythonVirtualenvOperator(
             task_id=f"extract_data_{extraction}",
             python_callable=extract_data,
