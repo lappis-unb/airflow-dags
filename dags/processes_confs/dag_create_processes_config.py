@@ -46,6 +46,41 @@ A seguir temos uma breve lista dos principais módulos utilizados pelo código f
 | **Operators**  | N/A (Uso de `task` decorator para tarefas) |
 | **Providers / Hooks**  | `GraphQLHook`, `TelegramHook` |
 
+### Fluxo de Tarefas
+
+A DAG segue o seguinte fluxo de tarefas:
+
+```python
+start
+
+get_update_date >> [get_componets_in_participatory_processes] >> filter_and_configure_componets
+
+filter_and_configure_componets >> [configure_component, update_component] >> end
+```
+
+**Resumo das Tarefas:**
+- **get_update_date:** Captura a última data de atualização armazenada nas
+variáveis do Airflow.
+- **get_componets_in_participatory_processes:** Recupera os componentes
+dentro dos espaços participativos definidos usando consultas GraphQL.
+- **filter_and_configure_componets:** Filtra e separa os componentes que
+precisam ser configurados daqueles que precisam ser atualizados.
+- **configure_component:** Cria novos arquivos YAML de configuração para
+componentes que ainda não foram configurados.
+- **update_component:** Atualiza os arquivos YAML existentes com novas
+configurações ou detalhes atualizados dos componentes.
+
+### Conexões
+
+A seguir está descrito as conexões que a DAG realiza e que estão presentes
+no Web-server UI do Airflow.
+
+| Conexão   | Descrição   | ID no Airflow   |
+|------------------------|--------------------|-----------------|
+| `DECIDIM_CONN_ID`| Conexão com a API Decidim para a extração dos dados.  | `api_decidim` |
+| `TELEGRAM_CONN_ID`| Conexão com a API do Telegram para criação de
+| |tópicos de notificações. | `telegram_decidim` |
+
 """
 
 DECIDIM_CONN_ID = "api_decidim"
