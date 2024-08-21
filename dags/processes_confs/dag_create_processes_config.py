@@ -15,7 +15,7 @@ from plugins.graphql.hooks.graphql_hook import GraphQLHook
 from plugins.telegram.decorators import telegram_retry
 from plugins.yaml.config_reader import dump_yaml, load_yaml, read_yaml_files_from_directory
 
-doc_dag_md="""
+doc_dag_md = """
 
 ## DAG: `create_processes_configs`
 
