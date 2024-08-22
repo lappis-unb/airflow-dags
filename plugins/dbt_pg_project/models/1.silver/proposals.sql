@@ -53,7 +53,7 @@ categorizations_base as
 (
     SELECT
         *,
-        row_number() over(partition by id order by updated_at DESC) as row_number
+        row_number() over(partition by categorizable_id, decidim_category_id order by updated_at DESC) as row_number
     FROM
         {{ source('bronze', 'decidim_categorizations') }}
     WHERE
@@ -90,4 +90,4 @@ from
             on p.id = pc.categorizable_id
         left join
     {{ source('bronze', 'decidim_categories') }} cat
-            on pc.decidim_category_id = c.id
+            on pc.decidim_category_id = cat.id
