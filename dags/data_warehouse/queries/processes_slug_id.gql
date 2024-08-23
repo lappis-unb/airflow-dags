@@ -1,8 +1,0 @@
-query slug_id {
-  participatoryProcesses  {
-    slug
-    components{
-      id
-    }  
-	}
-}

@@ -7,4 +7,4 @@ black>=24.1.1
 types-requests>=2.31.0.20240125
 types-PyYAML>=6.0.12.12
 pre-commit==3.5.0
-Faker>=23.1.0
+Faker==23.3.0
