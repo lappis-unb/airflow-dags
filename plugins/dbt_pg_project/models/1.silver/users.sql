@@ -1,3 +1,12 @@
+{{ config(
+   meta={
+	"datasets_trigger": [
+		"bronze_decidim_users"
+	]
+   }
+) }}
+
+
 WITH
 
 users_base as

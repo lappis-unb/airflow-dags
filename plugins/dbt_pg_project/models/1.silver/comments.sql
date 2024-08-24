@@ -1,3 +1,11 @@
+{{ config(
+   meta={
+	"datasets_trigger": [
+		"bronze_decidim_comments_comments"
+	]
+   }
+) }}
+
 WITH
 
 comments_base as

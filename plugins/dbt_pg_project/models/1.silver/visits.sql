@@ -1,3 +1,11 @@
+{{ config(
+   meta={
+	"datasets_trigger": [
+		"bronze_matomo_detailed_visits"
+	]
+   }
+) }}
+
 WITH
 
 base as

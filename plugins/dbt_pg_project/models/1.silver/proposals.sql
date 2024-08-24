@@ -1,3 +1,18 @@
+{{ config(
+   meta={
+	"datasets_trigger": [
+		"bronze_decidim_proposals_proposals",
+		"bronze_decidim_scopes",
+		"bronze_decidim_components",
+		"bronze_decidim_coauthorships",
+		"bronze_decidim_components",
+		"bronze_decidim_categorizations"
+	]
+   }
+) }}
+
+
+
 WITH
 
 proposals_base as
