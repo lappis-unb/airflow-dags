@@ -1,10 +1,10 @@
 from datetime import timedelta
 
+from airflow.datasets import Dataset
 from airflow.decorators import dag
 from airflow.models import Variable
 from airflow.operators.python import PythonVirtualenvOperator
 from airflow.utils.dates import days_ago
-from airflow.datasets import Dataset
 
 ssh_tunnel = {
     "ssh_host": Variable.get("decidim_ssh_host"),
@@ -267,7 +267,7 @@ def data_ingestion_postgres():
                 destination_db_conn,
             ],
             system_site_packages=True,
-            outlets=[Dataset(f"bronze_{extraction}")]
+            outlets=[Dataset(f"bronze_{extraction}")],
         )
 
         extract_data_task >> write_data_task
