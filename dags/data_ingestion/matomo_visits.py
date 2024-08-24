@@ -4,6 +4,8 @@ from airflow.decorators import dag
 from airflow.models import Variable
 from airflow.operators.python import PythonVirtualenvOperator
 from airflow.utils.dates import days_ago
+from airflow.datasets import Dataset
+
 
 destination_db_conn = {
     "pg_host": Variable.get("bp_dw_pg_host"),
@@ -207,6 +209,7 @@ def data_ingestion_matomo_detailed_visits():
             destination_db_conn,
         ],
         system_site_packages=True,
+        outlets=[Dataset("bronze_matomo_detailed_visits")]
     )
 
     extract_data_task >> write_data_task
