@@ -1,8 +1,11 @@
-from datetime import timedelta
+import json
+import os
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 from airflow.datasets import Dataset
 from airflow.decorators import dag
-from airflow.models import Variable
 from airflow.operators.python import PythonVirtualenvOperator
 
 if TYPE_CHECKING:
@@ -131,31 +134,29 @@ for entry in os.scandir(Path(__file__).parent.joinpath("./cursor_ingestions")):
 
             print(f"DataFrame written to {schema}.{extraction}.")
 
-    for extraction, extraction_info in extractions.items():
+        for extraction, extraction_info in extractions.items():  # noqa: B023
+            extract_data_task = PythonVirtualenvOperator(
+                task_id=f"extract_data_{extraction}",
+                python_callable=extract_data,
+                requirements=["pandas", "sqlalchemy", "sshtunnel"],
+                op_args=[extraction, extraction_info, origin_db_connection, True],
+                system_site_packages=True,
+            )
 
-        extract_data_task = PythonVirtualenvOperator(
-            task_id=f"extract_data_{extraction}",
-            python_callable=extract_data,
-            requirements=["pandas", "sqlalchemy", "sshtunnel"],
-            op_args=[extraction, extraction_info, origin_db_conn, ssh_tunnel],
-            system_site_packages=True,
-        )
+            write_data_task = PythonVirtualenvOperator(
+                task_id=f"write_data_{extraction}",
+                python_callable=write_data,
+                requirements=["pandas", "sqlalchemy"],
+                op_args=[
+                    f"{{{{ ti.xcom_pull(task_ids='extract_data_{extraction}') }}}}",
+                    extraction,
+                    extraction_info,
+                    destination_db_connection,
+                ],
+                system_site_packages=True,
+                 outlets=[Dataset(f"bronze_{extraction}")],
+            )
 
-        write_data_task = PythonVirtualenvOperator(
-            task_id=f"write_data_{extraction}",
-            python_callable=write_data,
-            requirements=["pandas", "sqlalchemy"],
-            op_args=[
-                f"{{{{ ti.xcom_pull(task_ids='extract_data_{extraction}') }}}}",
-                extraction,
-                extraction_info,
-                destination_db_conn,
-            ],
-            system_site_packages=True,
-            outlets=[Dataset(f"bronze_{extraction}")],
-        )
+            extract_data_task >> write_data_task
 
-        extract_data_task >> write_data_task
-
-
-data_ingestion_postgres = data_ingestion_postgres()
+    data_ingestion_postgres(dag_config["origin_db_connection"], dag_config["destination_db_connection"])
