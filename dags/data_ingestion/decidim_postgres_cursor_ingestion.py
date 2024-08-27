@@ -4,30 +4,10 @@ from airflow.datasets import Dataset
 from airflow.decorators import dag
 from airflow.models import Variable
 from airflow.operators.python import PythonVirtualenvOperator
-from airflow.utils.dates import days_ago
 
-ssh_tunnel = {
-    "ssh_host": Variable.get("decidim_ssh_host"),
-    "ssh_port": int(Variable.get("decidim_ssh_port")),
-    "ssh_user": Variable.get("decidim_ssh_user"),
-    "ssh_password": Variable.get("decidim_ssh_password"),
-}
+if TYPE_CHECKING:
+    from sshtunnel import SSHTunnelForwarder
 
-origin_db_conn = {
-    "pg_host": Variable.get("decidim_pg_host"),
-    "pg_port": int(Variable.get("decidim_pg_port")),
-    "pg_user": Variable.get("decidim_pg_user"),
-    "pg_password": Variable.get("decidim_pg_password"),
-    "pg_db": Variable.get("decidim_pg_db"),
-}
-
-destination_db_conn = {
-    "pg_host": Variable.get("bp_dw_pg_host"),
-    "pg_port": int(Variable.get("bp_dw_pg_port")),
-    "pg_user": Variable.get("bp_dw_pg_user"),
-    "pg_password": Variable.get("bp_dw_pg_password"),
-    "pg_db": Variable.get("bp_dw_pg_db"),
-}
 
 default_args = {"owner": "data", "retries": 2, "retry_delay": timedelta(minutes=10)}
 
