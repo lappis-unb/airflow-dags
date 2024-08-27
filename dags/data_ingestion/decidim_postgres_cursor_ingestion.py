@@ -252,7 +252,7 @@ def data_ingestion_postgres():
             python_callable=extract_data,
             requirements=["pandas", "sqlalchemy", "sshtunnel"],
             op_args=[extraction, extraction_info, origin_db_conn, ssh_tunnel],
-            queue="kubernetes_extract_data_decidim",
+            queue="kubernetes",
             system_site_packages=True,
         )
 
@@ -266,7 +266,7 @@ def data_ingestion_postgres():
                 extraction_info,
                 destination_db_conn,
             ],
-            queue="kubernetes_write_data_decidim",
+            queue="kubernetes",
             system_site_packages=True,
         )
 
