@@ -20,7 +20,7 @@ default_args = {
 with DAG(
     "run_model__visits",
     default_args=default_args,
-    schedule=[Dataset('participatory_processes_model')],
+    schedule=[Dataset('participatory_processes_model'), Dataset('bronze_matomo_detailed_visits')],
     start_date=days_ago(1),
     tags=["dbt", "model"],
     max_active_runs=1

@@ -20,7 +20,7 @@ default_args = {
 with DAG(
     "run_model__votes",
     default_args=default_args,
-    schedule='@daily',
+    schedule=[Dataset('bronze_decidim_proposals_proposal_votes'), Dataset('bronze_decidim_comments_comments'), Dataset('bronze_decidim_comments_comment_votes')],
     start_date=days_ago(1),
     tags=["dbt", "model"],
     max_active_runs=1

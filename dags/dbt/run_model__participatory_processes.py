@@ -20,7 +20,7 @@ default_args = {
 with DAG(
     "run_model__participatory_processes",
     default_args=default_args,
-    schedule='@daily',
+    schedule=[Dataset('bronze_decidim_participatory_processes'), Dataset('bronze_decidim_participatory_process_types'), Dataset('bronze_decidim_areas'), Dataset('bronze_decidim_area_types')],
     start_date=days_ago(1),
     tags=["dbt", "model"],
     max_active_runs=1
