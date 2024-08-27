@@ -27,57 +27,48 @@ for entry in os.scandir(Path(__file__).parent.joinpath("./cursor_ingestions")):
     catchup: bool = dag_config["catchup"]
     start_date: str = datetime.strptime(dag_config["start_date"], "%Y-%m-%d")
 
-@dag(
-    dag_id="decidim_postgres_cursor_ingestion",
-    default_args=default_args,
-    schedule_interval="0 4 * * *",
-    start_date=days_ago(1),
-    tags=["ingestion"],
-    catchup=False,
-    concurrency=1,
-    render_template_as_native_obj=True,
-)
-def data_ingestion_postgres():
+    @dag(
+        dag_id=f"{dag_name}_postgres_cursor_ingestion",
+        default_args=default_args,
+        schedule_interval="0 4 * * *",
+        start_date=start_date,
+        tags=["ingestion", dag_name],
+        catchup=catchup,
+        concurrency=1,
+        render_template_as_native_obj=True,
+    )
+    def data_ingestion_postgres(origin_db_connection, destination_db_connection):
+        def extract_data(extraction, extraction_info, db_conn_id, ssh_tunnel: bool = False):
+            import pandas as pd
+            from airflow.providers.postgres.hooks.postgres import PostgresHook
+            from airflow.providers.ssh.hooks.ssh import SSHHook
+            from sqlalchemy import create_engine
 
-    def extract_data(extraction, extraction_info, db_conn, ssh_tunnel=None):
+            ssh_conn = "ssh_tunnel_decidim"
+            extraction_schema = extraction_info["extraction_schema"]
 
-        import pandas as pd
-        from sqlalchemy import create_engine
-        from sshtunnel import SSHTunnelForwarder
+            if extraction_info["ingestion_type"] == "full_refresh":
+                query = f"SELECT * FROM {extraction_schema}.{extraction}"
+            elif extraction_info["ingestion_type"] == "incremental":
+                incremental_filter = extraction_info["incremental_filter"]
+                query = f"SELECT * FROM {extraction_schema}.{extraction} where {incremental_filter}"
 
-        extraction_schema = extraction_info["extraction_schema"]
+            print(query)
 
-        if extraction_info["ingestion_type"] == "full_refresh":
-            query = f"SELECT * FROM {extraction_schema}.{extraction}"
-        elif extraction_info["ingestion_type"] == "incremental":
-            incremental_filter = extraction_info["incremental_filter"]
-            query = f"SELECT * FROM {extraction_schema}.{extraction} where {incremental_filter}"
-
-        print(query)
-
-        db_host = db_conn["pg_host"]
-        db_port = db_conn["pg_port"]
-        db_user = db_conn["pg_user"]
-        db_pw = db_conn["pg_password"]
-        db_db = db_conn["pg_db"]
-
-        if ssh_tunnel:
-            with SSHTunnelForwarder(
-                (ssh_tunnel["ssh_host"], ssh_tunnel["ssh_port"]),
-                ssh_username=ssh_tunnel["ssh_user"],
-                ssh_password=ssh_tunnel["ssh_password"],
-                remote_bind_address=(db_host, db_port),
-            ) as tunnel:
-                engine = create_engine(
-                    f"postgresql://{db_user}:{db_pw}@127.0.0.1:{tunnel.local_bind_port}/{db_db}"
-                )
+            db = PostgresHook.get_connection(db_conn_id)
+            if ssh_tunnel:
+                with SSHHook(ssh_conn).get_tunnel(remote_host=db.host, remote_port=db.port) as tunnel:
+                    tunnel: SSHTunnelForwarder
+                    engine = create_engine(
+                        f"postgresql://{db.login}:{db.password}@127.0.0.1:{tunnel.local_bind_port}/{db.schema}"
+                    )
+                    df = pd.read_sql(query, engine)
+            else:
+                connection_string = f"postgresql://{db.login}:{db.password}@{db.host}:{db.port}/{db.schema}"
+                engine = create_engine(connection_string)
                 df = pd.read_sql(query, engine)
-        else:
-            connection_string = f"postgresql://{db_user}:{db_pw}@{db_host}:{db_port}/{db_db}"
-            engine = create_engine(connection_string)
-            df = pd.read_sql(query, engine)
 
-        return df
+            return df
 
     def write_data(df, extraction, extraction_info, db_conn):
 
