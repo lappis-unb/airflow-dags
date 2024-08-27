@@ -1,3 +1,15 @@
+{{ config(
+   meta={
+	"datasets_trigger": [
+        "bronze_decidim_proposals_proposal_votes",
+        "bronze_decidim_comments_comments",
+        "bronze_decidim_comments_comment_votes"
+	]
+   }
+) }}
+
+
+
 WITH
 
 proposal_votes_base as

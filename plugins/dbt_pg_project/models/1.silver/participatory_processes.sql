@@ -1,3 +1,15 @@
+{{ config(
+   meta={
+	"datasets_trigger": [
+		"bronze_decidim_participatory_processes",
+		"bronze_decidim_participatory_process_types",
+		"bronze_decidim_areas",
+		"bronze_decidim_area_types"
+	]
+   }
+) }}
+
+
 WITH
 
 participatory_processes_base as

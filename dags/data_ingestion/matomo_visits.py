@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from airflow.datasets import Dataset
 from airflow.decorators import dag
 from airflow.models import Variable
 from airflow.operators.python import PythonVirtualenvOperator
@@ -207,6 +208,7 @@ def data_ingestion_matomo_detailed_visits():
             destination_db_conn,
         ],
         system_site_packages=True,
+        outlets=[Dataset("bronze_matomo_detailed_visits")],
     )
 
     extract_data_task >> write_data_task

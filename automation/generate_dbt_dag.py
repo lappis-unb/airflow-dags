@@ -95,6 +95,7 @@ def parse_manifest(manifest):
             triggers = node["meta"]["datasets_trigger"]
             if isinstance(triggers, str):
                 triggers = triggers.split(",")
+            assert isinstance(triggers, list)
             datasets_map[node["name"]] = triggers
 
     upstreams = {}
