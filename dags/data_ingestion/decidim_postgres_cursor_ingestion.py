@@ -70,72 +70,66 @@ for entry in os.scandir(Path(__file__).parent.joinpath("./cursor_ingestions")):
 
             return df
 
-    def write_data(df, extraction, extraction_info, db_conn):
+        def write_data(df, extraction, extraction_info, db_conn_id):
+            import json
 
-        import json
+            import pandas as pd
+            from airflow.providers.postgres.hooks.postgres import PostgresHook
+            from sqlalchemy import MetaData, Table
+            from sqlalchemy.exc import NoSuchTableError
+            from sqlalchemy.orm import sessionmaker
 
-        import pandas as pd
-        from sqlalchemy import MetaData, Table, create_engine
-        from sqlalchemy.orm import sessionmaker
+            def treat_complex_columns(col_value):
+                if isinstance(col_value, (dict, list)):
+                    return json.dumps(col_value, ensure_ascii=False)
+                return col_value
 
-        def treat_complex_columns(col_value):
-            if isinstance(col_value, (dict, list)):
-                return json.dumps(col_value, ensure_ascii=False)
-            return col_value
+            print("##############################################################")
+            pd.set_option("display.max_columns", None)
+            pd.set_option("display.max_colwidth", 100)
+            print(df)
+            print("##############################################################")
 
-        print("##############################################################")
-        pd.set_option("display.max_columns", None)
-        pd.set_option("display.max_colwidth", 100)
-        print(df)
-        print("##############################################################")
+            if df.empty:
+                print("No data to write!")
+                return None
 
-        if df.empty:
-            print("No data to write!")
-            return None
+            engine = PostgresHook(db_conn_id).get_sqlalchemy_engine()
+            df = df.applymap(treat_complex_columns)
 
-        db_host = db_conn["pg_host"]
-        db_port = db_conn["pg_port"]
-        db_user = db_conn["pg_user"]
-        db_pw = db_conn["pg_password"]
-        db_db = db_conn["pg_db"]
+            schema = extraction_info["destination_schema"]
+            insertion_method = "append"
 
-        connection_string = f"postgresql://{db_user}:{db_pw}@{db_host}:{db_port}/{db_db}"
-        engine = create_engine(connection_string)
+            sess = sessionmaker(bind=engine)
+            session = sess()
+            metadata = MetaData(schema=schema)
+            try:
+                table = Table(extraction, metadata, autoload_with=engine)
 
-        df = df.applymap(treat_complex_columns)
+                if extraction_info["ingestion_type"] == "incremental":
+                    ids_to_delete = [str(x) for x in df["id"].unique()]
+                    delete_query = table.delete().where(table.c.id.in_(ids_to_delete))
+                else:
+                    delete_query = table.delete()
 
-        schema = extraction_info["destination_schema"]
-        insertion_method = "append"
+                result = session.execute(delete_query)
+                session.commit()
+                print(f"Rows deleted: {result.rowcount}")
 
-        sess = sessionmaker(bind=engine)
-        session = sess()
-        metadata = MetaData(schema=schema)
+            except NoSuchTableError:
+                print("Table does not exists.")
 
-        table = Table(extraction, metadata, autoload_with=engine)
+            session.close()
 
-        if extraction_info["ingestion_type"] == "incremental":
-            ids_to_delete = [str(x) for x in df["id"].unique()]
-            delete_query = table.delete().where(table.c.id.in_(ids_to_delete))
+            df.to_sql(
+                name=extraction,
+                con=engine,
+                schema=schema,
+                if_exists=insertion_method,
+                index=False,
+            )
 
-        else:
-            delete_query = table.delete()
-
-        result = session.execute(delete_query)
-        session.commit()
-
-        print(f"Rows deleted: {result.rowcount}")
-
-        session.close()
-
-        df.to_sql(
-            name=extraction,
-            con=engine,
-            schema=schema,
-            if_exists=insertion_method,
-            index=False,
-        )
-
-        print(f"DataFrame written to {schema}.{extraction}.")
+            print(f"DataFrame written to {schema}.{extraction}.")
 
     for extraction, extraction_info in extractions.items():
 
