@@ -137,8 +137,6 @@ compile_dbt_project:
     - cd $DBT_PROJECT_DIR
     - dbt deps
     - dbt compile
-    - dbt docs generate
-    - mv ./target ${CI_PROJECT_DIR}/public
     - wg-quick down wg0
   artifacts:
     paths:
@@ -148,11 +146,32 @@ compile_dbt_project:
     - main
     - development
 
+pages:
+  image: python:3.9
+  only:
+    refs:
+      - main
+  needs: [""]
+  script:
+    - apt-get update
+    - apt-get install -y wireguard iproute2
+    - echo -e "[Interface]\nAddress = 192.168.200.10/32\nSaveConfig = true\nListenPort = 51760\nPrivateKey = $WIREGUARD_PRIVATE_KEY\n\n[Peer]\nPublicKey = $WIREGUARD_PEER_KEY\nAllowedIPs = 192.168.3.0/27\nEndpoint = 200.152.47.48:51820\nPersistentKeepalive = 15\n" > /etc/wireguard/wg0.conf
+    - wg-quick up wg0
+    - pip install dbt-postgres
+    - cd $DBT_PROJECT_DIR
+    - dbt deps
+    - dbt docs generate
+    - mv ./target ${CI_PROJECT_DIR}/public
+    - wg-quick down wg0
+  artifacts:
+    paths:
+      - public
+
 process_manifest:
   stage: generate_dbt_dag
   image: python:3.9
   script:
-    - python $PYTHON_SCRIPT --manifest_path $DBT_PROJECT_DIR/target/manifest.json --project_path $AIRFLOW_DBT_PROJECT_DIR --profile_path $AIRFLOW_DBT_PROFILE_DIR --dag_folder_path dbt/
+    - python $PYTHON_SCRIPT --manifest_path public/target/manifest.json --project_path $AIRFLOW_DBT_PROJECT_DIR --profile_path $AIRFLOW_DBT_PROFILE_DIR --dag_folder_path dbt/
   artifacts:
     paths:
       - dbt/*.py
