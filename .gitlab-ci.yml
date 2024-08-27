@@ -45,6 +45,14 @@ default:
     reports:
       junit: pytest_report.xml
 
+.setup_dbt: &setup_dbt
+  before_script:
+    - apt-get update
+    - apt-get install -y wireguard iproute2
+    - echo -e "[Interface]\nAddress = 192.168.200.10/32\nSaveConfig = true\nListenPort = 51760\nPrivateKey = $WIREGUARD_PRIVATE_KEY\n\n[Peer]\nPublicKey = $WIREGUARD_PEER_KEY\nAllowedIPs = 192.168.3.0/27\nEndpoint = 200.152.47.48:51820\nPersistentKeepalive = 15\n" > /etc/wireguard/wg0.conf
+    - wg-quick up wg0
+    - pip install dbt-postgres
+
 # # <------------- Linters ------------->
 
 lint-ruff:
@@ -127,21 +135,16 @@ sonarcloud-check:
 compile_dbt_project:
   stage: compile_dbt
   image: python:3.9
+  <<: *setup_dbt
   inherit:
     default: false
   script:
-    - apt-get update
-    - apt-get install -y wireguard iproute2
-    - echo -e "[Interface]\nAddress = 192.168.200.10/32\nSaveConfig = true\nListenPort = 51760\nPrivateKey = $WIREGUARD_PRIVATE_KEY\n\n[Peer]\nPublicKey = $WIREGUARD_PEER_KEY\nAllowedIPs = 192.168.3.0/27\nEndpoint = 200.152.47.48:51820\nPersistentKeepalive = 15\n" > /etc/wireguard/wg0.conf
-    - wg-quick up wg0
-    - pip install dbt-postgres
     - cd $DBT_PROJECT_DIR
     - dbt deps
     - dbt compile
     - wg-quick down wg0
   artifacts:
     paths:
-      - public
       - $DBT_PROJECT_DIR/target/manifest.json
   only:
     - main
@@ -150,15 +153,11 @@ compile_dbt_project:
 pages:
   image: python:3.9
   stage: deploy pages
+  <<: *setup_dbt
   only:
     refs:
       - main
   script:
-    - apt-get update
-    - apt-get install -y wireguard iproute2
-    - echo -e "[Interface]\nAddress = 192.168.200.10/32\nSaveConfig = true\nListenPort = 51760\nPrivateKey = $WIREGUARD_PRIVATE_KEY\n\n[Peer]\nPublicKey = $WIREGUARD_PEER_KEY\nAllowedIPs = 192.168.3.0/27\nEndpoint = 200.152.47.48:51820\nPersistentKeepalive = 15\n" > /etc/wireguard/wg0.conf
-    - wg-quick up wg0
-    - pip install dbt-postgres
     - cd $DBT_PROJECT_DIR
     - dbt deps
     - dbt docs generate
@@ -172,7 +171,7 @@ process_manifest:
   stage: generate_dbt_dag
   image: python:3.9
   script:
-    - python $PYTHON_SCRIPT --manifest_path public/target/manifest.json --project_path $AIRFLOW_DBT_PROJECT_DIR --profile_path $AIRFLOW_DBT_PROFILE_DIR --dag_folder_path dbt/
+    - python $PYTHON_SCRIPT --manifest_path $DBT_PROJECT_DIR/target/manifest.json --project_path $AIRFLOW_DBT_PROJECT_DIR --profile_path $AIRFLOW_DBT_PROFILE_DIR --dag_folder_path dbt/
   artifacts:
     paths:
       - dbt/*.py
