@@ -44,7 +44,7 @@ default:
     reports:
       junit: pytest_report.xml
 
-# <------------- Linters ------------->
+# # <------------- Linters ------------->
 
 lint-ruff:
   stage: lint
@@ -121,10 +121,13 @@ sonarcloud-check:
     - main
     - development
 
+
 # <------------- Generate dbt DAG ------------->
 compile_dbt_project:
   stage: compile_dbt
   image: python:3.9
+  inherit:
+    default: false
   script:
     - apt-get update
     - apt-get install -y wireguard iproute2
@@ -134,9 +137,12 @@ compile_dbt_project:
     - cd $DBT_PROJECT_DIR
     - dbt deps
     - dbt compile
+    - dbt docs generate
+    - mv ./target ${CI_PROJECT_DIR}/public
     - wg-quick down wg0
   artifacts:
     paths:
+      - public
       - $DBT_PROJECT_DIR/target/manifest.json
   only:
     - main
