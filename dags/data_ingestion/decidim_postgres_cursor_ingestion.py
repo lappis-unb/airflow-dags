@@ -34,98 +34,18 @@ default_args = {"owner": "data", "retries": 2, "retry_delay": timedelta(minutes=
 origin_schema = "public"
 destination_schema = "raw"
 
-extractions = {
-    # Full Refresh Tables
-    "decidim_area_types": {
-        "extraction_schema": origin_schema,
-        "ingestion_type": "full_refresh",
-        "destination_schema": destination_schema,
-    },
-    "decidim_scope_types": {
-        "extraction_schema": origin_schema,
-        "ingestion_type": "full_refresh",
-        "destination_schema": destination_schema,
-    },
-    "decidim_categories": {
-        "extraction_schema": origin_schema,
-        "ingestion_type": "full_refresh",
-        "destination_schema": destination_schema,
-    },
-    # Incremental Tables
-    "decidim_components": {
-        "extraction_schema": origin_schema,
-        "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
-        "destination_schema": destination_schema,
-    },
-    "decidim_participatory_processes": {
-        "extraction_schema": origin_schema,
-        "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
-        "destination_schema": destination_schema,
-    },
-    "decidim_participatory_process_types": {
-        "extraction_schema": origin_schema,
-        "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
-        "destination_schema": destination_schema,
-    },
-    "decidim_areas": {
-        "extraction_schema": origin_schema,
-        "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
-        "destination_schema": destination_schema,
-    },
-    "decidim_users": {
-        "extraction_schema": origin_schema,
-        "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
-        "destination_schema": destination_schema,
-    },
-    "decidim_proposals_proposals": {
-        "extraction_schema": origin_schema,
-        "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
-        "destination_schema": destination_schema,
-    },
-    "decidim_scopes": {
-        "extraction_schema": origin_schema,
-        "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
-        "destination_schema": destination_schema,
-    },
-    "decidim_proposals_proposal_votes": {
-        "extraction_schema": origin_schema,
-        "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
-        "destination_schema": destination_schema,
-    },
-    "decidim_comments_comment_votes": {
-        "extraction_schema": origin_schema,
-        "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
-        "destination_schema": destination_schema,
-    },
-    "decidim_comments_comments": {
-        "extraction_schema": origin_schema,
-        "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
-        "destination_schema": destination_schema,
-    },
-    "decidim_coauthorships": {
-        "extraction_schema": origin_schema,
-        "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
-        "destination_schema": destination_schema,
-    },
-    "decidim_categorizations": {
-        "extraction_schema": origin_schema,
-        "ingestion_type": "incremental",
-        "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
-        "destination_schema": destination_schema,
-    },
-}
 
+for entry in os.scandir(Path(__file__).parent.joinpath("./cursor_ingestions")):
+    if not entry.name.endswith(".json"):
+        continue
+
+    with open(entry.path) as file:
+        dag_config = json.load(file)
+
+    dag_name: str = dag_config["name"]
+    extractions: dict = dag_config["extractions"]
+    catchup: bool = dag_config["catchup"]
+    start_date: str = datetime.strptime(dag_config["start_date"], "%Y-%m-%d")
 
 @dag(
     dag_id="decidim_postgres_cursor_ingestion",
