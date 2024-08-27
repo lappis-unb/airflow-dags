@@ -2,6 +2,7 @@ stages:
   - lint
   - tests
   - sonarcloud
+  - deploy pages
   - compile_dbt
   - generate_dbt_dag
   - commit_dbt_dag
@@ -148,10 +149,10 @@ compile_dbt_project:
 
 pages:
   image: python:3.9
+  stage: deploy pages
   only:
     refs:
       - main
-  needs: [""]
   script:
     - apt-get update
     - apt-get install -y wireguard iproute2
