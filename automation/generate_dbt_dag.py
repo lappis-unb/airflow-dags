@@ -54,7 +54,8 @@ def generate_airflow_task(node_type, node_name, dbt_project_path, dbt_profile_pa
 {indentation}{indentation}{indentation}'DBT_POSTGRES_PORT': Variable.get("bp_dw_pg_port"),
 {indentation}{indentation}{indentation}'DBT_POSTGRES_DATABASE': Variable.get("bp_dw_pg_db"),
 {indentation}{indentation}}},
-{indentation}{indentation}append_env=True
+{indentation}{indentation}append_env=True,
+{indentation}{indentation}queue="kubernetes_dbt_models"
 {indentation})"""
     return task
 

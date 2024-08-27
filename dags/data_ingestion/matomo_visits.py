@@ -193,6 +193,7 @@ def data_ingestion_matomo_detailed_visits():
         python_callable=fetch_visits_details,
         requirements=[],
         op_args=[api_url, site_id, api_token, start_date, end_date, limit],
+        queue="kubernetes_extract_data_matomo",
         system_site_packages=True,
     )
 
@@ -206,6 +207,7 @@ def data_ingestion_matomo_detailed_visits():
             "raw",
             destination_db_conn,
         ],
+        queue="kubernetes_write_data_matomo",
         system_site_packages=True,
     )
 
