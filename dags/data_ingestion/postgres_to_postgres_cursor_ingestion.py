@@ -154,7 +154,7 @@ for entry in os.scandir(Path(__file__).parent.joinpath("./cursor_ingestions")):
                     destination_db_connection,
                 ],
                 system_site_packages=True,
-                 outlets=[Dataset(f"bronze_{extraction}")],
+                outlets=[Dataset(f"bronze_{extraction}")],
             )
 
             extract_data_task >> write_data_task
