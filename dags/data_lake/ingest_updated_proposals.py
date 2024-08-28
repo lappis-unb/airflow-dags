@@ -380,7 +380,7 @@ def ingest_update_proposals():
     def get_component_ids():
         return _get_components_ids()
 
-    @task(retries=3, retry_delay=timedelta(seconds=20))
+    @task(retries=3, retry_delay=timedelta(seconds=20), queue="kubernetes")
     def get_date_id_update_proposals(components_ids: list[int]):
         """
         Retrieves the date and ID information for updating proposals.
@@ -396,7 +396,7 @@ def ingest_update_proposals():
         response = _extract_id_date_from_response(data)
         return response
 
-    @task(retries=3, retry_delay=timedelta(seconds=20))
+    @task(retries=3, retry_delay=timedelta(seconds=20), queue="kubernetes")
     def get_current_updated_ids(ids: pd.DataFrame, date_filter: pendulum.DateTime):
         """
         Filter the given DataFrame of IDs based on the current execution date.
@@ -421,7 +421,7 @@ def ingest_update_proposals():
         aws_conn_id=MINIO_CONN,
     )
 
-    @task(retries=3, retry_delay=timedelta(seconds=20))
+    @task(retries=3, retry_delay=timedelta(seconds=20), queue="kubernetes")
     def get_updated_proposals(ids: List[str], date: pendulum.DateTime):
         """
         Retrieves and stores updated proposals in the landing zone.
