@@ -1,0 +1,37 @@
+{
+    "name": "ej",
+    "origin_db_connection": "ej_db",
+    "destination_db_connection": "conn_postgres",
+    "catchup": true,
+    "start_date": "2024-08-01",
+
+    "extractions": {
+        "ej_conversations_vote": {
+          "extraction_schema": "public",
+          "ingestion_type": "incremental",
+          "incremental_filter": "created >= '{{ ds }}' and created < '{{ macros.ds_add(ds, 1) }}'",
+          "destination_schema": "raw"
+        },
+
+        "ej_users_user": {
+          "extraction_schema": "public",
+          "ingestion_type": "incremental",
+          "incremental_filter": "date_joined >= '{{ ds }}' and date_joined < '{{ macros.ds_add(ds, 1) }}'",
+          "destination_schema": "raw"
+        },
+
+        "ej_conversations_conversation": {
+          "extraction_schema": "public",
+          "ingestion_type": "incremental",
+          "incremental_filter": "modified >= '{{ ds }}' and modified < '{{ macros.ds_add(ds, 1) }}'",
+          "destination_schema": "raw"
+        },
+
+        "ej_conversations_comment": {
+          "extraction_schema": "public",
+          "ingestion_type": "incremental",
+          "incremental_filter": "modified >= '{{ ds }}' and modified < '{{ macros.ds_add(ds, 1) }}'",
+          "destination_schema": "raw"
+        }
+    }
+}
