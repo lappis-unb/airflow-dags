@@ -52,7 +52,8 @@ def generate_airflow_task(node_type, node_name, dbt_project_path, dbt_profile_pa
 {indentation}{indentation}{indentation}'DBT_POSTGRES_PASSWORD': Variable.get("bp_dw_pg_password"),
 {indentation}{indentation}{indentation}'DBT_POSTGRES_ENVIRONMENT': Variable.get("bp_dw_pg_environment"),
 {indentation}{indentation}}},
-{indentation}{indentation}append_env=True
+{indentation}{indentation}append_env=True,
+{indentation}{indentation}queue="kubernetes"
 {indentation})"""
     return task
 
