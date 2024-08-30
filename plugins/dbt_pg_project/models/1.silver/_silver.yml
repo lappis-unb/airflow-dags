@@ -126,3 +126,15 @@ models:
           - referential_integrity_test:
               parent_model: users
               parent_column: user_id
+
+
+version: 2
+
+sources:
+  - name: silver
+    schema: "{{ env_var('DBT_POSTGRES_ENVIRONMENT', 'dev') }}_silver"
+    tables:
+      - name: proposals
+      - name: participatory_processes
+      - name: votes
+      - name: comments
