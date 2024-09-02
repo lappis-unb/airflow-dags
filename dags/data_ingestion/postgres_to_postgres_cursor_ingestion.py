@@ -54,17 +54,18 @@ for entry in os.scandir(Path(__file__).parent.joinpath("./cursor_ingestions")):
 
             db = PostgresHook.get_connection(db_conn_id)
             if ssh_tunnel:
-                with SSHHook(ssh_conn).get_tunnel(remote_host=db.host, remote_port=db.port) as tunnel:
-                    tunnel: SSHTunnelForwarder
-                    engine = create_engine(
-                        f"postgresql://{db.login}:{db.password}@127.0.0.1:{tunnel.local_bind_port}/{db.schema}"
-                    )
-                    df = pd.read_sql(query, engine)
+                tunnel = SSHHook(ssh_conn).get_tunnel(remote_host=db.host, remote_port=db.port)
+                tunnel.start()
+                tunnel: SSHTunnelForwarder
+                engine = create_engine(
+                    f"postgresql://{db.login}:{db.password}@127.0.0.1:{tunnel.local_bind_port}/{db.schema}"
+                )
             else:
                 connection_string = f"postgresql://{db.login}:{db.password}@{db.host}:{db.port}/{db.schema}"
                 engine = create_engine(connection_string)
                 df = pd.read_sql(query, engine)
 
+            tunnel.close()
             return df
 
         def write_data(df, extraction, extraction_info, db_conn_id):
