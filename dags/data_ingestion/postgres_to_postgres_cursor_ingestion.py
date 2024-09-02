@@ -46,6 +46,45 @@ Esta DAG processa múltiplas tabelas conforme descrito em arquivos `.json` local
 - **start_date**: Data de início da DAG no formato `YYYY-MM-DD`.
 - **origin_db_connection**: ID da conexão para o banco de dados de origem no Airflow.
 - **destination_db_connection**: ID da conexão para o banco de dados de destino no Airflow.
+
+### Estrutura da DAG
+
+Para cada extração configurada, a DAG cria duas tarefas:
+
+#### 1. `extract_data_{nome_da_tabela}`
+
+**Operador**: `PythonVirtualenvOperator`
+
+- **Descrição**: Extrai os dados de uma tabela específica do banco de dados de origem utilizando o tipo de ingestão especificado (com ou sem túnel SSH).
+- **Parâmetros de Entrada**:
+  - `extraction`: Nome da tabela a ser extraída.
+  - `extraction_info`: Informações de configuração da extração, conforme descritas no arquivo JSON.
+  - `db_conn_id`: ID da conexão do banco de dados de origem no Airflow.
+  - `ssh_tunnel`: Indica se deve ser utilizado um túnel SSH (padrão `True`).
+- **Bibliotecas Necessárias**: `pandas`, `sqlalchemy`, `sshtunnel`
+- **Saída**: Retorna um DataFrame contendo os dados extraídos.
+
+#### 2. `write_data_{nome_da_tabela}`
+
+**Operador**: `PythonVirtualenvOperator`
+
+- **Descrição**: Escreve os dados extraídos na tabela de destino especificada no banco de dados de destino.
+- **Parâmetros de Entrada**:
+  - `df`: DataFrame contendo os dados extraídos.
+  - `extraction`: Nome da tabela a ser escrita.
+  - `extraction_info`: Informações de configuração da extração, conforme descritas no arquivo JSON.
+  - `db_conn_id`: ID da conexão do banco de dados de destino no Airflow.
+- **Bibliotecas Necessárias**: `pandas`, `sqlalchemy`
+- **Saída**: Escreve os dados no banco de dados de destino, no esquema e tabela especificados.
+
+#### Conexões e Relacionamentos
+
+- Cada par de tarefas (`extract_data_{nome_da_tabela}` e `write_data_{nome_da_tabela}`) está encadeado, ou seja, a tarefa de extração deve ser concluída com sucesso antes que a tarefa de escrita seja executada.
+
+### Conexões com Datasets
+
+- **Output Dataset**: Cada tabela extraída gera um `Dataset` correspondente, identificado pelo nome `bronze_{nome_da_tabela}`.
+
 '''
 
 if TYPE_CHECKING:
