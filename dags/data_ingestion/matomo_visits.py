@@ -6,6 +6,40 @@ from airflow.models import Variable
 from airflow.operators.python import PythonVirtualenvOperator
 from airflow.utils.dates import days_ago
 
+doc_md_DAG = '''
+
+## Documentação da DAG `data_ingestion_matomo_detailed_visits`
+
+### Descrição
+
+A DAG `data_ingestion_matomo_detailed_visits` é responsável pela extração e ingestão de detalhes de visitas do Matomo, essa DAG coleta informações detalhadas sobre as visitas ao site, como origem de tráfego, informações do dispositivo e detalhes de ações do usuário, e as armazena em uma tabela na base de dados especificada.
+
+### Detalhes da DAG
+
+- **ID da DAG**: `matomo_detailed_visits_ingestion`
+- **Tags**: `ingestion`
+- **Proprietário**: `data`
+- **Agendamento**: Diariamente às 04:00 UTC (`0 4 * * *`)
+- **Data de início**: Configurada para iniciar um dia atrás (`days_ago(1)`)
+- **Catchup**: Desativado (`False`)
+- **Concurrency**: 1 (apenas uma execução da DAG por vez)
+- **Renderização de templates como objetos nativos**: Ativado (`True`)
+
+### Argumentos Padrão
+
+- **Retries**: 2 (número de tentativas em caso de falha)
+- **Retry Delay**: 10 minutos (tempo de espera entre as tentativas)
+
+### Variáveis Utilizadas
+
+- `bp_dw_pg_host`: Host do banco de dados PostgreSQL.
+- `bp_dw_pg_port`: Porta do banco de dados PostgreSQL.
+- `bp_dw_pg_user`: Usuário do banco de dados PostgreSQL.
+- `bp_dw_pg_password`: Senha do banco de dados PostgreSQL.
+- `bp_dw_pg_db`: Nome do banco de dados PostgreSQL.
+- `matomo_api_token`: Token de autenticação para a API Matomo.
+'''
+
 destination_db_conn = {
     "pg_host": Variable.get("bp_dw_pg_host"),
     "pg_port": int(Variable.get("bp_dw_pg_port")),
@@ -34,6 +68,7 @@ limit = 100
     catchup=False,
     concurrency=1,
     render_template_as_native_obj=True,
+    doc_md=doc_md_DAG,
 )
 def data_ingestion_matomo_detailed_visits():
 
