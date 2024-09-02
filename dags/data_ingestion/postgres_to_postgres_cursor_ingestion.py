@@ -8,6 +8,46 @@ from airflow.datasets import Dataset
 from airflow.decorators import dag
 from airflow.operators.python import PythonVirtualenvOperator
 
+doc_md_DAG = '''
+
+## Documentação da DAG `data_ingestion_postgres_cursor_ingestion`
+
+### Descrição
+
+A DAG `data_ingestion_postgres_cursor_ingestion` é responsável pela extração de dados de várias tabelas em um banco de dados PostgreSQL, utilizando uma configuração específica para cada tabela armazenada em arquivos `.json`. Esta DAG realiza tanto ingestões completas quanto incrementais e armazena os dados extraídos em um banco de dados de destino especificado.
+
+### Detalhes da DAG
+
+- **ID da DAG**: `data_ingestion_postgres_cursor_ingestion`
+- **Tags**: `ingestion`, `{nome_da_tabela}` (as tags incluem a identificação de cada tabela conforme configurada no arquivo JSON)
+- **Proprietário**: `data`
+- **Agendamento**: Diariamente às 04:00 UTC (`0 4 * * *`)
+- **Data de início**: Configurada conforme especificado no arquivo JSON de cada tabela.
+- **Catchup**: Configurado conforme especificado no arquivo JSON de cada tabela.
+- **Concurrency**: 1 (apenas uma execução da DAG por vez)
+- **Renderização de templates como objetos nativos**: Ativado (`True`)
+
+### Argumentos Padrão
+
+- **Retries**: 2 (número de tentativas em caso de falha)
+- **Retry Delay**: 10 minutos (tempo de espera entre as tentativas)
+
+### Configuração da Ingestão
+
+Esta DAG processa múltiplas tabelas conforme descrito em arquivos `.json` localizados no diretório `./cursor_ingestions`. Cada arquivo JSON deve conter as seguintes informações:
+
+- **name**: Nome da extração (utilizado na definição da DAG e nas tarefas).
+- **extractions**: Dicionário contendo as extrações a serem realizadas, onde cada chave representa o nome de uma tabela e o valor é um dicionário com as seguintes informações:
+  - `extraction_schema`: Esquema de origem da tabela.
+  - `ingestion_type`: Tipo de ingestão (`full_refresh` ou `incremental`).
+  - `incremental_filter`: Filtro utilizado para identificar os novos dados em ingestações incrementais.
+  - `destination_schema`: Esquema de destino onde os dados serão armazenados.
+- **catchup**: Define se a DAG deve realizar catchup.
+- **start_date**: Data de início da DAG no formato `YYYY-MM-DD`.
+- **origin_db_connection**: ID da conexão para o banco de dados de origem no Airflow.
+- **destination_db_connection**: ID da conexão para o banco de dados de destino no Airflow.
+'''
+
 if TYPE_CHECKING:
     from sshtunnel import SSHTunnelForwarder
 
@@ -39,6 +79,7 @@ for entry in os.scandir(Path(__file__).parent.joinpath("./cursor_ingestions")):
         catchup=catchup,
         concurrency=1,
         render_template_as_native_obj=True,
+        doc_md=doc_md_DAG,
     )
     def data_ingestion_postgres(origin_db_connection, destination_db_connection):
         def extract_data(extraction, extraction_info, db_conn_id, ssh_tunnel: bool = False):
