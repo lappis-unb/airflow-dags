@@ -3,18 +3,22 @@ import json
 from contextlib import closing
 from pathlib import Path
 
-doc_md_DAG = '''
+doc_md_dag = """
 
 ## Documentação da DAG `data_ingestion_postgres_cursor_ingestion`
 
 ### Descrição
 
-A DAG `data_ingestion_postgres_cursor_ingestion` é responsável pela extração de dados de várias tabelas em um banco de dados PostgreSQL, utilizando uma configuração específica para cada tabela armazenada em arquivos `.json`. Esta DAG realiza tanto ingestações completas quanto incrementais e armazena os dados extraídos em um banco de dados de destino especificado.
+A DAG `data_ingestion_postgres_cursor_ingestion` é responsável pela extração de dados de várias
+tabelas em um banco de dados PostgreSQL, utilizando uma configuração específica para cada tabela
+armazenada em arquivos `.json`. Esta DAG realiza tanto ingestações completas quanto incrementais
+e armazena os dados extraídos em um banco de dados de destino especificado.
 
 ### Detalhes da DAG
 
 - **ID da DAG**: `data_ingestion_postgres_cursor_ingestion`
-- **Tags**: `ingestion`, `{nome_da_tabela}` (as tags incluem a identificação de cada tabela conforme configurada no arquivo JSON)
+- **Tags**: `ingestion`, `{nome_da_tabela}` (as tags incluem a identificação de cada tabela
+conforme configurada no arquivo JSON)
 - **Proprietário**: `data`
 - **Agendamento**: Diariamente às 04:00 UTC (`0 4 * * *`)
 - **Data de início**: Configurada conforme especificado no arquivo JSON de cada tabela.
@@ -29,10 +33,12 @@ A DAG `data_ingestion_postgres_cursor_ingestion` é responsável pela extração
 
 ### Configuração da Ingestão
 
-Esta DAG processa múltiplas tabelas conforme descrito em arquivos `.json` localizados no diretório `./cursor_ingestions`. Cada arquivo JSON deve conter as seguintes informações:
+Esta DAG processa múltiplas tabelas conforme descrito em arquivos `.json` localizados no
+diretório `./cursor_ingestions`. Cada arquivo JSON deve conter as seguintes informações:
 
 - **name**: Nome da extração (utilizado na definição da DAG e nas tarefas).
-- **extractions**: Dicionário contendo as extrações a serem realizadas, onde cada chave representa o nome de uma tabela e o valor é um dicionário com as seguintes informações:
+- **extractions**: Dicionário contendo as extrações a serem realizadas, onde cada chave
+representa o nome de uma tabela e o valor é um dicionário com as seguintes informações:
   - `extraction_schema`: Esquema de origem da tabela.
   - `ingestion_type`: Tipo de ingestão (`full_refresh` ou `incremental`).
   - `incremental_filter`: Filtro utilizado para identificar os novos dados em ingestações incrementais.
@@ -50,7 +56,8 @@ Para cada extração configurada, a DAG cria duas tarefas:
 
 **Operador**: `PythonVirtualenvOperator`
 
-- **Descrição**: Extrai os dados de uma tabela específica do banco de dados de origem utilizando o tipo de ingestão especificado (com ou sem túnel SSH).
+- **Descrição**: Extrai os dados de uma tabela específica do banco de dados de origem
+utilizando o tipo de ingestão especificado (com ou sem túnel SSH).
 - **Parâmetros de Entrada**:
   - `extraction`: Nome da tabela a ser extraída.
   - `extraction_info`: Informações de configuração da extração, conforme descritas no arquivo JSON.
@@ -74,12 +81,14 @@ Para cada extração configurada, a DAG cria duas tarefas:
 
 #### Conexões e Relacionamentos
 
-- Cada par de tarefas (`extract_data_{nome_da_tabela}` e `write_data_{nome_da_tabela}`) está encadeado, ou seja, a tarefa de extração deve ser concluída com sucesso antes que a tarefa de escrita seja executada.
+- Cada par de tarefas (`extract_data_{nome_da_tabela}` e `write_data_{nome_da_tabela}`)está encadeado,
+ou seja, a tarefa de extração deve ser concluída com sucesso antes que a tarefa de escrita seja executada.
 
 ### Conexões com Datasets
 
-- **Output Dataset**: Cada tabela extraída gera um `Dataset` correspondente, identificado pelo nome `bronze_{nome_da_tabela}`.
-'''
+- **Output Dataset**: Cada tabela extraída gera um `Dataset` correspondente, identificado
+pelo nome `bronze_{nome_da_tabela}`.
+"""
 
 
 def parse_args():
@@ -246,7 +255,7 @@ def generate_airflow_dags(dag_folder_path, manifest, dbt_project_path, dbt_profi
                     dependencies_str=dependencies_str,
                     dag_trigger=generate_airflow_schedule(dependencies["model_dependecies"], nodes_type_map),
                     outlet_dataset=f"{node}_model",
-                    doc_md=doc_md_DAG
+                    doc_md=doc_md_dag,
                 )
             )
 
