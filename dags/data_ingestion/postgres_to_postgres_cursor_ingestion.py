@@ -63,7 +63,23 @@ for entry in os.scandir(Path(__file__).parent.joinpath("./cursor_ingestions")):
             else:
                 connection_string = f"postgresql://{db.login}:{db.password}@{db.host}:{db.port}/{db.schema}"
                 engine = create_engine(connection_string)
-                df = pd.read_sql(query, engine)
+
+            metadata = MetaData(schema=extraction_schema)
+            table = Table(extraction, metadata, autoload_with=engine)
+
+            columns = set([str(x).lower() for x in table.columns])
+            columns.difference_update(columns_to_remove)
+
+            if extraction_info["ingestion_type"] == "full_refresh":
+                query = f"SELECT {','.join(columns)} FROM {extraction_schema}.{extraction}"
+            elif extraction_info["ingestion_type"] == "incremental":
+                incremental_filter = extraction_info["incremental_filter"]
+                query = f"SELECT {','.join(columns)} FROM {extraction_schema}.{extraction}\
+                    where {incremental_filter}"
+
+            print(query)
+
+            df = pd.read_sql(query, engine)
 
             tunnel.close()
             return df
