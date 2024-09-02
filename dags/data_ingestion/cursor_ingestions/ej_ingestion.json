@@ -17,7 +17,8 @@
           "extraction_schema": "public",
           "ingestion_type": "incremental",
           "incremental_filter": "date_joined >= '{{ ds }}' and date_joined < '{{ macros.ds_add(ds, 1) }}'",
-          "destination_schema": "raw"
+          "destination_schema": "raw",
+          "exclude_columns": ["password", "name", "email", "display_name", "secret_id"]
         },
 
         "ej_conversations_conversation": {
