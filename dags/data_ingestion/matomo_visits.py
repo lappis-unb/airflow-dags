@@ -6,6 +6,90 @@ from airflow.models import Variable
 from airflow.operators.python import PythonVirtualenvOperator
 from airflow.utils.dates import days_ago
 
+doc_md_dag = """
+
+## Documentação da DAG `data_ingestion_matomo_detailed_visits`
+
+### Descrição
+
+A DAG `data_ingestion_matomo_detailed_visits` é responsável pela extração e ingestão de detalhes
+de visitas do Matomo, essa DAG coleta informações detalhadas sobre as visitas ao site, como origem
+de tráfego, informações do dispositivo e detalhes de ações do usuário, e as armazena em uma tabela
+na base de dados especificada.
+
+### Detalhes da DAG
+
+- **ID da DAG**: `matomo_detailed_visits_ingestion`
+- **Tags**: `ingestion`
+- **Proprietário**: `data`
+- **Agendamento**: Diariamente às 04:00 UTC (`0 4 * * *`)
+- **Data de início**: Configurada para iniciar um dia atrás (`days_ago(1)`)
+- **Catchup**: Desativado (`False`)
+- **Concurrency**: 1 (apenas uma execução da DAG por vez)
+- **Renderização de templates como objetos nativos**: Ativado (`True`)
+
+### Argumentos Padrão
+
+- **Retries**: 2 (número de tentativas em caso de falha)
+- **Retry Delay**: 10 minutos (tempo de espera entre as tentativas)
+
+### Variáveis Utilizadas
+
+- `bp_dw_pg_host`: Host do banco de dados PostgreSQL.
+- `bp_dw_pg_port`: Porta do banco de dados PostgreSQL.
+- `bp_dw_pg_user`: Usuário do banco de dados PostgreSQL.
+- `bp_dw_pg_password`: Senha do banco de dados PostgreSQL.
+- `bp_dw_pg_db`: Nome do banco de dados PostgreSQL.
+- `matomo_api_token`: Token de autenticação para a API Matomo.
+
+### Estrutura da DAG
+
+A DAG é composta por duas tarefas principais:
+
+#### 1. `extract_data`
+
+**Operador**: `PythonVirtualenvOperator`
+
+- **Descrição**: Extrai os detalhes das visitas do Matomo Live! API dentro de um intervalo
+de datas especificado.
+- **Parâmetros de Entrada**:
+  - `api_url`: URL base da instância Matomo.
+  - `site_id`: ID do site para o qual os dados serão recuperados.
+  - `api_token`: Token de autenticação da API.
+  - `start_date`: Data de início no formato `YYYY-MM-DD`.
+  - `end_date`: Data de término no formato `YYYY-MM-DD`.
+  - `limit`: Número de registros a serem buscados por página (padrão 100).
+- **Bibliotecas Necessárias**: Não há requisitos adicionais além das bibliotecas do sistema.
+- **Saída**: Retorna uma lista de detalhes das visitas em formato JSON.
+
+#### 2. `write_data`
+
+**Operador**: `PythonVirtualenvOperator`
+
+- **Descrição**: Escreve os dados extraídos no banco de dados PostgreSQL. A tarefa remove
+entradas existentes na tabela com base nas datas dos dados extraídos e insere as novas entradas.
+- **Parâmetros de Entrada**:
+  - `data`: Dados extraídos da tarefa anterior.
+  - `extraction`: Nome da tabela onde os dados serão inseridos.
+  - `schema`: Esquema do banco de dados.
+  - `db_conn`: Dicionário com as informações de conexão ao banco de dados.
+- **Bibliotecas Necessárias**: `pandas`, `sqlalchemy`
+- **Saída**: Escreve os dados na tabela `raw.matomo_detailed_visits`.
+
+#### Conexões e Relacionamentos
+
+- A tarefa `extract_data` é executada primeiro, e seus dados são passados para a tarefa
+`write_data`, que então escreve os dados no banco de dados.
+
+### Conexões com Datasets
+
+- **Output Dataset**: `bronze_matomo_detailed_visits`
+
+Este dataset é marcado como uma saída da tarefa `write_data`, indicando que o processo de
+ingestão de visitas detalhadas do Matomo foi concluído com sucesso.
+
+"""
+
 destination_db_conn = {
     "pg_host": Variable.get("bp_dw_pg_host"),
     "pg_port": int(Variable.get("bp_dw_pg_port")),
@@ -34,9 +118,9 @@ limit = 100
     catchup=False,
     concurrency=1,
     render_template_as_native_obj=True,
+    doc_md=doc_md_dag,
 )
 def data_ingestion_matomo_detailed_visits():
-
     def fetch_visits_details(api_url, site_id, api_token, start_date, end_date, limit=100):
         """
         Fetches visitor details from Matomo Live! API within a specified date range, paginated.
@@ -88,7 +172,6 @@ def data_ingestion_matomo_detailed_visits():
         return all_visits
 
     def write_data(data, extraction, schema, db_conn):
-
         import json
 
         import pandas as pd
