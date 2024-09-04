@@ -5,15 +5,7 @@
     full_refresh=True,
     indexes=[
       {'columns': ['id_proposta', 'titulo_proposta']}
-      ],
-meta={
-	"datasets_trigger": [
-		"votes_model",
-		"comments_model",
-		"participatory_processes_model",
-        "proposals_model"
-	]
-   }
+      ]
 ) }}
 
 WITH proposal_votes AS (
