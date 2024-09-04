@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: proposal_metrics  # Substitua por seu nome de modelo
+    description: "Modelo que faz a contagem de votos e comentários de propostas participativas"
+    columns:
+      - name: id_proposta
+        description: "Identificador único da proposta"
+        tests:
+          - not_null
+          - unique
+
+      - name: titulo_proposta
+        description: "Título da proposta"
+        tests:
+          - not_null
+
+      - name: processo_participativo
+        description: "Nome do processo participativo ao qual a proposta pertence"
+        tests:
+          - not_null
+
+      - name: data_proposta
+        description: "Data de criação da proposta"
+        tests:
+          - not_null
+
+      - name: total_votos
+        description: "Número total de votos na proposta"
+        tests:
+          - not_null
+
+      - name: total_comentarios
+        description: "Número total de comentários na proposta"
+        tests:
+          - not_null

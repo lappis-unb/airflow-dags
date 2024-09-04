@@ -129,12 +129,3 @@ models:
 
 
 version: 2
-
-sources:
-  - name: silver
-    schema: "{{ env_var('DBT_POSTGRES_ENVIRONMENT', 'dev') }}_silver"
-    tables:
-      - name: proposals
-      - name: participatory_processes
-      - name: votes
-      - name: comments

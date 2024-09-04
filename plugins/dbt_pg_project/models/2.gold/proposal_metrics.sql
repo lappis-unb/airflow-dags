@@ -4,9 +4,8 @@
     materialized='table',
     full_refresh=True,
     indexes=[
-        {'columns': ['proposal_id']}
-    ],
-
+      {'columns': ['id_proposta', 'titulo_proposta']}
+      ],
 meta={
 	"datasets_trigger": [
 		"votes_model",
@@ -15,7 +14,6 @@ meta={
         "proposals_model"
 	]
    }
-
 ) }}
 
 WITH proposal_votes AS (
@@ -26,10 +24,10 @@ WITH proposal_votes AS (
         proposals.created_at,
         votes.voted_component_id,
         participatory_processes.process_title
-    FROM {{ source('silver', 'proposals') }} AS proposals
-    JOIN {{ source('silver', 'participatory_processes') }} AS participatory_processes
+    FROM {{ ref('proposals') }} AS proposals
+    JOIN {{ ref('participatory_processes') }} AS participatory_processes
         ON proposals.process_id = participatory_processes.process_id 
-    JOIN {{ source('silver', 'votes') }} AS votes
+    JOIN {{ ref('votes') }} AS votes
         ON proposals.proposal_id = votes.voted_component_id
 ),
 proposal_comments AS (
@@ -39,25 +37,26 @@ proposal_comments AS (
         proposals.proposal_status,
         proposals.created_at,
         comments.commented_root_component_id
-    FROM {{ source('silver', 'proposals') }} AS proposals
-    JOIN {{ source('silver', 'participatory_processes') }} AS participatory_processes
+    FROM {{ ref('proposals') }} AS proposals
+    JOIN {{ ref('participatory_processes') }} AS participatory_processes
         ON proposals.process_id = participatory_processes.process_id 
-    JOIN {{ source('silver', 'comments') }} AS comments
+    JOIN {{ ref('comments') }} AS comments
         ON proposals.proposal_id = comments.commented_root_component_id
 ),
 total_votes_count AS (
-    SELECT proposal_title, COUNT(*) AS total_votos, MIN(created_at) as data_proposta, MAX(process_title) as processo_participativo
+    SELECT proposal_id, proposal_title, COUNT(*) AS total_votos, MIN(created_at) as data_proposta, MAX(process_title) as processo_participativo
     FROM proposal_votes
-    GROUP BY proposal_title
+    GROUP BY proposal_id, proposal_title
     ORDER BY total_votos DESC
 ),
 total_comments_count AS (
-    SELECT proposal_title, COUNT(*) AS total_comentarios
+    SELECT proposal_id, proposal_title, COUNT(*) AS total_comentarios
     FROM proposal_comments
-    GROUP BY proposal_title
+    GROUP BY proposal_id, proposal_title
     ORDER BY total_comentarios DESC
 )
-SELECT 
+SELECT
+    total_votes_count.proposal_id as id_proposta,
     total_votes_count.proposal_title AS titulo_proposta, 
     total_votes_count.processo_participativo, 
     total_votes_count.data_proposta, 
@@ -65,4 +64,4 @@ SELECT
     total_comments_count.total_comentarios
 FROM total_votes_count
 JOIN total_comments_count
-ON total_votes_count.proposal_title = total_comments_count.proposal_title
+ON total_votes_count.proposal_id = total_comments_count.proposal_id
