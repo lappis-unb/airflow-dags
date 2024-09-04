@@ -42,35 +42,46 @@ for entry in os.scandir(Path(__file__).parent.joinpath("./cursor_ingestions")):
     )
     def data_ingestion_postgres(origin_db_connection, destination_db_connection):
         def extract_data(extraction, extraction_info, db_conn_id, ssh_tunnel: bool = False):
+
             import pandas as pd
             from airflow.providers.postgres.hooks.postgres import PostgresHook
             from airflow.providers.ssh.hooks.ssh import SSHHook
-            from sqlalchemy import create_engine
+            from sqlalchemy import MetaData, Table, create_engine
 
             ssh_conn = "ssh_tunnel_decidim"
             extraction_schema = extraction_info["extraction_schema"]
-
-            if extraction_info["ingestion_type"] == "full_refresh":
-                query = f"SELECT * FROM {extraction_schema}.{extraction}"
-            elif extraction_info["ingestion_type"] == "incremental":
-                incremental_filter = extraction_info["incremental_filter"]
-                query = f"SELECT * FROM {extraction_schema}.{extraction} where {incremental_filter}"
-
-            print(query)
+            columns_to_remove = set([f"{extraction}.{x}".lower() for x in extraction_info["exclude_columns"]])
 
             db = PostgresHook.get_connection(db_conn_id)
             if ssh_tunnel:
-                with SSHHook(ssh_conn).get_tunnel(remote_host=db.host, remote_port=db.port) as tunnel:
-                    tunnel: SSHTunnelForwarder
-                    engine = create_engine(
-                        f"postgresql://{db.login}:{db.password}@127.0.0.1:{tunnel.local_bind_port}/{db.schema}"
-                    )
-                    df = pd.read_sql(query, engine)
+                tunnel = SSHHook(ssh_conn).get_tunnel(remote_host=db.host, remote_port=db.port)
+                tunnel.start()
+                tunnel: SSHTunnelForwarder
+                engine = create_engine(
+                    f"postgresql://{db.login}:{db.password}@127.0.0.1:{tunnel.local_bind_port}/{db.schema}"
+                )
             else:
                 connection_string = f"postgresql://{db.login}:{db.password}@{db.host}:{db.port}/{db.schema}"
                 engine = create_engine(connection_string)
-                df = pd.read_sql(query, engine)
 
+            metadata = MetaData(schema=extraction_schema)
+            table = Table(extraction, metadata, autoload_with=engine)
+
+            columns = set([str(x).lower() for x in table.columns])
+            columns.difference_update(columns_to_remove)
+
+            if extraction_info["ingestion_type"] == "full_refresh":
+                query = f"SELECT {','.join(columns)} FROM {extraction_schema}.{extraction}"
+            elif extraction_info["ingestion_type"] == "incremental":
+                incremental_filter = extraction_info["incremental_filter"]
+                query = f"SELECT {','.join(columns)} FROM {extraction_schema}.{extraction}\
+                    where {incremental_filter}"
+
+            print(query)
+
+            df = pd.read_sql(query, engine)
+
+            tunnel.close()
             return df
 
         def write_data(df, extraction, extraction_info, db_conn_id):
