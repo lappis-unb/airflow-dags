@@ -126,6 +126,3 @@ models:
           - referential_integrity_test:
               parent_model: users
               parent_column: user_id
-
-
-version: 2
