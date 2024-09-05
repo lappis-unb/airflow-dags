@@ -1,7 +1,7 @@
 {
     "name": "ej",
     "origin_db_connection": "ej_db",
-    "destination_db_connection": "conn_postgres",
+    "destination_db_connection": "pg_bp_analytics",
     "catchup": true,
     "start_date": "2024-08-01",
 
