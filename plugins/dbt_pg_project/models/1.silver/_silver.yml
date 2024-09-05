@@ -1,5 +1,4 @@
 version: 2
-
 models:
   - name: users
     description: "A table containing user information, including unique identifiers for each user."

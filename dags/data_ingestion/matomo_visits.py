@@ -1,43 +1,46 @@
-from datetime import timedelta
+import json
+from datetime import datetime, timedelta
 
+import pandas as pd
+import requests
+from airflow import macros
 from airflow.datasets import Dataset
-from airflow.decorators import dag
-from airflow.models import Variable
-from airflow.operators.python import PythonVirtualenvOperator
-from airflow.utils.dates import days_ago
+from airflow.decorators import dag, task
+from airflow.hooks.base_hook import BaseHook
+from airflow.operators.empty import EmptyOperator
+from airflow.providers.postgres.hooks.postgres import PostgresHook
+from sqlalchemy import MetaData, Table
+from sqlalchemy.exc import NoSuchTableError
+from sqlalchemy.orm import sessionmaker
 
-destination_db_conn = {
-    "pg_host": Variable.get("bp_dw_pg_host"),
-    "pg_port": int(Variable.get("bp_dw_pg_port")),
-    "pg_user": Variable.get("bp_dw_pg_user"),
-    "pg_password": Variable.get("bp_dw_pg_password"),
-    "pg_db": Variable.get("bp_dw_pg_db"),
-}
+default_args = {"owner": "data", "retries": 0, "retry_delay": timedelta(minutes=10)}
 
-default_args = {"owner": "data", "retries": 2, "retry_delay": timedelta(minutes=10)}
-
-api_url = "https://ew.dataprev.gov.br/index.php"
-site_id = "18"
-api_token = Variable.get("matomo_api_token")
-
-start_date = "{{ ds }}"
-end_date = "{{ macros.ds_add(ds, 1) }}"
 limit = 100
+
+
+POSTGRES_CONN_ID = "pg_bp_analytics"
+SCHEMA = "raw"
+TABLE_NAME = "matomo_detailed_visits"
+dataset = Dataset("bronze_matomo_detailed_visits")
 
 
 @dag(
     dag_id="matomo_detailed_visits_ingestion",
     default_args=default_args,
     schedule_interval="0 4 * * *",
-    start_date=days_ago(1),
+    start_date=datetime(2023, 6, 1),
     tags=["ingestion"],
-    catchup=False,
+    catchup=True,
     concurrency=1,
+    max_active_runs=1,
     render_template_as_native_obj=True,
 )
 def data_ingestion_matomo_detailed_visits():
+    start = EmptyOperator(task_id="start")
+    end = EmptyOperator(task_id="end")
 
-    def fetch_visits_details(api_url, site_id, api_token, start_date, end_date, limit=100):
+    @task(provide_context=True)
+    def fetch_visits_details(limit=100, **context):
         """
         Fetches visitor details from Matomo Live! API within a specified date range, paginated.
 
@@ -54,7 +57,10 @@ def data_ingestion_matomo_detailed_visits():
         -------
             list: A list of all visit details in JSON format.
         """
-        import requests
+        # Configs
+        site_id, matomo_url, api_token = _get_matomo_credentials()
+        start_date = context["ds"]
+        end_date = macros.ds_add(context["ds"], 1)
 
         all_visits = []
         offset = 0
@@ -72,7 +78,7 @@ def data_ingestion_matomo_detailed_visits():
                 "token_auth": api_token,
             }
 
-            response = requests.get(api_url, params=params)
+            response = requests.get(matomo_url, params=params)
 
             # Check if the request was successful
             if response.status_code == 200:
@@ -87,87 +93,69 @@ def data_ingestion_matomo_detailed_visits():
 
         return all_visits
 
-    def write_data(data, extraction, schema, db_conn):
+    def _get_matomo_credentials():
+        """
+        Retorna as credenciais necessárias para se conectar ao Matomo.
 
-        import json
+        Returns:
+        -------
+            tuple: Uma tupla contendo as seguintes informações:
+                - site_id (str): O ID do site no Matomo.
+                - matomo_url (str): A URL do Matomo.
+                - api_token (str): O token de API do Matomo.
+        """
+        matomo_conn = BaseHook.get_connection("matomo_conn")
+        matomo_url = matomo_conn.host
+        api_token = matomo_conn.password
+        site_id = matomo_conn.login
+        return site_id, matomo_url, api_token
 
-        import pandas as pd
-        from sqlalchemy import MetaData, Table, create_engine
-        from sqlalchemy.orm import sessionmaker
+    @task(provide_context=True, outlets=dataset)
+    def write_data(data, table=TABLE_NAME, schema=SCHEMA):
+
+        engine = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID).get_sqlalchemy_engine()
 
         if not data:
             print("No data to write!")
             return None
 
-        select_columns = [
-            "idVisit",
-            "visitorId",
-            "serverDate",
-            "serverTimestamp",
-            "userId",
-            "visitorType",
-            "referrerType",
-            "referrerTypeName",
-            "referrerName",
-            "referrerKeyword",
-            "referrerKeywordPosition",
-            "referrerUrl",
-            "referrerSearchEngineUrl",
-            "referrerSearchEngineIcon",
-            "referrerSocialNetworkUrl",
-            "referrerSocialNetworkIcon",
-            "deviceType",
-            "deviceBrand",
-            "deviceModel",
-            "operatingSystemName",
-            "continent",
-            "country",
-            "countryCode",
-            "region",
-            "regionCode",
-            "city",
-            "actionDetails",
-        ]
-
         df = pd.DataFrame(data)
 
-        df = df[select_columns]
-
-        df_exploded = df.explode("actionDetails").reset_index(drop=True)
-
-        df_normalized = pd.json_normalize(df_exploded["actionDetails"])
-
-        df_normalized = df_normalized[["url", "pageIdAction", "timeSpent", "timestamp"]]
-
-        df = df_exploded.drop("actionDetails", axis=1).join(df_normalized)
+        pd.set_option("display.max_columns", None)
 
         def treat_complex_columns(col_value):
             if isinstance(col_value, (dict, list)):
                 return json.dumps(col_value, ensure_ascii=False)
             return col_value
 
-        print("##############################################################")
-        pd.set_option("display.max_columns", None)
-        pd.set_option("display.max_colwidth", 100)
-        print(df)
-        print("##############################################################")
-
-        db_host = db_conn["pg_host"]
-        db_port = db_conn["pg_port"]
-        db_user = db_conn["pg_user"]
-        db_pw = db_conn["pg_password"]
-        db_db = db_conn["pg_db"]
-
-        connection_string = f"postgresql://{db_user}:{db_pw}@{db_host}:{db_port}/{db_db}"
-        engine = create_engine(connection_string)
-
         df = df.applymap(treat_complex_columns)
+        try:
+            delete_matching_rows_from_table(table, schema, engine, df)
+        except NoSuchTableError:
+            print(f"Table {schema}.{table} não existe, criando uma nova tabela.")
+        df.to_sql(TABLE_NAME, con=engine, schema=SCHEMA, if_exists="append", index=False)
+        print(f"DataFrame written to {schema}.{table}.")
 
+    def delete_matching_rows_from_table(table, schema, engine, df):
+        """
+        Deleta as linhas da tabela especificada com base nos valores únicos da coluna 'serverDate'.
+
+        Args:
+        ----
+            table (str): O nome da tabela a ser deletada.
+            schema (str): O esquema da tabela.
+            engine (sqlalchemy.engine.Engine): O objeto de conexão do SQLAlchemy.
+            df (pandas.DataFrame): O DataFrame contendo os valores únicos da coluna 'serverDate'.
+
+        Returns:
+        -------
+            None
+        """
         sess = sessionmaker(bind=engine)
         session = sess()
         metadata = MetaData(schema=schema)
 
-        table = Table(extraction, metadata, autoload_with=engine)
+        table = Table(table, metadata, autoload_with=engine)
 
         to_delete = [str(x) for x in df["serverDate"].unique()]
         delete_query = table.delete().where(table.c.serverDate.in_(to_delete))
@@ -179,39 +167,9 @@ def data_ingestion_matomo_detailed_visits():
 
         session.close()
 
-        df.to_sql(
-            name=extraction,
-            con=engine,
-            schema=schema,
-            if_exists="append",
-            index=False,
-        )
-
-        print(f"DataFrame written to {schema}.{extraction}.")
-
-    extract_data_task = PythonVirtualenvOperator(
-        task_id="extract_data",
-        python_callable=fetch_visits_details,
-        requirements=[],
-        op_args=[api_url, site_id, api_token, start_date, end_date, limit],
-        system_site_packages=True,
-    )
-
-    write_data_task = PythonVirtualenvOperator(
-        task_id="write_data",
-        python_callable=write_data,
-        requirements=["pandas", "sqlalchemy"],
-        op_args=[
-            "{{ ti.xcom_pull(task_ids='extract_data') }}",
-            "matomo_detailed_visits",
-            "raw",
-            destination_db_conn,
-        ],
-        system_site_packages=True,
-        outlets=[Dataset("bronze_matomo_detailed_visits")],
-    )
-
-    extract_data_task >> write_data_task
+    extract_data_task = fetch_visits_details(limit)
+    write_data_task = write_data(extract_data_task, table=TABLE_NAME, schema=SCHEMA)
+    start >> extract_data_task >> write_data_task >> end
 
 
-data_ingestion_matomo_detailed_visits = data_ingestion_matomo_detailed_visits()
+data_ingestion_matomo_detailed_visits()
