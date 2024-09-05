@@ -50,7 +50,9 @@ for entry in os.scandir(Path(__file__).parent.joinpath("./cursor_ingestions")):
 
             ssh_conn = "ssh_tunnel_decidim"
             extraction_schema = extraction_info["extraction_schema"]
-            columns_to_remove = set([f"{extraction}.{x}".lower() for x in extraction_info.get("exclude_columns", [])])
+            columns_to_remove = set(
+                [f"{extraction}.{x}".lower() for x in extraction_info.get("exclude_columns", [])]
+            )
 
             db = PostgresHook.get_connection(db_conn_id)
             if ssh_tunnel:
