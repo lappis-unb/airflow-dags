@@ -1,7 +1,7 @@
 {
   "name": "decidim",
   "origin_db_connection": "bp_replica",
-  "destination_db_connection": "data_warehouse",
+  "destination_db_connection": "pg_bp_analytics",
   "catchup": false,
   "start_date": "2024-08-10",
 
