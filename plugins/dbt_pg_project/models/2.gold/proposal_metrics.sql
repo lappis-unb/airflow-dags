@@ -7,53 +7,95 @@
       {'columns': ['id_proposta', 'titulo_proposta']}
       ]
 ) }}
-
-WITH proposal_votes AS (
-    SELECT 
-        proposals.proposal_id,
-        proposals.proposal_title, 
-        proposals.proposal_status,
-        proposals.created_at,
-        votes.voted_component_id,
-        participatory_processes.process_title
-    FROM {{ ref('proposals') }} AS proposals
-    JOIN {{ ref('participatory_processes') }} AS participatory_processes
-        ON proposals.process_id = participatory_processes.process_id 
-    JOIN {{ ref('votes') }} AS votes
-        ON proposals.proposal_id = votes.voted_component_id
-),
-proposal_comments AS (
-    SELECT 
-        proposals.proposal_id,
-        proposals.proposal_title, 
-        proposals.proposal_status,
-        proposals.created_at,
-        comments.commented_root_component_id
-    FROM {{ ref('proposals') }} AS proposals
-    JOIN {{ ref('participatory_processes') }} AS participatory_processes
-        ON proposals.process_id = participatory_processes.process_id 
-    JOIN {{ ref('comments') }} AS comments
-        ON proposals.proposal_id = comments.commented_root_component_id
-),
-total_votes_count AS (
-    SELECT proposal_id, proposal_title, COUNT(*) AS total_votos, MIN(created_at) as data_proposta, MAX(process_title) as processo_participativo
-    FROM proposal_votes
-    GROUP BY proposal_id, proposal_title
-    ORDER BY total_votos DESC
-),
-total_comments_count AS (
-    SELECT proposal_id, proposal_title, COUNT(*) AS total_comentarios
-    FROM proposal_comments
-    GROUP BY proposal_id, proposal_title
-    ORDER BY total_comentarios DESC
-)
-SELECT
-    total_votes_count.proposal_id as id_proposta,
-    total_votes_count.proposal_title AS titulo_proposta, 
-    total_votes_count.processo_participativo, 
-    total_votes_count.data_proposta, 
-    total_votes_count.total_votos, 
-    total_comments_count.total_comentarios
-FROM total_votes_count
-JOIN total_comments_count
-ON total_votes_count.proposal_id = total_comments_count.proposal_id
+select
+   a.data_do_voto as data_operacao, 
+   a.process_id as id_processo, 
+   a.proposal_id as id_proposta,
+   a.proposal_title as titulo_proposta,
+   a.proposal_status as status_proposta,
+   a.process_title as titulo_processo,
+   a.proposal_category as eixo_tematico,
+   coalesce(b.bounce_rate, 0) as bounce_rate, 
+   coalesce(c.qtd_votos, 0) as qtd_votos, 
+   coalesce(d.qtd_comentarios, 0) as qtd_comentarios
+from
+   (
+      select
+         p.proposal_title,
+         p.proposal_status,
+         p.process_id,
+         pp.process_title,
+         p.proposal_id,
+         p.proposal_category,
+         generate_series(
+            p.created_at::date,         -- Data de criação da proposta
+            CURRENT_DATE,               -- Até a data atual
+            '1 day'::interval
+         )::date AS data_do_voto 
+      FROM
+         {{ ref('proposals') }} p
+      join {{ ref('participatory_processes') }} pp 
+         on p.process_id = pp.process_id
+   ) as a 
+   left join
+      (
+         SELECT
+            proposal_id::INTEGER,
+            session_date as data_rejeicao,
+            SUM(
+               CASE
+                  WHEN qtd_acoes = 1 THEN 1
+                  ELSE 0
+               END
+            ) * 1.0 / COUNT(*) AS bounce_rate 
+         FROM
+            (
+               SELECT
+                  proposal_id,
+                  session_date::date AS session_date,
+                  visit_id,
+                  COUNT(0) AS qtd_acoes 
+               FROM
+                  {{ ref('visits') }} v
+               WHERE
+                  proposal_id IS NOT NULL 
+                  AND proposal_id ~ '^\d+$'
+               GROUP BY
+                  session_date::date,
+                  visit_id,
+                  proposal_id
+            ) AS visit_actions 
+         GROUP BY
+            proposal_id,
+            session_date
+      ) b 
+      on a.proposal_id = b.proposal_id 
+      and a.data_do_voto = b.data_rejeicao 
+   left join
+      (
+         select
+            v.created_at::date AS data_do_voto,
+            v.voted_component_id AS proposal_id,
+            COUNT(v.voted_component_id) AS qtd_votos 
+         FROM
+            {{ ref('votes') }} v
+         GROUP BY
+            v.created_at::date,
+            v.voted_component_id
+      ) c 
+      on a.proposal_id = c.proposal_id 
+      and a.data_do_voto = c.data_do_voto 
+   left join
+      (
+         select
+            commented_root_component_id as proposal_id,
+            created_at::date data_comentario,
+            count(0) qtd_comentarios 
+         from
+            {{ ref('comments') }} c
+         group by
+            commented_root_component_id,
+            created_at::date
+      ) d 
+      on a.proposal_id = d.proposal_id 
+      and a.data_do_voto = d.data_comentario 
