@@ -1,36 +1,60 @@
 version: 2
 
 models:
-  - name: proposal_metrics  # Substitua por seu nome de modelo
-    description: "Modelo que faz a contagem de votos e comentários de propostas participativas"
+  - name: proposal_metrics  # Substitua pelo nome real do modelo SQL
+    description: "Este modelo consolida informações sobre propostas, seus votos, comentários e bounce rate associados a cada dia desde a criação da proposta."
     columns:
-      - name: id_proposta
-        description: "Identificador único da proposta"
+      - name: data_operacao
+        description: "Data da operação, correspondente à série temporal gerada para cada proposta."
         tests:
           - not_null
-          - unique
+
+      - name: id_processo
+        description: "ID do processo ao qual a proposta está associada."
+        tests:
+          - not_null
+
+      - name: id_proposta
+        description: "Identificador único da proposta."
+        tests:
+          - not_null
 
       - name: titulo_proposta
-        description: "Título da proposta"
+        description: "Título da proposta."
+        tests:
+        - not_null
+
+      - name: status_proposta
+        description: "Status atual da proposta."
+
+      - name: titulo_processo
+        description: "Título do processo participativo."
+        tests:
+        - not_null
+
+      - name: eixo_tematico
+        description: "Categoria temática à qual a proposta pertence."
+      - name: bounce_rate
+        description: "Taxa de rejeição das propostas, calculada com base nas visitas."
         tests:
           - not_null
 
-      - name: processo_participativo
-        description: "Nome do processo participativo ao qual a proposta pertence"
+      - name: qtd_votos
+        description: "Quantidade de votos recebidos pela proposta em uma determinada data."
         tests:
           - not_null
 
-      - name: data_proposta
-        description: "Data de criação da proposta"
+      - name: qtd_comentarios
+        description: "Quantidade de comentários recebidos pela proposta em uma determinada data."
         tests:
           - not_null
 
-      - name: total_votos
-        description: "Número total de votos na proposta"
-        tests:
-          - not_null
-
-      - name: total_comentarios
-        description: "Número total de comentários na proposta"
-        tests:
-          - not_null
+# Testes adicionais para garantir integridade e qualidade dos dados
+tests:
+  - name: unique_proposal_per_day
+    description: "Valida que cada proposta tem uma única entrada por dia."
+    config:
+      severity: error
+    columns:
+      - id_proposta
+      - data_operacao
