@@ -4,6 +4,7 @@ from io import StringIO
 
 import pandas as pd
 import requests
+from airflow.datasets import Dataset
 from airflow.decorators import dag, task
 from airflow.operators.empty import EmptyOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
@@ -11,6 +12,8 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 default_args = {
     "owner": "Amoêdo",
 }
+
+dataset = Dataset("bronze_datas")
 
 MESES = {
     1: "janeiro",
@@ -46,7 +49,7 @@ TABLE_FERIADOS_NAME = "feriados"
 
 
 @dag(
-    schedule="@daily",
+    schedule_interval="@monthly",
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=["data-ingestion"],
@@ -112,7 +115,7 @@ def datas_feriados():
         df = pd.concat(dfs)
         return df
 
-    @task()
+    @task(outlets=dataset)
     def load_feriados(feriados: pd.DataFrame):
         load(feriados, TABLE_FERIADOS_NAME, SCHEMA)
 

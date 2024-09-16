@@ -1,5 +1,9 @@
 {{ config(
-    materialized='view'
+    meta={
+	"datasets_trigger": [
+		"bronze_datas"
+	]
+   }
 ) }}
 
 WITH feriados AS (
