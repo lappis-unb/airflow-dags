@@ -34,7 +34,7 @@ bounce_rates AS (
             SUM(CASE WHEN num_actions = 1 THEN 1 ELSE 0 END) AS qtd_rejeicoes,
             SUM(CASE WHEN num_actions = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT session_id)  as bounce_rate
         FROM 
-            dev_silver.visits v
+            {{ ref('visits') }} v
         WHERE 
             proposal_id IS NOT null
             AND proposal_id ~ '^\d+$'
