@@ -51,6 +51,7 @@ FROM      (
                               mdv."daysSinceLastVisit"       AS days_since_last_visit,
                               mdv."secondsSinceLastVisit"    AS seconds_since_last_visit,
                               mdv.resolution                 AS resolution,
+                              mdv."actions"                  AS num_actions,
                               actions.type                   AS type,
                               actions.url                    AS url,
                               actions."pageTitle"            AS page_title,

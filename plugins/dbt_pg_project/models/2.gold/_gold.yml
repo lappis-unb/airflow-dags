@@ -34,10 +34,17 @@ models:
 
       - name: eixo_tematico
         description: "Categoria temática à qual a proposta pertence."
-      - name: bounce_rate
-        description: "Taxa de rejeição das propostas, calculada com base nas visitas."
+
+      - name: qtd_rejeicao
+        description: "Número de rejeições recebidas pela proposta em uma determinada data. Uma rejeição é contabilizada quando uma visita realiza apenas uma ação na página"
         tests:
           - not_null
+        
+      - name: qtd_visitas
+        description: "Número de visitas na página"
+        tests:
+          - not_null
+          
 
       - name: qtd_votos
         description: "Quantidade de votos recebidos pela proposta em uma determinada data."
