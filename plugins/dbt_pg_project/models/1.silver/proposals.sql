@@ -56,7 +56,7 @@ coauthorships_base as
 (
     SELECT
         *,
-        row_number() over(partition by id order by updated_at DESC) as row_number
+        row_number() over(partition by decidim_author_id, coauthorable_id order by updated_at DESC) as row_number
     FROM
         {{ source('bronze', 'decidim_coauthorships') }}
     WHERE
