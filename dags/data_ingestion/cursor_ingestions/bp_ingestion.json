@@ -4,7 +4,6 @@
   "destination_db_connection": "pg_bp_analytics",
   "catchup": false,
   "start_date": "2024-08-10",
-
   "extractions": {
     "decidim_area_types": {
       "extraction_schema": "public",
@@ -24,31 +23,31 @@
     "decidim_components": {
       "extraction_schema": "public",
       "ingestion_type": "incremental",
-      "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
+      "incremental_filter": "updated_at >= '{{ macros.ds_add(ds, -1) }}' and updated_at < '{{ macros.ds_add(ds, 2) }}'",
       "destination_schema": "raw"
     },
     "decidim_participatory_processes": {
       "extraction_schema": "public",
       "ingestion_type": "incremental",
-      "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
+      "incremental_filter": "updated_at >= '{{ macros.ds_add(ds, -1) }}' and updated_at < '{{ macros.ds_add(ds, 2) }}'",
       "destination_schema": "raw"
     },
     "decidim_participatory_process_types": {
       "extraction_schema": "public",
       "ingestion_type": "incremental",
-      "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
+      "incremental_filter": "updated_at >= '{{ macros.ds_add(ds, -1) }}' and updated_at < '{{ macros.ds_add(ds, 2) }}'",
       "destination_schema": "raw"
     },
     "decidim_areas": {
       "extraction_schema": "public",
       "ingestion_type": "incremental",
-      "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
+      "incremental_filter": "updated_at >= '{{ macros.ds_add(ds, -1) }}' and updated_at < '{{ macros.ds_add(ds, 2) }}'",
       "destination_schema": "raw"
     },
     "decidim_users": {
       "extraction_schema": "public",
       "ingestion_type": "incremental",
-      "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
+      "incremental_filter": "updated_at >= '{{ macros.ds_add(ds, -1) }}' and updated_at < '{{ macros.ds_add(ds, 2) }}'",
       "destination_schema": "raw",
       "exclude_columns": [
         "email",
@@ -81,43 +80,43 @@
     "decidim_proposals_proposals": {
       "extraction_schema": "public",
       "ingestion_type": "incremental",
-      "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
+      "incremental_filter": "updated_at >= '{{ macros.ds_add(ds, -1) }}' and updated_at < '{{ macros.ds_add(ds, 2) }}'",
       "destination_schema": "raw"
     },
     "decidim_scopes": {
       "extraction_schema": "public",
       "ingestion_type": "incremental",
-      "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
+      "incremental_filter": "updated_at >= '{{ macros.ds_add(ds, -1) }}' and updated_at < '{{ macros.ds_add(ds, 2) }}'",
       "destination_schema": "raw"
     },
     "decidim_proposals_proposal_votes": {
       "extraction_schema": "public",
       "ingestion_type": "incremental",
-      "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
+      "incremental_filter": "updated_at >= '{{ macros.ds_add(ds, -1) }}' and updated_at < '{{ macros.ds_add(ds, 2) }}'",
       "destination_schema": "raw"
     },
     "decidim_comments_comment_votes": {
       "extraction_schema": "public",
       "ingestion_type": "incremental",
-      "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
+      "incremental_filter": "updated_at >= '{{ macros.ds_add(ds, -1) }}' and updated_at < '{{ macros.ds_add(ds, 2) }}'",
       "destination_schema": "raw"
     },
     "decidim_comments_comments": {
       "extraction_schema": "public",
       "ingestion_type": "incremental",
-      "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
+      "incremental_filter": "updated_at >= '{{ macros.ds_add(ds, -1) }}' and updated_at < '{{ macros.ds_add(ds, 2) }}'",
       "destination_schema": "raw"
     },
     "decidim_coauthorships": {
       "extraction_schema": "public",
       "ingestion_type": "incremental",
-      "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
+      "incremental_filter": "updated_at >= '{{ macros.ds_add(ds, -1) }}' and updated_at < '{{ macros.ds_add(ds, 2) }}'",
       "destination_schema": "raw"
     },
     "decidim_categorizations": {
       "extraction_schema": "public",
       "ingestion_type": "incremental",
-      "incremental_filter": "updated_at >= '{{ ds }}' and updated_at < '{{ macros.ds_add(ds, 1) }}'",
+      "incremental_filter": "updated_at >= '{{ macros.ds_add(ds, -1) }}' and updated_at < '{{ macros.ds_add(ds, 2) }}'",
       "destination_schema": "raw"
     }
   }
