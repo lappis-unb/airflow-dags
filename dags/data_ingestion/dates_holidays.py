@@ -92,7 +92,7 @@ def dates_holidays():
         df["week_of_month"] = df.apply(
             lambda row: week_number_of_month(row["date"], row["day_of_week"]), axis=1
         )
-        df["weekend"] = df["day_of_week"].isin([6, 7])
+        df["weekend"] = df["day_of_week"].isin([7, 1])
         df["week_of_year"] = df.apply(
             lambda x: calc_week_number_of_year(x["day_of_year"], x["day_of_week"]), axis=1
         )
