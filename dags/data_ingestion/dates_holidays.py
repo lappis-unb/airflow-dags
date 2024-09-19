@@ -89,7 +89,9 @@ def dates_holidays():
         df["day_of_month"] = df["date"].dt.day
         df["day_of_week"] = (df["date"].dt.weekday + 1) % 7 + 1
         df["day_of_year"] = df["date"].dt.dayofyear
-        df["week_of_month"] = df.apply(lambda row: week_number_of_month(row["date"], row["day_of_week"]), axis=1)
+        df["week_of_month"] = df.apply(
+            lambda row: week_number_of_month(row["date"], row["day_of_week"]), axis=1
+        )
         df["weekend"] = df["day_of_week"].isin([6, 7])
         df["week_of_year"] = df.apply(
             lambda x: calc_week_number_of_year(x["day_of_year"], x["day_of_week"]), axis=1
@@ -108,7 +110,7 @@ def dates_holidays():
 
         url = "https://brasilapi.com.br/api/feriados/v1/{year}"
         dfs = []
-        for year in range(start_year, end_year+1):
+        for year in range(start_year, end_year + 1):
             response = requests.get(url.format(year=year))
             time.sleep(0.5)
             response.raise_for_status()
