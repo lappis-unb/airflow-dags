@@ -1,4 +1,5 @@
 {{ config(
+   materialized='table',
    meta={
 	"datasets_trigger": [
 		"bronze_matomo_detailed_visits"
@@ -37,6 +38,7 @@ FROM      (
                               mdv."visitDuration"            AS visit_duration_seconds,
                               mdv.searches                   AS searches,
                               mdv.events                     AS events,
+                              mdv."actions"                  AS num_actions,
                               mdv.continent                  AS continent,
                               mdv."continentCode"            AS continent_code,
                               mdv.country                    AS country,
@@ -49,6 +51,7 @@ FROM      (
                               mdv."daysSinceLastVisit"       AS days_since_last_visit,
                               mdv."secondsSinceLastVisit"    AS seconds_since_last_visit,
                               mdv.resolution                 AS resolution,
+                              mdv."actions"                  AS num_actions,
                               actions.type                   AS type,
                               actions.url                    AS url,
                               actions."pageTitle"            AS page_title,
