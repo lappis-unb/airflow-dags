@@ -1,0 +1,67 @@
+version: 2
+
+models:
+  - name: proposal_metrics  # Substitua pelo nome real do modelo SQL
+    description: "Este modelo consolida informações sobre propostas, seus votos, comentários e bounce rate associados a cada dia desde a criação da proposta."
+    columns:
+      - name: data_operacao
+        description: "Data da operação, correspondente à série temporal gerada para cada proposta."
+        tests:
+          - not_null
+
+      - name: id_processo
+        description: "ID do processo ao qual a proposta está associada."
+        tests:
+          - not_null
+
+      - name: id_proposta
+        description: "Identificador único da proposta."
+        tests:
+          - not_null
+
+      - name: titulo_proposta
+        description: "Título da proposta."
+        tests:
+        - not_null
+
+      - name: status_proposta
+        description: "Status atual da proposta."
+
+      - name: titulo_processo
+        description: "Título do processo participativo."
+        tests:
+        - not_null
+
+      - name: eixo_tematico
+        description: "Categoria temática à qual a proposta pertence."
+
+      - name: qtd_rejeicao
+        description: "Número de rejeições recebidas pela proposta em uma determinada data. Uma rejeição é contabilizada quando uma visita realiza apenas uma ação na página"
+        tests:
+          - not_null
+        
+      - name: qtd_visitas
+        description: "Número de visitas na página"
+        tests:
+          - not_null
+          
+
+      - name: qtd_votos
+        description: "Quantidade de votos recebidos pela proposta em uma determinada data."
+        tests:
+          - not_null
+
+      - name: qtd_comentarios
+        description: "Quantidade de comentários recebidos pela proposta em uma determinada data."
+        tests:
+          - not_null
+
+# Testes adicionais para garantir integridade e qualidade dos dados
+tests:
+  - name: unique_proposal_per_day
+    description: "Valida que cada proposta tem uma única entrada por dia."
+    config:
+      severity: error
+    columns:
+      - id_proposta
+      - data_operacao
