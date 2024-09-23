@@ -38,7 +38,6 @@ FROM      (
                               mdv."visitDuration"            AS visit_duration_seconds,
                               mdv.searches                   AS searches,
                               mdv.events                     AS events,
-                              mdv."actions"                  AS num_actions,
                               mdv.continent                  AS continent,
                               mdv."continentCode"            AS continent_code,
                               mdv.country                    AS country,
