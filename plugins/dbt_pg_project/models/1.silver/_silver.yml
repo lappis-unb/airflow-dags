@@ -126,3 +126,62 @@ models:
           - referential_integrity_test:
               parent_model: users
               parent_column: user_id
+  - name: datas
+    description: "Tabela de datas com a flag de feriado nacional e suas informações detalhadas."
+    columns:
+      - name: ano_mes_dia
+        description: "Data no formato YYYYMMDD."
+        tests:
+          - not_null
+          - unique
+      - name: ano_mes
+        description: "Data no formato YYYYMM."
+        tests:
+          - not_null
+      - name: ano
+        description: "Ano da data."
+        tests:
+          - not_null
+      - name: descricao_dia_semana
+        description: "Descrição textual do dia da semana (ex: Segunda-feira)."
+        tests:
+          - not_null
+      - name: descricao_mes
+        description: "Descrição textual do mês (ex: Janeiro)."
+        tests:
+          - not_null
+      - name: numero_mes
+        description: "Número do mês no ano (ex: 1 para Janeiro)."
+        tests:
+          - not_null
+      - name: numero_dia_mes
+        description: "Número do dia no mês."
+        tests:
+          - not_null
+      - name: numero_dia_semana
+        description: "Número do dia na semana."
+        tests:
+          - not_null
+      - name: numero_dia_ano
+        description: "Número do dia no ano."
+        tests:
+          - not_null
+      - name: numero_semana_mes
+        description: "Número da semana no mês."
+        tests:
+          - not_null
+      - name: final_de_semana
+        description: "Flag indicando se a data é um final de semana (1 para sim, 0 para não)."
+        tests:
+          - not_null
+      - name: numero_semana_ano
+        description: "Número da semana no ano."
+        tests:
+          - not_null
+      - name: flag_feriado
+        description: "Flag indicando se a data é um feriado nacional (1 para sim, 0 para não)."
+        tests:
+          - not_null
+      - name: feriado_nacional
+        description: "Nome do feriado nacional, caso seja feriado."
+        tests: []

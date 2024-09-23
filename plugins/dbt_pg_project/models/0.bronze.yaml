@@ -20,3 +20,5 @@ sources:
       - name: matomo_detailed_visits
       - name: decidim_categorizations
       - name: decidim_categories
+      - name: dates 
+      - name: holidays
